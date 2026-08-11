@@ -89,59 +89,58 @@ class QuotesScreen extends StatelessWidget {
                 Expanded(
                   child: ListView.separated(
                     itemCount: quotes.length,
-                    separatorBuilder: (_, _) => const Divider(),
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, i) {
                       final q = quotes[i];
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Row(
-                          children: [
-                            Expanded(
-                                flex: 3,
-                                child: Text(q.mechanicName,
-                                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13))),
-                            Expanded(flex: 2, child: Text(q.price, style: const TextStyle(fontSize: 13))),
-                            Expanded(flex: 2, child: Text(q.eta, style: const TextStyle(fontSize: 13))),
-                            Expanded(
-                              flex: 2,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.star, size: 14, color: AppColors.yellow),
-                                  const SizedBox(width: 2),
-                                  Text(q.rating.toStringAsFixed(1), style: const TextStyle(fontSize: 13)),
-                                ],
-                              ),
+                      return Row(
+                        children: [
+                          Expanded(
+                              flex: 3,
+                              child: Text(q.mechanicName,
+                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13))),
+                          Expanded(flex: 2, child: Text(q.price, style: const TextStyle(fontSize: 13))),
+                          Expanded(flex: 2, child: Text(q.eta, style: const TextStyle(fontSize: 13))),
+                          Expanded(
+                            flex: 2,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.star, size: 14, color: AppColors.yellow),
+                                const SizedBox(width: 2),
+                                Text(q.rating.toStringAsFixed(1), style: const TextStyle(fontSize: 13)),
+                              ],
                             ),
-                            SizedBox(
-                              width: 80,
-                              child: q.accepted
-                                  ? const Text(
-                                      'Accepted',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.green),
-                                    )
-                                  : ElevatedButton(
-                                      onPressed: hasAccepted
-                                          ? null
-                                          : () {
-                                              QuoteNotificationStore.instance.acceptQuote(q.id);
-                                              Navigator.pop(context, true);
-                                            },
-                                      style: ElevatedButton.styleFrom(
-                                        padding: EdgeInsets.zero,
-                                        minimumSize: const Size(70, 32),
-                                        textStyle: const TextStyle(
-                                            fontSize: 11, fontWeight: FontWeight.w700),
-                                      ),
-                                      child: const Text('Accept'),
+                          ),
+                          SizedBox(
+                            width: 80,
+                            child: q.accepted
+                                ? const Text(
+                                    'Accepted',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.green),
+                                  )
+                                : ElevatedButton(
+                                    onPressed: hasAccepted
+                                        ? null
+                                        : () {
+                                            QuoteNotificationStore.instance.acceptQuote(q.id);
+                                            Navigator.pop(context, true);
+                                          },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primary,
+                                      shape: const StadiumBorder(),
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: const Size(70, 32),
+                                      textStyle: const TextStyle(
+                                          fontSize: 11, fontWeight: FontWeight.w700),
                                     ),
-                            ),
-                          ],
-                        ),
+                                    child: const Text('Accept'),
+                                  ),
+                          ),
+                        ],
                       );
                     },
                   ),

@@ -30,12 +30,12 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
   bool _uploading = false;
 
   static const List<Map<String, dynamic>> _issues = [
-    {'icon': Icons.car_repair, 'label': 'Engine Problem'},
-    {'icon': Icons.album_outlined, 'label': 'Brake Issue'},
-    {'icon': Icons.tire_repair, 'label': 'Flat Tire'},
-    {'icon': Icons.battery_alert_outlined, 'label': 'Battery Dead'},
-    {'icon': Icons.settings_input_component_outlined, 'label': 'Clutch Problem'},
-    {'icon': Icons.electrical_services_outlined, 'label': 'Electrical Issue'},
+    {'icon': Icons.car_repair, 'label': 'Engine Problem', 'color': Color(0xFFFF9800)},
+    {'icon': Icons.album_outlined, 'label': 'Brake Issue', 'color': AppColors.primary},
+    {'icon': Icons.tire_repair, 'label': 'Flat Tire', 'color': AppColors.textDark},
+    {'icon': Icons.battery_alert_outlined, 'label': 'Battery Dead', 'color': AppColors.green},
+    {'icon': Icons.settings_input_component_outlined, 'label': 'Chain Problem', 'color': AppColors.blue},
+    {'icon': Icons.electrical_services_outlined, 'label': 'Electrical Issue', 'color': AppColors.yellow},
   ];
 
   @override
@@ -219,6 +219,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
             childAspectRatio: 0.95,
             children: _issues.map((issue) {
               final selected = _selectedIssue == issue['label'];
+              final color = issue['color'] as Color;
               return InkWell(
                 borderRadius: BorderRadius.circular(10),
                 onTap: () => setState(() {
@@ -227,19 +228,16 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
                 }),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: selected
-                        ? AppColors.primary.withValues(alpha: 0.08)
-                        : AppColors.white,
+                    color: selected ? color.withValues(alpha: 0.08) : AppColors.white,
                     border: Border.all(
-                      color: selected ? AppColors.primary : AppColors.borderGrey,
+                      color: selected ? color : AppColors.borderGrey,
                     ),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(issue['icon'] as IconData,
-                          color: AppColors.primary, size: 26),
+                      Icon(issue['icon'] as IconData, color: color, size: 26),
                       const SizedBox(height: 6),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -267,17 +265,16 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: _addPhotos,
-            icon: const Icon(Icons.add_a_photo_outlined, size: 18),
-            label: Text(_photos.isEmpty
-                ? 'Add Photos'
-                : 'Add Photos (${_photos.length})'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.primary,
-              side: const BorderSide(color: AppColors.primary),
-              minimumSize: const Size(double.infinity, 46),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: _addPhotos,
+              icon: const Icon(Icons.photo_camera_outlined, size: 18, color: AppColors.primary),
+              label: Text(
+                _photos.isEmpty ? 'Add Photos' : 'Add Photos (${_photos.length})',
+                style: const TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+              style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
             ),
           ),
           if (_photos.isNotEmpty) ...[
@@ -383,6 +380,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
           const SizedBox(height: 20),
           AppCard(
             padding: const EdgeInsets.all(14),
+            color: AppColors.blue.withValues(alpha: 0.08),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -443,21 +441,21 @@ class _UrgencyChip extends StatelessWidget {
     return Expanded(
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(30),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: selected ? color.withValues(alpha: 0.15) : AppColors.white,
-            border: Border.all(color: selected ? color : AppColors.borderGrey),
-            borderRadius: BorderRadius.circular(8),
+            color: color.withValues(alpha: 0.15),
+            border: selected ? Border.all(color: color, width: 2) : null,
+            borderRadius: BorderRadius.circular(30),
           ),
           child: Text(
             label,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: selected ? color : AppColors.textGrey,
+              color: color,
             ),
           ),
         ),

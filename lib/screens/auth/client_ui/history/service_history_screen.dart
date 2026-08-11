@@ -35,39 +35,36 @@ class _HistoryCard extends StatelessWidget {
         context,
         MaterialPageRoute(builder: (_) => MechanicProfileViewScreen(name: item['name'] as String)),
       ),
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           border: Border.all(color: AppColors.borderGrey),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const CircleAvatar(
-              radius: 22,
-              backgroundColor: AppColors.background,
-              child: Icon(Icons.person, color: AppColors.textGrey),
-            ),
-            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(item['name'] as String,
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                  Text(item['name'] as String, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                   const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on_outlined, size: 12, color: AppColors.textGrey),
-                      const SizedBox(width: 2),
-                      Text(item['location'] as String,
-                          style: const TextStyle(fontSize: 11, color: AppColors.textGrey)),
-                    ],
+                  Text(item['location'] as String, style: const TextStyle(fontSize: 13, color: AppColors.textDark)),
+                  const SizedBox(height: 2),
+                  Text(item['date'] as String, style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.green.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text('Completed',
+                        style: TextStyle(fontSize: 11, color: AppColors.green, fontWeight: FontWeight.w600)),
                   ),
-                  const SizedBox(height: 2),
-                  Text(item['date'] as String, style: const TextStyle(fontSize: 11, color: AppColors.textGrey)),
                 ],
               ),
             ),
@@ -75,24 +72,14 @@ class _HistoryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(item['price'] as String,
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.primary)),
-                const SizedBox(height: 4),
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.green)),
+                const SizedBox(height: 6),
                 Row(
                   children: [
-                    const Icon(Icons.star, size: 12, color: AppColors.yellow),
+                    const Icon(Icons.star, size: 14, color: AppColors.yellow),
                     const SizedBox(width: 2),
-                    Text('${item['rating']}', style: const TextStyle(fontSize: 11)),
+                    Text('${item['rating']}', style: const TextStyle(fontSize: 13)),
                   ],
-                ),
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppColors.green.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text('Completed',
-                      style: TextStyle(fontSize: 10, color: AppColors.green, fontWeight: FontWeight.w600)),
                 ),
               ],
             ),

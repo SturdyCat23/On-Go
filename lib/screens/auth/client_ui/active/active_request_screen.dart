@@ -9,11 +9,13 @@ class ActiveRequestScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Stack(
+            clipBehavior: Clip.none,
             children: [
               Container(
-                height: 200,
+                height: 190,
                 width: double.infinity,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
@@ -22,37 +24,28 @@ class ActiveRequestScreen extends StatelessWidget {
                     end: Alignment.bottomCenter,
                   ),
                 ),
-                child: const Center(
-                  child: Icon(Icons.location_on, color: AppColors.primary, size: 40),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.location_on_outlined, color: AppColors.primary, size: 40),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Mechanic is on the way',
+                      style: TextStyle(color: AppColors.textDark, fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '20 km away · 30 mins',
+                      style: TextStyle(color: AppColors.textDark.withValues(alpha: 0.7), fontSize: 12),
+                    ),
+                  ],
                 ),
               ),
               Positioned(
-                bottom: 12,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      'Mechanic is on the way\n20 km away · 30 mins',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.white, fontSize: 12),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppCard(
+                left: 16,
+                right: 16,
+                bottom: -46,
+                child: AppCard(
                   padding: const EdgeInsets.all(12),
                   child: Column(
                     children: [
@@ -71,8 +64,13 @@ class ActiveRequestScreen extends StatelessWidget {
                                 Text('Juan Dela Cruz',
                                     style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
                                 SizedBox(height: 2),
-                                Text('Service · Gold',
-                                    style: TextStyle(fontSize: 12, color: AppColors.textGrey)),
+                                Row(
+                                  children: [
+                                    Text('Service · Gold', style: TextStyle(fontSize: 12, color: AppColors.textGrey)),
+                                    SizedBox(width: 4),
+                                    Icon(Icons.military_tech, size: 14, color: AppColors.yellow),
+                                  ],
+                                ),
                               ],
                             ),
                           ),
@@ -84,19 +82,33 @@ class ActiveRequestScreen extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      const Divider(height: 1),
-                      const SizedBox(height: 8),
-                      const Row(
-                        children: [
-                          _InfoColumn(label: 'ETA', value: '20 mins'),
-                          _InfoColumn(label: 'Distance', value: '30 km'),
-                          _InfoColumn(label: 'Quote', value: '₱200'),
-                        ],
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Row(
+                          children: [
+                            _InfoColumn(label: 'ETA', value: '20 mins'),
+                            _VerticalDivider(),
+                            _InfoColumn(label: 'Distance', value: '20 km'),
+                            _VerticalDivider(),
+                            _InfoColumn(label: 'Quote', value: '₱200', valueColor: AppColors.green),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 62, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 const Text('Service Status',
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
@@ -106,27 +118,27 @@ class ActiveRequestScreen extends StatelessWidget {
                 const _StatusStep(title: 'Mechanic Arrived', time: 'Expected 12:15 PM', done: false),
                 const _StatusStep(title: 'Service Complete', time: 'Pending...', done: false, isLast: true),
                 const SizedBox(height: 12),
-                OutlinedButton.icon(
+                ElevatedButton.icon(
                   onPressed: () {},
-                  icon: const Icon(Icons.my_location, size: 18),
+                  icon: const Icon(Icons.my_location, size: 18, color: AppColors.white),
                   label: const Text('Track Mechanic Location'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.textDark,
-                    side: const BorderSide(color: AppColors.borderGrey),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.green,
+                    foregroundColor: AppColors.white,
                     minimumSize: const Size(double.infinity, 46),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: const StadiumBorder(),
                   ),
                 ),
                 const SizedBox(height: 10),
-                OutlinedButton(
+                ElevatedButton(
                   onPressed: () {},
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primary),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
                     minimumSize: const Size(double.infinity, 46),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: const StadiumBorder(),
                   ),
-                  child: const Text('Cancel Request'),
+                  child: const Text('Send Payment'),
                 ),
                 const SizedBox(height: 16),
                 Center(
@@ -173,20 +185,30 @@ class _CircleIconButton extends StatelessWidget {
   }
 }
 
+class _VerticalDivider extends StatelessWidget {
+  const _VerticalDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(width: 1, height: 28, color: AppColors.borderGrey);
+  }
+}
+
 class _InfoColumn extends StatelessWidget {
   final String label;
   final String value;
+  final Color? valueColor;
 
-  const _InfoColumn({required this.label, required this.value});
+  const _InfoColumn({required this.label, required this.value, this.valueColor});
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Column(
         children: [
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-          const SizedBox(height: 2),
           Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textGrey)),
+          const SizedBox(height: 2),
+          Text(value, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: valueColor ?? AppColors.textDark)),
         ],
       ),
     );
