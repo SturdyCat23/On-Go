@@ -108,7 +108,7 @@ class _SendQuoteSheetState extends State<SendQuoteSheet> {
                       foregroundColor: AppColors.primary,
                       side: const BorderSide(color: AppColors.primary),
                       minimumSize: const Size(double.infinity, 48),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: const StadiumBorder(),
                     ),
                     child: const Text('Cancel'),
                   ),
@@ -117,6 +117,10 @@ class _SendQuoteSheetState extends State<SendQuoteSheet> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: _send,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 48),
+                      shape: const StadiumBorder(),
+                    ),
                     child: const Text('Send Quote'),
                   ),
                 ),

@@ -19,6 +19,12 @@ class NeedHelpScreen extends StatefulWidget {
   State<NeedHelpScreen> createState() => _NeedHelpScreenState();
 }
 
+class _UrgencyInfo {
+  final String durationLabel;
+  final int surcharge;
+  const _UrgencyInfo(this.durationLabel, this.surcharge);
+}
+
 class _NeedHelpScreenState extends State<NeedHelpScreen> {
   final _problemCtrl = TextEditingController();
   final _locationCtrl = TextEditingController();
@@ -37,6 +43,16 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
     {'icon': Icons.settings_input_component_outlined, 'label': 'Chain Problem', 'color': AppColors.blue},
     {'icon': Icons.electrical_services_outlined, 'label': 'Electrical Issue', 'color': AppColors.yellow},
   ];
+
+  // Sampled directly from the design reference: light-blue card, deep navy text.
+  static const _pricingCardBg = Color(0xFFE7F4FD);
+  static const _pricingCardText = Color(0xFF00297E);
+
+  static const Map<String, _UrgencyInfo> _urgencyInfo = {
+    'Normal': _UrgencyInfo('Completed within 10 days', 0),
+    'Urgent': _UrgencyInfo('Completed within 5 days', 50),
+    'Emergency': _UrgencyInfo('As fast as possible — today', 100),
+  };
 
   @override
   void dispose() {
@@ -156,6 +172,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
 
     setState(() => _uploading = true);
 
+    final info = _urgencyInfo[_urgency]!;
     final request = HelpRequest(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       problem: _problemCtrl.text.trim(),
@@ -163,6 +180,11 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
       urgency: _urgency,
       photoPaths: _photos.map((f) => f.path).toList(),
       createdAt: DateTime.now(),
+      durationLabel: info.durationLabel,
+      surcharge: info.surcharge,
+      // Todo: HelpRequest doesn't have duration/surcharge fields yet — once
+      // quote_store.dart is shared, wire _urgencyInfo[_urgency] through here
+      // so the mechanic side and pricing actually reflect this.
     );
 
     // Hands the request off to mechanics. Quotes will arrive asynchronously
@@ -191,6 +213,8 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final info = _urgencyInfo[_urgency]!;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -377,26 +401,68 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: info.surcharge > 0 ? AppColors.yellow.withValues(alpha: 0.12) : AppColors.green.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: (info.surcharge > 0 ? AppColors.yellow : AppColors.green).withValues(alpha: 0.4)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.schedule, size: 16, color: AppColors.textDark),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(info.durationLabel, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded,
+                        size: 16, color: info.surcharge > 0 ? const Color(0xFFB07A00) : AppColors.green),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        info.surcharge > 0
+                            ? 'Additional charge applies: +₱${info.surcharge} for faster service'
+                            : 'No additional charge for standard service',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: info.surcharge > 0 ? const Color(0xFFB07A00) : AppColors.green,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 20),
           AppCard(
             padding: const EdgeInsets.all(14),
-            color: AppColors.blue.withValues(alpha: 0.08),
-            child: Row(
+            color: _pricingCardBg,
+            child: const Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.attach_money, color: AppColors.blue),
-                const SizedBox(width: 10),
+                Icon(Icons.attach_money, color: _pricingCardText),
+                SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('How pricing works', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.blue, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 4),
+                      Text('How pricing works',
+                          style: TextStyle(color: _pricingCardText, fontWeight: FontWeight.w700, fontSize: 16)),
+                      SizedBox(height: 4),
                       Text(
-                        'Upload your problem and mechanics will review it and send their quotes. '
-                        'You\'ll see them under the notification bell, where you can compare '
-                        'prices and choose the best mechanic for you.',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.blue),
+                        'Mechanic will review your problem and send their quotes. You can compare prices and choose the best mechanic for you.',
+                        style: TextStyle(color: _pricingCardText, fontSize: 13),
                       ),
                     ],
                   ),

@@ -193,6 +193,7 @@ class _OverviewTabState extends State<OverviewTab> {
                             width: double.infinity,
                             child: CustomPaint(painter: _LineChartPainter(income: income, maxRevenue: maxRevenue, highlightIndex: idx)),
                           ),
+                          // ignore: use_null_aware_elements
                           if (tooltip != null) tooltip,
                         ],
                       ),

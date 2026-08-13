@@ -203,7 +203,7 @@ class _IncomeTabState extends State<IncomeTab> {
                               ],
                             ),
                           ),
-                          if (tooltip != null) tooltip,
+                          ?tooltip,
                         ],
                       ),
                     );

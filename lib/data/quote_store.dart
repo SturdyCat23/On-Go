@@ -41,6 +41,9 @@ class HelpRequest {
   final DateTime createdAt;
   // Todo: populate from the logged-in client's real profile once auth exists.
   final String clientName;
+  // Set from NeedHelpScreen's urgency selection — see _urgencyInfo there.
+  final String durationLabel;
+  final int surcharge;
   RequestStatus status;
   DateTime? completedAt;
 
@@ -52,6 +55,8 @@ class HelpRequest {
     required this.photoPaths,
     required this.createdAt,
     this.clientName = 'Client',
+    this.durationLabel = 'Completed within 10 days',
+    this.surcharge = 0,
     this.status = RequestStatus.pending,
     this.completedAt,
   });
@@ -66,11 +71,13 @@ class HelpRequest {
 ///  - Normal / Urgent: the request goes out to every mechanic as "Send
 ///    Quote". Any number of mechanics can call [mechanicSendQuote]. The
 ///    client compares them on QuotesScreen and calls [clientAcceptQuote] —
-///    only then is a winner picked.
+///    only then is a winner picked. Multiple Normal/Urgent jobs can be
+///    accepted and worked simultaneously by the same mechanic — they stack.
 ///  - Emergency: the request goes out to every mechanic as "Accept" only.
 ///    The FIRST mechanic to call [mechanicAcceptEmergency] is immediately
-///    and irreversibly matched. There's nothing for the client to choose —
-///    it's first come, first served.
+///    and irreversibly matched. A mechanic can only have ONE active
+///    emergency job at a time — see [mechanicHasActiveEmergency] — they
+///    must complete it before accepting another.
 ///
 /// In a real backend this would be replaced by Firestore / REST + push
 /// notifications, but the shape of this API is what both sides talk to, so
@@ -78,6 +85,11 @@ class HelpRequest {
 class QuoteNotificationStore extends ChangeNotifier {
   QuoteNotificationStore._internal();
   static final QuoteNotificationStore instance = QuoteNotificationStore._internal();
+
+  // Todo: replace with real auth-derived identities once login exists.
+  // Centralized here so every screen/store agrees on "who is the current
+  // mechanic" instead of each file hardcoding its own 'You' string.
+  static const currentMechanicName = 'You';
 
   final List<HelpRequest> _requests = [];
   final List<MechanicQuote> _allQuotes = [];
@@ -87,8 +99,14 @@ class QuoteNotificationStore extends ChangeNotifier {
   // Client-facing API (NeedHelpScreen / QuotesScreen / bell badge)
   // ---------------------------------------------------------------------
 
-  /// The request currently shown on QuotesScreen / ActiveRequestScreen.
-  HelpRequest? get activeRequest => _requests.isEmpty ? null : _requests.last;
+  /// The request currently shown on QuotesScreen / ActiveRequestScreen —
+  /// the most recently submitted request that's still pending, falling back
+  /// to the last request overall once everything's matched/completed.
+  HelpRequest? get activeRequest {
+    final pending = _requests.where((r) => r.status == RequestStatus.pending);
+    if (pending.isNotEmpty) return pending.last;
+    return _requests.isEmpty ? null : _requests.last;
+  }
 
   /// Quotes for the active request only.
   List<MechanicQuote> get quotes {
@@ -97,18 +115,33 @@ class QuoteNotificationStore extends ChangeNotifier {
     return _allQuotes.where((q) => q.requestId == req.id).toList();
   }
 
+  /// Quotes for any specific request (used internally, and available if a
+  /// future screen wants to browse quotes across multiple open requests).
+  List<MechanicQuote> quotesForRequest(String requestId) =>
+      _allQuotes.where((q) => q.requestId == requestId).toList();
+
   int get unseenCount => _unseenCount;
   bool get hasAcceptedQuote => quotes.any((q) => q.accepted);
 
-  int get mechanicNotificationCount =>
-      _allQuotes.where((q) => q.accepted).length;
+  int get mechanicNotificationCount => _allQuotes
+      .where((q) => q.accepted && q.mechanicName == currentMechanicName)
+      .length;
 
-  List<MechanicQuote> get mechanicNotifications =>
-      _allQuotes.where((q) => q.accepted).toList();
+  List<MechanicQuote> get mechanicNotifications => _allQuotes
+      .where((q) => q.accepted && q.mechanicName == currentMechanicName)
+      .toList();
 
   HelpRequest? requestFor(String requestId) {
     try {
       return _requests.firstWhere((r) => r.id == requestId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  MechanicQuote? quoteById(String quoteId) {
+    try {
+      return _allQuotes.firstWhere((q) => q.id == quoteId);
     } catch (_) {
       return null;
     }
@@ -126,14 +159,20 @@ class QuoteNotificationStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Client picks a quote on QuotesScreen. Only reachable for Normal/Urgent
-  /// requests — Emergency requests are already matched before this screen
-  /// would show a choice.
+  /// Client picks a quote — on QuotesScreen or anywhere else. Resolves the
+  /// quote's OWN request via [quote.requestId] rather than assuming it
+  /// belongs to [activeRequest], so accepting quotes across several
+  /// different open requests all work correctly and independently.
   void clientAcceptQuote(String quoteId) {
-    for (final q in quotes) {
+    final quote = quoteById(quoteId);
+    if (quote == null) return;
+    final req = requestFor(quote.requestId);
+    if (req == null) return;
+
+    for (final q in quotesForRequest(quote.requestId)) {
       q.accepted = q.id == quoteId;
     }
-    activeRequest?.status = RequestStatus.matched;
+    req.status = RequestStatus.matched;
     notifyListeners();
   }
 
@@ -158,7 +197,7 @@ class QuoteNotificationStore extends ChangeNotifier {
     required double rating,
   }) {
     _allQuotes.add(MechanicQuote(
-      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      id: '${DateTime.now().microsecondsSinceEpoch}_${_allQuotes.length}',
       requestId: requestId,
       mechanicName: mechanicName,
       price: price,
@@ -169,9 +208,21 @@ class QuoteNotificationStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// True while [mechanicName] has an emergency job that's been accepted
+  /// but not yet marked complete. A mechanic can only ride one emergency at
+  /// a time — Normal/Urgent jobs are unaffected and can stack freely.
+  bool mechanicHasActiveEmergency(String mechanicName) {
+    return _requests.any((r) =>
+        r.isEmergency &&
+        r.status == RequestStatus.matched &&
+        acceptedQuoteFor(r.id)?.mechanicName == mechanicName);
+  }
+
   /// Emergency only: first mechanic to call this wins. Returns false if the
-  /// job was already grabbed by someone else, so the UI can tell this
-  /// mechanic they were too slow instead of silently double-booking it.
+  /// job was already grabbed by someone else, OR if this mechanic already
+  /// has an active emergency job — check [mechanicHasActiveEmergency]
+  /// beforehand if you want to show a more specific message than a generic
+  /// failure.
   bool mechanicAcceptEmergency(
     String requestId, {
     required String mechanicName,
@@ -181,9 +232,10 @@ class QuoteNotificationStore extends ChangeNotifier {
   }) {
     final req = _requests.firstWhere((r) => r.id == requestId);
     if (req.status != RequestStatus.pending) return false;
+    if (mechanicHasActiveEmergency(mechanicName)) return false;
 
     _allQuotes.add(MechanicQuote(
-      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      id: '${DateTime.now().microsecondsSinceEpoch}_${_allQuotes.length}',
       requestId: requestId,
       mechanicName: mechanicName,
       price: price,
@@ -205,7 +257,9 @@ class QuoteNotificationStore extends ChangeNotifier {
     return null;
   }
 
-  /// Jobs a specific mechanic has won and is currently working.
+  /// Jobs a specific mechanic has won and is currently working. Normal and
+  /// Urgent jobs stack here freely; Emergency is capped to one by
+  /// [mechanicAcceptEmergency] refusing further accepts while one is active.
   List<HelpRequest> matchedJobsFor(String mechanicName) => _requests
       .where((r) =>
           r.status == RequestStatus.matched &&

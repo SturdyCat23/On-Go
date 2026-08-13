@@ -35,7 +35,7 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
       const EarningScreen(),
       const QrScreen(),
       const MechanicLeaderboardScreen(),
-      const MechanicProfileScreen(),
+      const MechanicProfileViewScreen(name: '',),
     ];
 
     return Scaffold(

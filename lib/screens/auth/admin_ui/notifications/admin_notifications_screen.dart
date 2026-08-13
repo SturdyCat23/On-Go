@@ -223,7 +223,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
           return ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: activity.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final entry = activity[index];
               final color = _colorFor(entry.action);

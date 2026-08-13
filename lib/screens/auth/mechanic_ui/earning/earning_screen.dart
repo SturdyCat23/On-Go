@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../widgets/common_widgets.dart';
 import '../rank/mechanic_leaderboard_screen.dart';
 import 'package:on_go/services/local_data.dart';
 
@@ -14,6 +15,7 @@ class EarningScreen extends StatefulWidget {
 class _EarningScreenState extends State<EarningScreen> {
   bool _showBalance = true;
   int _balance = 0;
+  double _points = 0;
 
   static const _topMechanics = ['Pedro Santos', 'Juan Dela Cruz', 'Maria Garcia'];
 
@@ -26,7 +28,9 @@ class _EarningScreenState extends State<EarningScreen> {
       final item = _history[index];
       if (!(item['completed'] as bool)) {
         item['completed'] = true;
-        _balance += (item['earned'] as int);
+        final earned = item['earned'] as int;
+        _balance += earned;
+        _points += earned * 0.1; // Todo: replace with real points/rewards rules once defined.
         item['clientActive'] = true; // client can now rate
         LocalData.saveHistory(_history);
         LocalData.saveBalance(_balance);
@@ -107,27 +111,52 @@ class _EarningScreenState extends State<EarningScreen> {
             color: AppColors.green,
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Available Balance',
-                      style: TextStyle(color: AppColors.white, fontSize: 13, fontWeight: FontWeight.w600)),
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    onPressed: _toggleBalance,
-                    icon: Icon(_showBalance ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                        color: AppColors.white, size: 18),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text('Available Balance',
+                            style: TextStyle(color: AppColors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                        const SizedBox(width: 4),
+                        InkWell(
+                          onTap: _toggleBalance,
+                          child: Icon(_showBalance ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                              color: AppColors.white, size: 16),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _showBalance ? '₱${_balance.toString()}' : '••••',
+                      style: const TextStyle(color: AppColors.white, fontSize: 30, fontWeight: FontWeight.w800),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                _showBalance ? '₱${_balance.toString()}' : '••••',
-                style: const TextStyle(color: AppColors.white, fontSize: 32, fontWeight: FontWeight.w800),
+              Container(width: 1, height: 48, color: AppColors.white.withValues(alpha: 0.3)),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.card_giftcard, color: AppColors.white, size: 16),
+                        SizedBox(width: 4),
+                        Text('Points', style: TextStyle(color: AppColors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _showBalance ? _points.toStringAsFixed(2) : '••••',
+                      style: const TextStyle(color: AppColors.white, fontSize: 30, fontWeight: FontWeight.w800),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -147,86 +176,100 @@ class _EarningScreenState extends State<EarningScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        Row(
-          children: _topMechanics
-              .map((name) => Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: CircleAvatar(
-                      radius: 26,
-                      backgroundColor: AppColors.background,
-                      child: const Icon(Icons.person, color: AppColors.textGrey),
-                    ),
-                  ))
-              .toList(),
+        AppCard(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: _topMechanics
+                .map((name) => Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: CircleAvatar(
+                        radius: 26,
+                        backgroundColor: AppColors.background,
+                        child: const Icon(Icons.person, color: AppColors.textGrey),
+                      ),
+                    ))
+                .toList(),
+          ),
         ),
         const SizedBox(height: 24),
         const Text('Service History', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
         const SizedBox(height: 12),
         ...List.generate(_history.length, (idx) {
           final item = _history[idx];
+          final completed = item['completed'] as bool;
+          final rating = item['rating'] as int;
+
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               border: Border.all(color: AppColors.borderGrey),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(16),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item['date'] as String, style: const TextStyle(fontSize: 11, color: AppColors.textGrey)),
-                const SizedBox(height: 4),
-                Text(item['issue'] as String, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                Text(item['description'] as String, style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
-                const SizedBox(height: 10),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Earned ₱${item['earned']}',
-                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.primary)),
-                    Row(
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(item['issue'] as String, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                          const SizedBox(height: 2),
+                          Text(item['description'] as String, style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+                          const SizedBox(height: 2),
+                          Text(item['date'] as String, style: const TextStyle(fontSize: 11, color: AppColors.textGrey)),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Row(
-                          children: List.generate(
-                            5,
-                            (i) => Icon(
-                              i < (item['rating'] as int) ? Icons.star : Icons.star_border,
-                              color: AppColors.yellow,
-                              size: 16,
-                            ),
+                        Text('₱${item['earned']}',
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.green)),
+                        if (rating > 0) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              const Icon(Icons.star, size: 14, color: AppColors.yellow),
+                              const SizedBox(width: 2),
+                              Text('$rating', style: const TextStyle(fontSize: 13)),
+                            ],
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    if (!(item['completed'] as bool))
-                      ElevatedButton(
-                        onPressed: () => _markCompleted(idx),
-                        child: const Text('Mark Completed'),
+                const SizedBox(height: 10),
+                if (!completed)
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => _markCompleted(idx),
+                      style: ElevatedButton.styleFrom(shape: const StadiumBorder(), padding: const EdgeInsets.symmetric(vertical: 10)),
+                      child: const Text('Mark Completed'),
+                    ),
+                  )
+                else ...[
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(color: AppColors.green.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
+                        child: const Text('Completed', style: TextStyle(fontSize: 11, color: AppColors.green, fontWeight: FontWeight.w600)),
                       ),
-                    if ((item['completed'] as bool) && (item['clientActive'] as bool)) ...[
-                      TextButton(onPressed: () => _showRatingDialog(idx), child: const Text('Awaiting Client Rating')),
                       const SizedBox(width: 8),
-                      TextButton(onPressed: () => _simulateClientRating(idx), child: const Text('Simulate Client Rating')),
+                      if (item['clientActive'] as bool) ...[
+                        TextButton(onPressed: () => _showRatingDialog(idx), child: const Text('Awaiting Client Rating', style: TextStyle(fontSize: 12))),
+                        TextButton(onPressed: () => _simulateClientRating(idx), child: const Text('Simulate Client Rating', style: TextStyle(fontSize: 12))),
+                      ] else if (rating == 0)
+                        TextButton(onPressed: () => _showRatingDialog(idx), child: const Text('Rate', style: TextStyle(fontSize: 12))),
                     ],
-                    if ((item['completed'] as bool) && !(item['clientActive'] as bool) && (item['rating'] as int) == 0)
-                      TextButton(onPressed: () => _showRatingDialog(idx), child: const Text('Rate')),
-                    if ((item['completed'] as bool))
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8.0),
-                        child: Text(
-                          (item['clientActive'] as bool)
-                              ? 'Client can rate'
-                              : ((item['rating'] as int) > 0 ? 'Rated: ${item['rating']}' : 'Completed'),
-                          style: const TextStyle(color: AppColors.textGrey, fontSize: 12),
-                        ),
-                      ),
-                  ],
-                )
+                  ),
+                ],
               ],
             ),
           );

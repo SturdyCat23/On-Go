@@ -89,7 +89,7 @@ class QuotesScreen extends StatelessWidget {
                 Expanded(
                   child: ListView.separated(
                     itemCount: quotes.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (context, i) {
                       final q = quotes[i];
                       return Row(
