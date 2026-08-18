@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../data/app_session.dart';
+import '../../../data/review_store.dart';
 import '../../../widgets/app_widgets.dart';
 import '../../../data/quote_store.dart';
 import 'home/need_help_screen.dart';
@@ -17,6 +19,16 @@ class ClientHomeScreen extends StatefulWidget {
 
 class _ClientHomeScreenState extends State<ClientHomeScreen> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Marks this session as Client-shell so role-gated store methods
+    // (ReviewStore.submitReview, QuoteNotificationStore.clientConfirmPayment)
+    // are actually reachable, and identifies this client as the viewer for
+    // like/helpful interactions on reviews — see AppSession's doc comment.
+    AppSession.instance.setRole(AppRole.client, viewerName: ReviewStore.currentClientName);
+  }
 
   void _goToTab(int index) => setState(() => _currentIndex = index);
 

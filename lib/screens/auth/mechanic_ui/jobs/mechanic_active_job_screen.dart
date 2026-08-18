@@ -1,12 +1,98 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/common_widgets.dart';
 // Todo: adjust this path to wherever quote_store.dart lives in your project
 import '../../../../data/quote_store.dart';
 
-class MechanicActiveJobScreen extends StatelessWidget {
+class MechanicActiveJobScreen extends StatefulWidget {
   final String requestId;
   const MechanicActiveJobScreen({super.key, required this.requestId});
+
+  @override
+  State<MechanicActiveJobScreen> createState() => _MechanicActiveJobScreenState();
+}
+
+class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
+  final _store = QuoteNotificationStore.instance;
+  StreamSubscription<Position>? _positionSub;
+  double? _initialDistance;
+  String? _trackingError;
+
+  static const _arrivalRadiusMeters = 100.0;
+  static const _movementThresholdMeters = 20.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _store.addListener(_onChange);
+    _startTracking();
+  }
+
+  @override
+  void dispose() {
+    _store.removeListener(_onChange);
+    _positionSub?.cancel();
+    super.dispose();
+  }
+
+  void _onChange() => setState(() {});
+
+  Future<void> _startTracking() async {
+    final request = _store.requestFor(widget.requestId);
+    if (request == null || request.arrived) return;
+
+    // No GPS coordinates on this request (client typed a freeform address
+    // instead of using "Use Current Location") — nothing to auto-detect
+    // against. The UI falls back to a manual "Confirm Arrival" control.
+    if (!request.hasClientCoordinates) return;
+
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() => _trackingError = 'Location services are off.');
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        setState(() => _trackingError = 'Location permission denied — arrival must be confirmed manually.');
+        return;
+      }
+
+      _positionSub = Geolocator.getPositionStream(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 10),
+      ).listen((pos) => _handlePosition(request, pos));
+    } catch (e) {
+      setState(() => _trackingError = 'Could not start location tracking — arrival must be confirmed manually.');
+    }
+  }
+
+  void _handlePosition(HelpRequest request, Position pos) {
+    final distance = Geolocator.distanceBetween(pos.latitude, pos.longitude, request.clientLat!, request.clientLng!);
+    _initialDistance ??= distance;
+
+    if (!request.enRoute && distance < _initialDistance! - _movementThresholdMeters) {
+      _store.mechanicMarkEnRoute(request.id);
+    }
+    if (!request.arrived && distance <= _arrivalRadiusMeters) {
+      _store.mechanicMarkArrived(request.id);
+      _positionSub?.cancel();
+    }
+  }
+
+  /// Fallback only used when the request has no GPS coordinates to compare
+  /// against — see [_startTracking].
+  void _confirmArrivalManually(HelpRequest request) {
+    _store.mechanicMarkEnRoute(request.id);
+    _store.mechanicMarkArrived(request.id);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,15 +103,13 @@ class MechanicActiveJobScreen extends StatelessWidget {
         foregroundColor: AppColors.white,
         title: const Text('Active Job'),
       ),
-      body: AnimatedBuilder(
-        animation: QuoteNotificationStore.instance,
-        builder: (context, _) {
-          final store = QuoteNotificationStore.instance;
-          final request = store.requestFor(requestId);
+      body: Builder(
+        builder: (context) {
+          final request = _store.requestFor(widget.requestId);
           if (request == null) {
             return const Center(child: Text('This job is no longer active.', style: TextStyle(color: AppColors.textGrey)));
           }
-          final quote = store.acceptedQuoteFor(requestId);
+          final quote = _store.acceptedQuoteFor(widget.requestId);
 
           return SingleChildScrollView(
             child: Column(
@@ -49,11 +133,19 @@ class MechanicActiveJobScreen extends StatelessWidget {
                         children: [
                           const Icon(Icons.location_on_outlined, color: AppColors.primary, size: 40),
                           const SizedBox(height: 8),
-                          const Text('Heading to client',
-                              style: TextStyle(color: AppColors.textDark, fontSize: 14, fontWeight: FontWeight.w600)),
-                          const SizedBox(height: 2),
-                          Text('20 km away · 20 mins',
-                              style: TextStyle(color: AppColors.textDark.withValues(alpha: 0.7), fontSize: 12)),
+                          Text(
+                            request.arrived ? "You've arrived" : (request.enRoute ? 'Heading to client' : 'Ready to head out'),
+                            style: const TextStyle(color: AppColors.textDark, fontSize: 14, fontWeight: FontWeight.w600),
+                          ),
+                          if (_trackingError != null) ...[
+                            const SizedBox(height: 4),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              child: Text(_trackingError!,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: AppColors.textDark.withValues(alpha: 0.7), fontSize: 11)),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -93,9 +185,7 @@ class MechanicActiveJobScreen extends StatelessWidget {
                               decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(10)),
                               child: Row(
                                 children: [
-                                  _InfoColumn(label: 'ETA', value: quote?.eta ?? '20 mins'),
-                                  const _VerticalDivider(),
-                                  const _InfoColumn(label: 'Distance', value: '20 km'),
+                                  const _InfoColumn(label: 'Location', value: 'Client'),
                                   const _VerticalDivider(),
                                   _InfoColumn(label: 'Quote', value: quote?.price ?? '₱200', valueColor: AppColors.green),
                                 ],
@@ -114,51 +204,14 @@ class MechanicActiveJobScreen extends StatelessWidget {
                     children: [
                       const Text('Service Status', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 12),
-                      const _StatusStep(title: 'Preparing', time: '12:00 PM', done: true, isFirst: true),
-                      const _StatusStep(title: 'Mechanic En Route', time: '12:05 PM', done: true),
-                      const _StatusStep(title: 'Mechanic Arrive', time: '12:10 PM', done: true),
-                      const _StatusStep(title: 'Work in Progress', time: 'Expected 12:11 PM', done: false),
-                      const _StatusStep(title: 'Service Complete', time: 'Pending...', done: false, isLast: true),
-                      const SizedBox(height: 12),
-                      ElevatedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.my_location, size: 18, color: AppColors.white),
-                        label: const Text('Navigate Location'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.green,
-                          foregroundColor: AppColors.white,
-                          minimumSize: const Size(double.infinity, 46),
-                          shape: const StadiumBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      ElevatedButton(
-                        onPressed: () {
-                          store.mechanicCompleteJob(request.id);
-                          Navigator.pop(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: AppColors.white,
-                          minimumSize: const Size(double.infinity, 46),
-                          shape: const StadiumBorder(),
-                        ),
-                        child: const Text('Payment Complete'),
-                      ),
+                      const _StatusStep(title: 'Request Accepted', done: true, isFirst: true),
+                      _StatusStep(title: 'Mechanic En Route', done: request.enRoute),
+                      _StatusStep(title: 'Mechanic Arrived', done: request.arrived),
+                      _StatusStep(title: 'Work in Progress', done: request.workStarted),
+                      _StatusStep(title: 'Service Complete', done: request.serviceCompleted),
+                      _StatusStep(title: 'Payment Complete', done: request.paymentCompleted, isLast: true),
                       const SizedBox(height: 16),
-                      Center(
-                        child: Column(
-                          children: [
-                            const Text('Need help?', style: TextStyle(fontSize: 12, color: AppColors.textGrey)),
-                            TextButton(
-                              onPressed: () {},
-                              style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
-                              child: const Text('Contact Support',
-                                  style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w700)),
-                            ),
-                          ],
-                        ),
-                      ),
+                      _buildAction(request, quote),
                     ],
                   ),
                 ),
@@ -166,6 +219,123 @@ class MechanicActiveJobScreen extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildAction(HelpRequest request, MechanicQuote? quote) {
+    if (request.paymentCompleted) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.green.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.green.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.check_circle, color: AppColors.green),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Payment received — ${quote?.price ?? ''} · +${request.pointsAwarded ?? 0} points',
+                style: const TextStyle(color: AppColors.green, fontWeight: FontWeight.w700, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (request.serviceCompleted) {
+      // Waiting for the CLIENT to pay — the mechanic can only display the
+      // QR, never mark this complete themselves.
+      final amount = quote == null ? 0.0 : parsePesoAmount(quote.price);
+      final qrData = buildPaymentQrData(
+        requestId: request.id,
+        mechanicName: quote?.mechanicName ?? QuoteNotificationStore.currentMechanicName,
+        amount: amount,
+      );
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(color: AppColors.yellow.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
+            child: const Text('Waiting for Client Payment',
+                textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFFB07A00))),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(border: Border.all(color: AppColors.borderGrey), borderRadius: BorderRadius.circular(16)),
+            child: QrImageView(data: qrData, size: 200),
+          ),
+          const SizedBox(height: 10),
+          Text('Have the client scan this to pay ${quote?.price ?? ''}',
+              style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+        ],
+      );
+    }
+
+    if (request.workStarted) {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: () => _store.mechanicCompleteService(request.id),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: AppColors.white,
+            minimumSize: const Size(double.infinity, 46),
+            shape: const StadiumBorder(),
+          ),
+          child: const Text('Service Complete'),
+        ),
+      );
+    }
+
+    if (request.arrived) {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: () => _store.mechanicStartWork(request.id),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.green,
+            foregroundColor: AppColors.white,
+            minimumSize: const Size(double.infinity, 46),
+            shape: const StadiumBorder(),
+          ),
+          child: const Text('Start Work'),
+        ),
+      );
+    }
+
+    if (!request.hasClientCoordinates) {
+      return SizedBox(
+        width: double.infinity,
+        child: OutlinedButton(
+          onPressed: () => _confirmArrivalManually(request),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.textDark,
+            side: const BorderSide(color: AppColors.borderGrey),
+            minimumSize: const Size(double.infinity, 46),
+            shape: const StadiumBorder(),
+          ),
+          child: const Text('Confirm Arrival'),
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
+      child: const Text(
+        'Tracking your location — En Route and Arrived will be detected automatically as you travel.',
+        textAlign: TextAlign.center,
+        style: TextStyle(color: AppColors.textGrey, fontSize: 12),
       ),
     );
   }
@@ -225,14 +395,12 @@ class _InfoColumn extends StatelessWidget {
 
 class _StatusStep extends StatelessWidget {
   final String title;
-  final String time;
   final bool done;
   final bool isFirst;
   final bool isLast;
 
   const _StatusStep({
     required this.title,
-    required this.time,
     required this.done,
     this.isFirst = false,
     this.isLast = false,
@@ -256,15 +424,9 @@ class _StatusStep extends StatelessWidget {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w600, color: done ? AppColors.textDark : AppColors.textGrey)),
-                  Text(time, style: const TextStyle(fontSize: 11, color: AppColors.textGrey)),
-                ],
-              ),
+              child: Text(title,
+                  style: TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600, color: done ? AppColors.textDark : AppColors.textGrey)),
             ),
           ),
         ],

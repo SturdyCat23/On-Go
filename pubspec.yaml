@@ -19,7 +19,8 @@ dependencies:
   shared_preferences: ^2.3.2
   livelyness_detection: ^0.0.1+5
   geolocator: ^13.0.1
-  mobile_scanner: ^3.0.0
+  mobile_scanner: ^7.1.2
+  qr_flutter: ^4.1.0
 
 dev_dependencies:
   flutter_test:

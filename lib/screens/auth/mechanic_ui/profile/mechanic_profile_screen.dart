@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
+import '../../../../data/app_session.dart';
 import '../../../../data/review_store.dart';
 import '../../../../theme/app_theme.dart';
-import '../../../../widgets/app_widgets.dart';
+import '../../../../widgets/common_widgets.dart';
 
-class MechanicProfileViewScreen extends StatefulWidget {
-  final String name;
-  const MechanicProfileViewScreen({super.key, required this.name});
+class MechanicProfileScreen extends StatefulWidget {
+  const MechanicProfileScreen({super.key});
 
   @override
-  State<MechanicProfileViewScreen> createState() => _MechanicProfileViewScreenState();
+  State<MechanicProfileScreen> createState() => _MechanicProfileScreenState();
 }
 
-class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
+class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
+  // Todo: replace with the logged-in mechanic's real name once auth exists.
+  // Matches the display name used elsewhere (leaderboard, service history)
+  // — see the note on mechanic identity in QuoteNotificationStore.
+  static const _myName = 'Juan Dela Cruz';
+
   final _store = ReviewStore.instance;
 
   @override
@@ -28,6 +33,150 @@ class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
 
   void _onChange() => setState(() {});
 
+  @override
+  Widget build(BuildContext context) {
+    final reviews = _store.reviewsFor(_myName);
+    final average = _store.averageRatingFor(_myName);
+    final viewerId = AppSession.instance.currentViewerName;
+
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        AppCard(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Stack(
+                    children: [
+                      const CircleAvatar(
+                        radius: 40,
+                        backgroundColor: AppColors.background,
+                        child: Icon(Icons.person, color: AppColors.textGrey, size: 44),
+                      ),
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: InkWell(
+                          onTap: () {}, // Todo: wire up profile photo edit
+                          borderRadius: BorderRadius.circular(14),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(color: AppColors.textGrey, shape: BoxShape.circle),
+                            child: const Icon(Icons.camera_alt, color: AppColors.white, size: 14),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(_myName, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on_outlined, size: 14, color: AppColors.textGrey),
+                            const SizedBox(width: 2),
+                            Text('Puerto Princesa City', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textGrey)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: const [
+                  _StatBox(value: '536', label: 'Jobs Done'),
+                  _StatBox(value: '4.8', label: 'Ratings'),
+                  _StatBox(value: '9yr', label: 'Experience'),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        AppCard(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Certifications', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 12),
+              const _CertificationRow(label: 'NC II'),
+              const SizedBox(height: 6),
+              const _CertificationRow(label: 'Related Certificates'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        AppCard(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Reviews', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                  if (reviews.isNotEmpty)
+                    Row(
+                      children: [
+                        const Icon(Icons.star, size: 14, color: AppColors.yellow),
+                        const SizedBox(width: 2),
+                        Text(average.toStringAsFixed(1), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                        Text(' (${reviews.length})', style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+                      ],
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
+              const Row(
+                children: [
+                  _FilterChip(label: 'All', selected: true),
+                  SizedBox(width: 6),
+                  _FilterChip(label: 'Rating', selected: false),
+                  SizedBox(width: 6),
+                  _FilterChip(label: 'Most Relevant', selected: false),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Mechanics can only ever land here to VIEW and (optionally)
+              // mark a review helpful — there is no write/edit path on this
+              // screen, and ReviewStore.submitReview would throw at runtime
+              // even if something tried to call it from this tree.
+              if (reviews.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Text('No reviews yet.', style: TextStyle(color: AppColors.textGrey, fontSize: 13)),
+                )
+              else
+                ...reviews.map((r) => Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _ReviewCard(
+                        name: r.clientName,
+                        timeAgo: _timeAgo(r.date),
+                        rating: r.rating,
+                        comment: r.comment.isEmpty ? '(No comment left)' : r.comment,
+                        helpfulCount: r.helpfulCount,
+                        likedByMe: r.likedByViewer(viewerId),
+                        onToggleLike: () => _store.toggleHelpful(r.id),
+                      ),
+                    )),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   String _timeAgo(DateTime date) {
     final diff = DateTime.now().difference(date);
     if (diff.inDays >= 365) {
@@ -40,155 +189,6 @@ class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
     }
     if (diff.inDays >= 1) return '${diff.inDays} day${diff.inDays == 1 ? '' : 's'} ago';
     return 'today';
-  }
-
-  Future<void> _openReviewDialog() async {
-    final existing = _store.reviewByCurrentClientFor(widget.name);
-    int selected = existing?.rating ?? 0;
-    final controller = TextEditingController(text: existing?.comment ?? '');
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(existing == null ? 'Write a review' : 'Edit your review'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(5, (i) {
-                  return IconButton(
-                    icon: Icon(i < selected ? Icons.star : Icons.star_border, color: AppColors.yellow),
-                    onPressed: () => setDialogState(() => selected = i + 1),
-                  );
-                }),
-              ),
-              TextField(
-                controller: controller,
-                maxLines: 3,
-                decoration: const InputDecoration(hintText: 'Share your experience...'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-            ElevatedButton(
-              onPressed: selected == 0
-                  ? null
-                  : () => Navigator.pop(ctx, true),
-              child: const Text('Submit'),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (result == true) {
-      _store.submitReview(mechanicName: widget.name, rating: selected, comment: controller.text.trim());
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Review saved')));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final reviews = _store.reviewsFor(widget.name);
-    final average = _store.averageRatingFor(widget.name);
-    final distribution = _store.ratingDistributionFor(widget.name);
-    final alreadyReviewed = _store.reviewByCurrentClientFor(widget.name) != null;
-
-    return Scaffold(
-      backgroundColor: AppColors.white,
-      appBar: AppBar(
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.white,
-        title: const Text('Mechanic Profile'),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Row(
-            children: [
-              const CircleAvatar(
-                radius: 32,
-                backgroundColor: AppColors.background,
-                child: Icon(Icons.person, color: AppColors.textGrey, size: 36),
-              ),
-              const SizedBox(width: 14),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(widget.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 2),
-                  const Row(
-                    children: [
-                      Icon(Icons.location_on_outlined, size: 14, color: AppColors.textGrey),
-                      SizedBox(width: 2),
-                      Text('Puerto Princesa City', style: TextStyle(fontSize: 12, color: AppColors.textGrey)),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: const [
-              _StatBox(value: '536', label: 'Jobs Done'),
-              _StatBox(value: '4.8', label: 'Ratings'),
-              _StatBox(value: '9yr', label: 'Experience'),
-            ],
-          ),
-          const SizedBox(height: 20),
-          const Text('Certifications', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 10),
-          const _CertificationRow(label: 'NC II'),
-          const SizedBox(height: 6),
-          const _CertificationRow(label: 'Related Certificates'),
-          const SizedBox(height: 20),
-          const Text('Review Summary', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 10),
-          RatingSummaryBars(
-            average: reviews.isEmpty ? 4.8 : average,
-            distribution: reviews.isEmpty ? const {5: 0.8, 4: 0.15, 3: 0.05, 2: 0, 1: 0} : distribution,
-            reviewCount: reviews.isEmpty ? 1 : reviews.length,
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _openReviewDialog,
-              icon: const Icon(Icons.edit_outlined, size: 18),
-              label: Text(alreadyReviewed ? 'Edit your review' : 'Write a review'),
-            ),
-          ),
-          const SizedBox(height: 24),
-          const Text('Reviews', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 12),
-          if (reviews.isEmpty)
-            const _ReviewCard(
-              name: 'Uncle Bob',
-              timeAgo: '3 years ago',
-              rating: 4,
-              comment:
-                  'High quality products and personnel are very accommodating! A fashion store for all male and female moto drivers.',
-              helpful: 100,
-            )
-          else
-            ...reviews.map((r) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _ReviewCard(
-                    name: r.clientName,
-                    timeAgo: _timeAgo(r.date),
-                    rating: r.rating,
-                    comment: r.comment.isEmpty ? '(No comment left)' : r.comment,
-                    helpful: r.helpful,
-                  ),
-                )),
-        ],
-      ),
-    );
   }
 }
 
@@ -204,14 +204,14 @@ class _StatBox extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.background,
+          border: Border.all(color: AppColors.borderGrey),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
           children: [
-            Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+            Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.primary)),
             const SizedBox(height: 2),
-            Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textGrey)),
+            Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textDark)),
           ],
         ),
       ),
@@ -233,9 +233,35 @@ class _CertificationRow extends StatelessWidget {
         TextButton(
           onPressed: () {},
           style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
-          child: const Text('View', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600)),
+          child: const Text('View', style: TextStyle(color: AppColors.blue, fontSize: 12, fontWeight: FontWeight.w600)),
         ),
       ],
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  const _FilterChip({required this.label, required this.selected});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: selected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.white,
+        border: Border.all(color: selected ? AppColors.primary : AppColors.borderGrey),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: selected ? AppColors.primary : AppColors.textGrey,
+        ),
+      ),
     );
   }
 }
@@ -245,62 +271,72 @@ class _ReviewCard extends StatelessWidget {
   final String timeAgo;
   final int rating;
   final String comment;
-  final int helpful;
+  final int helpfulCount;
+  final bool likedByMe;
+  final VoidCallback onToggleLike;
 
   const _ReviewCard({
     required this.name,
     required this.timeAgo,
     required this.rating,
     required this.comment,
-    required this.helpful,
+    required this.helpfulCount,
+    required this.likedByMe,
+    required this.onToggleLike,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.borderGrey),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const CircleAvatar(
-                  radius: 16, backgroundColor: AppColors.background, child: Icon(Icons.person, size: 18, color: AppColors.textGrey)),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                    Text(timeAgo, style: const TextStyle(fontSize: 11, color: AppColors.textGrey)),
-                  ],
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const CircleAvatar(
+                radius: 16, backgroundColor: AppColors.background, child: Icon(Icons.person, size: 18, color: AppColors.textGrey)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                  Text(timeAgo, style: const TextStyle(fontSize: 11, color: AppColors.textGrey)),
+                ],
               ),
-            ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: List.generate(
+            5,
+            (i) => Icon(i < rating ? Icons.star : Icons.star_border, color: AppColors.yellow, size: 14),
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: List.generate(
-              5,
-              (i) => Icon(i < rating ? Icons.star : Icons.star_border, color: AppColors.yellow, size: 14),
+        ),
+        const SizedBox(height: 8),
+        Text(comment, style: const TextStyle(fontSize: 12, color: AppColors.textDark)),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: onToggleLike,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(likedByMe ? Icons.thumb_up_alt : Icons.thumb_up_alt_outlined,
+                    size: 14, color: likedByMe ? AppColors.primary : AppColors.textGrey),
+                const SizedBox(width: 4),
+                Text('$helpfulCount',
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: likedByMe ? AppColors.primary : AppColors.textGrey,
+                        fontWeight: likedByMe ? FontWeight.w700 : FontWeight.normal)),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(comment, style: const TextStyle(fontSize: 12, color: AppColors.textDark)),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.thumb_up_alt_outlined, size: 14, color: AppColors.textGrey),
-              const SizedBox(width: 4),
-              Text('$helpful', style: const TextStyle(fontSize: 11, color: AppColors.textGrey)),
-            ],
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -1,13 +1,112 @@
 import 'package:flutter/material.dart';
+import '../../../../data/app_session.dart';
+import '../../../../data/review_store.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_widgets.dart';
 
-class MechanicProfileViewScreen extends StatelessWidget {
+class MechanicProfileViewScreen extends StatefulWidget {
   final String name;
   const MechanicProfileViewScreen({super.key, required this.name});
 
   @override
+  State<MechanicProfileViewScreen> createState() => _MechanicProfileViewScreenState();
+}
+
+class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
+  final _store = ReviewStore.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _store.addListener(_onChange);
+  }
+
+  @override
+  void dispose() {
+    _store.removeListener(_onChange);
+    super.dispose();
+  }
+
+  void _onChange() => setState(() {});
+
+  String _timeAgo(DateTime date) {
+    final diff = DateTime.now().difference(date);
+    if (diff.inDays >= 365) {
+      final years = (diff.inDays / 365).floor();
+      return '$years year${years == 1 ? '' : 's'} ago';
+    }
+    if (diff.inDays >= 30) {
+      final months = (diff.inDays / 30).floor();
+      return '$months month${months == 1 ? '' : 's'} ago';
+    }
+    if (diff.inDays >= 1) return '${diff.inDays} day${diff.inDays == 1 ? '' : 's'} ago';
+    return 'today';
+  }
+
+  /// CLIENT-ONLY write path — the dialog itself is only reachable from this
+  /// client-side screen, and ReviewStore.submitReview backstops that at
+  /// runtime by throwing if the active shell isn't the Client UI (see its
+  /// doc comment). If that ever fires, we surface it instead of crashing.
+  Future<void> _openReviewDialog() async {
+    final existing = _store.reviewByCurrentClientFor(widget.name);
+    int selected = existing?.rating ?? 0;
+    final controller = TextEditingController(text: existing?.comment ?? '');
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text(existing == null ? 'Write a review' : 'Edit your review'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (i) {
+                  return IconButton(
+                    icon: Icon(i < selected ? Icons.star : Icons.star_border, color: AppColors.yellow),
+                    onPressed: () => setDialogState(() => selected = i + 1),
+                  );
+                }),
+              ),
+              TextField(
+                controller: controller,
+                maxLines: 3,
+                decoration: const InputDecoration(hintText: 'Share your experience...'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: selected == 0 ? null : () => Navigator.pop(ctx, true),
+              child: const Text('Submit'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result == true) {
+      try {
+        _store.submitReview(mechanicName: widget.name, rating: selected, comment: controller.text.trim());
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Review saved')));
+      } on StateError catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final reviews = _store.reviewsFor(widget.name);
+    final average = _store.averageRatingFor(widget.name);
+    final distribution = _store.ratingDistributionFor(widget.name);
+    final alreadyReviewed = _store.reviewByCurrentClientFor(widget.name) != null;
+    final viewerId = AppSession.instance.currentViewerName;
+
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
@@ -29,7 +128,7 @@ class MechanicProfileViewScreen extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                  Text(widget.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 2),
                   const Row(
                     children: [
@@ -59,39 +158,49 @@ class MechanicProfileViewScreen extends StatelessWidget {
           const SizedBox(height: 20),
           const Text('Review Summary', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
           const SizedBox(height: 10),
-          const RatingSummaryBars(
-            average: 4.8,
-            distribution: {5: 0.8, 4: 0.15, 3: 0.05, 2: 0, 1: 0},
-            reviewCount: 1,
+          RatingSummaryBars(
+            average: reviews.isEmpty ? 4.8 : average,
+            distribution: reviews.isEmpty ? const {5: 0.8, 4: 0.15, 3: 0.05, 2: 0, 1: 0} : distribution,
+            reviewCount: reviews.isEmpty ? 1 : reviews.length,
           ),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: _openReviewDialog,
               icon: const Icon(Icons.edit_outlined, size: 18),
-              label: const Text('Write a review'),
+              label: Text(alreadyReviewed ? 'Edit your review' : 'Write a review'),
             ),
           ),
           const SizedBox(height: 24),
           const Text('Reviews', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
           const SizedBox(height: 12),
-          const _ReviewCard(
-            name: 'Uncle Bob',
-            timeAgo: '3 years ago',
-            rating: 4,
-            comment:
-                'High quality products and personnel are very accommodating! A fashion store for all male and female moto drivers.',
-            helpful: 100,
-          ),
-          const SizedBox(height: 12),
-          Center(
-            child: TextButton(
-              onPressed: () {},
-              child: const Text('See all reviews',
-                  style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
-            ),
-          ),
+          if (reviews.isEmpty)
+            const _ReviewCard(
+              reviewId: 'seed_placeholder',
+              name: 'Uncle Bob',
+              timeAgo: '3 years ago',
+              rating: 4,
+              comment:
+                  'High quality products and personnel are very accommodating! A fashion store for all male and female moto drivers.',
+              helpfulCount: 100,
+              likedByMe: false,
+              onToggleLike: null,
+            )
+          else
+            ...reviews.map((r) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _ReviewCard(
+                    reviewId: r.id,
+                    name: r.clientName,
+                    timeAgo: _timeAgo(r.date),
+                    rating: r.rating,
+                    comment: r.comment.isEmpty ? '(No comment left)' : r.comment,
+                    helpfulCount: r.helpfulCount,
+                    likedByMe: r.likedByViewer(viewerId),
+                    onToggleLike: () => _store.toggleHelpful(r.id),
+                  ),
+                )),
         ],
       ),
     );
@@ -147,18 +256,24 @@ class _CertificationRow extends StatelessWidget {
 }
 
 class _ReviewCard extends StatelessWidget {
+  final String reviewId;
   final String name;
   final String timeAgo;
   final int rating;
   final String comment;
-  final int helpful;
+  final int helpfulCount;
+  final bool likedByMe;
+  final VoidCallback? onToggleLike;
 
   const _ReviewCard({
+    required this.reviewId,
     required this.name,
     required this.timeAgo,
     required this.rating,
     required this.comment,
-    required this.helpful,
+    required this.helpfulCount,
+    required this.likedByMe,
+    required this.onToggleLike,
   });
 
   @override
@@ -198,12 +313,25 @@ class _ReviewCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(comment, style: const TextStyle(fontSize: 12, color: AppColors.textDark)),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.thumb_up_alt_outlined, size: 14, color: AppColors.textGrey),
-              const SizedBox(width: 4),
-              Text('$helpful', style: const TextStyle(fontSize: 11, color: AppColors.textGrey)),
-            ],
+          InkWell(
+            onTap: onToggleLike,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(likedByMe ? Icons.thumb_up_alt : Icons.thumb_up_alt_outlined,
+                      size: 14, color: likedByMe ? AppColors.primary : AppColors.textGrey),
+                  const SizedBox(width: 4),
+                  Text('$helpfulCount',
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: likedByMe ? AppColors.primary : AppColors.textGrey,
+                          fontWeight: likedByMe ? FontWeight.w700 : FontWeight.normal)),
+                ],
+              ),
+            ),
           ),
         ],
       ),

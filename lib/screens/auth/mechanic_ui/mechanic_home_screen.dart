@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../data/app_session.dart';
 import '../../../data/quote_store.dart';
 import '../../../widgets/app_widgets.dart';
 import 'jobs/jobs_screen.dart';
@@ -19,6 +20,16 @@ class MechanicHomeScreen extends StatefulWidget {
 class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
   int _currentIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    // Marks this session as Mechanic-shell — see AppSession's doc comment.
+    // This is what makes ReviewStore.submitReview refuse to run from
+    // anywhere in this tree (mechanics can only view/like, never write),
+    // and identifies this mechanic as the viewer for like interactions.
+    AppSession.instance.setRole(AppRole.mechanic, viewerName: QuoteNotificationStore.currentMechanicName);
+  }
+
   void _goToTab(int index) => setState(() => _currentIndex = index);
 
   Future<void> _openNotifications() async {
@@ -35,7 +46,7 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
       const EarningScreen(),
       const QrScreen(),
       const MechanicLeaderboardScreen(),
-      const MechanicProfileViewScreen(name: '',),
+      const MechanicProfileScreen(),
     ];
 
     return Scaffold(

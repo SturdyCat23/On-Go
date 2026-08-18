@@ -35,6 +35,14 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
   bool _fetchingLocation = false;
   bool _uploading = false;
 
+  // Only set when "Use Current Location" succeeds — cleared the moment the
+  // client edits the field by hand, so we never send stale/mismatched
+  // coordinates for a location string the client typed themselves. This is
+  // what lets the mechanic side auto-detect En Route / Arrived; without it,
+  // MechanicActiveJobScreen falls back to a manual arrival confirmation.
+  double? _capturedLat;
+  double? _capturedLng;
+
   static const List<Map<String, dynamic>> _issues = [
     {'icon': Icons.car_repair, 'label': 'Engine Problem', 'color': Color(0xFFFF9800)},
     {'icon': Icons.album_outlined, 'label': 'Brake Issue', 'color': AppColors.primary},
@@ -144,6 +152,8 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
 
       _locationCtrl.text =
           '${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}';
+      _capturedLat = position.latitude;
+      _capturedLng = position.longitude;
     } catch (e) {
       _showSnack('Could not get your location: $e');
     } finally {
@@ -182,9 +192,8 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
       createdAt: DateTime.now(),
       durationLabel: info.durationLabel,
       surcharge: info.surcharge,
-      // Todo: HelpRequest doesn't have duration/surcharge fields yet — once
-      // quote_store.dart is shared, wire _urgencyInfo[_urgency] through here
-      // so the mechanic side and pricing actually reflect this.
+      clientLat: _capturedLat,
+      clientLng: _capturedLng,
     );
 
     // Hands the request off to mechanics. Quotes will arrive asynchronously
@@ -208,6 +217,8 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
       _selectedIssue = null;
       _photos.clear();
       _urgency = 'Normal';
+      _capturedLat = null;
+      _capturedLng = null;
     });
   }
 
@@ -350,6 +361,17 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
           const SizedBox(height: 8),
           TextFormField(
             controller: _locationCtrl,
+            onChanged: (_) {
+              // A real keystroke means the client is typing their own
+              // address — the GPS fix we may have captured no longer
+              // matches what's in the field, so drop it.
+              if (_capturedLat != null || _capturedLng != null) {
+                setState(() {
+                  _capturedLat = null;
+                  _capturedLng = null;
+                });
+              }
+            },
             decoration: const InputDecoration(hintText: 'Enter your location or use GPS'),
           ),
           const SizedBox(height: 6),
@@ -373,6 +395,17 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
               style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
             ),
           ),
+          if (_capturedLat != null) ...[
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Icon(Icons.gps_fixed, size: 12, color: AppColors.green),
+                const SizedBox(width: 4),
+                Text('Precise location captured — mechanic arrival will be detected automatically',
+                    style: const TextStyle(fontSize: 11, color: AppColors.green)),
+              ],
+            ),
+          ],
           const SizedBox(height: 14),
           const Text('Urgency Level !!!',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),

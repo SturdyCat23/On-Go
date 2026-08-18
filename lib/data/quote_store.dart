@@ -1,16 +1,9 @@
 import 'package:flutter/foundation.dart';
+import 'app_session.dart';
 
 enum RequestStatus { pending, matched, completed }
 
 /// A quote sent by a mechanic in response to a client's help request.
-///
-/// For Normal/Urgent requests, several of these can exist for the same
-/// [requestId] — the client compares them and picks one (`accepted` flips to
-/// true only on the winner).
-///
-/// For Emergency requests there is only ever ONE MechanicQuote per request:
-/// it's created already `accepted: true` the instant a mechanic taps Accept.
-/// There is no comparison step — first mechanic to accept wins.
 class MechanicQuote {
   final String id;
   final String requestId;
@@ -31,6 +24,36 @@ class MechanicQuote {
   });
 }
 
+/// Parses a peso-formatted string like '₱300' into a numeric value.
+double parsePesoAmount(String price) {
+  final digits = price.replaceAll(RegExp(r'[^0-9.]'), '');
+  return double.tryParse(digits) ?? 0;
+}
+
+/// The payload a mechanic's "Waiting for Client Payment" QR encodes, and the
+/// client's scanner decodes. Kept as a single shared format so both sides
+/// can never drift out of sync with each other.
+class PaymentQrPayload {
+  final String requestId;
+  final String mechanicName;
+  final double amount;
+  const PaymentQrPayload({required this.requestId, required this.mechanicName, required this.amount});
+}
+
+const _qrPrefix = 'ONGOPAY';
+
+String buildPaymentQrData({required String requestId, required String mechanicName, required double amount}) {
+  return '$_qrPrefix|$requestId|$mechanicName|${amount.toStringAsFixed(2)}';
+}
+
+PaymentQrPayload? parsePaymentQrData(String raw) {
+  final parts = raw.split('|');
+  if (parts.length != 4 || parts[0] != _qrPrefix) return null;
+  final amount = double.tryParse(parts[3]);
+  if (amount == null) return null;
+  return PaymentQrPayload(requestId: parts[1], mechanicName: parts[2], amount: amount);
+}
+
 /// The problem report a client uploads from NeedHelpScreen.
 class HelpRequest {
   final String id;
@@ -39,12 +62,38 @@ class HelpRequest {
   final String urgency; // 'Normal' | 'Urgent' | 'Emergency'
   final List<String> photoPaths;
   final DateTime createdAt;
-  // Todo: populate from the logged-in client's real profile once auth exists.
   final String clientName;
-  // Set from NeedHelpScreen's urgency selection — see _urgencyInfo there.
   final String durationLabel;
   final int surcharge;
+
+  /// GPS coordinates captured only if the client used "Use Current
+  /// Location" — null if they typed a freeform address. Auto-detection of
+  /// En Route / Arrived requires these; without them the mechanic gets a
+  /// manual "Confirm Arrival" fallback (see MechanicActiveJobScreen).
+  final double? clientLat;
+  final double? clientLng;
+
   RequestStatus status;
+
+  // Fine-grained workflow flags. Who's allowed to flip each one:
+  //  - enRoute / arrived: SYSTEM only (GPS-driven, see mechanicMarkEnRoute/Arrived)
+  //  - workStarted / serviceCompleted: MECHANIC only (manual button press)
+  //  - paymentCompleted: CLIENT only, via clientConfirmPayment after a QR scan
+  bool enRoute;
+  bool arrived;
+  bool workStarted;
+  bool serviceCompleted;
+  bool paymentCompleted;
+  DateTime? enRouteAt;
+  DateTime? arrivedAt;
+  DateTime? workStartedAt;
+  DateTime? serviceCompletedAt;
+  DateTime? paymentCompletedAt;
+
+  /// Points credited to the mechanic for this job — 5% of the paid amount,
+  /// set exactly once by [QuoteNotificationStore.clientConfirmPayment].
+  int? pointsAwarded;
+
   DateTime? completedAt;
 
   HelpRequest({
@@ -57,38 +106,40 @@ class HelpRequest {
     this.clientName = 'Client',
     this.durationLabel = 'Completed within 10 days',
     this.surcharge = 0,
+    this.clientLat,
+    this.clientLng,
     this.status = RequestStatus.pending,
+    this.enRoute = false,
+    this.arrived = false,
+    this.workStarted = false,
+    this.serviceCompleted = false,
+    this.paymentCompleted = false,
+    this.enRouteAt,
+    this.arrivedAt,
+    this.workStartedAt,
+    this.serviceCompletedAt,
+    this.paymentCompletedAt,
+    this.pointsAwarded,
     this.completedAt,
   });
 
   bool get isEmergency => urgency == 'Emergency';
+  bool get hasClientCoordinates => clientLat != null && clientLng != null;
 }
 
 /// App-wide, in-memory store connecting the client's "Need Help" upload to
 /// the mechanic's "Jobs" screen, and back to the client's notification bell.
 ///
-/// Flow:
-///  - Normal / Urgent: the request goes out to every mechanic as "Send
-///    Quote". Any number of mechanics can call [mechanicSendQuote]. The
-///    client compares them on QuotesScreen and calls [clientAcceptQuote] —
-///    only then is a winner picked. Multiple Normal/Urgent jobs can be
-///    accepted and worked simultaneously by the same mechanic — they stack.
-///  - Emergency: the request goes out to every mechanic as "Accept" only.
-///    The FIRST mechanic to call [mechanicAcceptEmergency] is immediately
-///    and irreversibly matched. A mechanic can only have ONE active
-///    emergency job at a time — see [mechanicHasActiveEmergency] — they
-///    must complete it before accepting another.
-///
-/// In a real backend this would be replaced by Firestore / REST + push
-/// notifications, but the shape of this API is what both sides talk to, so
-/// swapping the implementation later shouldn't require touching the UI.
+/// THE CLIENT CONTROLS PAYMENT, THE MECHANIC CONTROLS THE SERVICE, THE
+/// SYSTEM HANDLES AUTOMATIC STATUS DETECTION. See the per-method docs below
+/// for exactly who's allowed to call what — several methods assert
+/// [AppSession.instance.currentRole] and throw if called from the wrong
+/// shell, so this isn't just a UI convention.
 class QuoteNotificationStore extends ChangeNotifier {
   QuoteNotificationStore._internal();
   static final QuoteNotificationStore instance = QuoteNotificationStore._internal();
 
   // Todo: replace with real auth-derived identities once login exists.
-  // Centralized here so every screen/store agrees on "who is the current
-  // mechanic" instead of each file hardcoding its own 'You' string.
   static const currentMechanicName = 'You';
 
   final List<HelpRequest> _requests = [];
@@ -96,27 +147,21 @@ class QuoteNotificationStore extends ChangeNotifier {
   int _unseenCount = 0;
 
   // ---------------------------------------------------------------------
-  // Client-facing API (NeedHelpScreen / QuotesScreen / bell badge)
+  // Client-facing API (NeedHelpScreen / QuotesScreen / ActiveRequestScreen)
   // ---------------------------------------------------------------------
 
-  /// The request currently shown on QuotesScreen / ActiveRequestScreen —
-  /// the most recently submitted request that's still pending, falling back
-  /// to the last request overall once everything's matched/completed.
   HelpRequest? get activeRequest {
     final pending = _requests.where((r) => r.status == RequestStatus.pending);
     if (pending.isNotEmpty) return pending.last;
     return _requests.isEmpty ? null : _requests.last;
   }
 
-  /// Quotes for the active request only.
   List<MechanicQuote> get quotes {
     final req = activeRequest;
     if (req == null) return const [];
     return _allQuotes.where((q) => q.requestId == req.id).toList();
   }
 
-  /// Quotes for any specific request (used internally, and available if a
-  /// future screen wants to browse quotes across multiple open requests).
   List<MechanicQuote> quotesForRequest(String requestId) =>
       _allQuotes.where((q) => q.requestId == requestId).toList();
 
@@ -147,7 +192,6 @@ class QuoteNotificationStore extends ChangeNotifier {
     }
   }
 
-  /// Called when the client taps "Upload" on NeedHelpScreen.
   void submitRequest(HelpRequest request) {
     _requests.add(request);
     notifyListeners();
@@ -159,10 +203,6 @@ class QuoteNotificationStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Client picks a quote — on QuotesScreen or anywhere else. Resolves the
-  /// quote's OWN request via [quote.requestId] rather than assuming it
-  /// belongs to [activeRequest], so accepting quotes across several
-  /// different open requests all work correctly and independently.
   void clientAcceptQuote(String quoteId) {
     final quote = quoteById(quoteId);
     if (quote == null) return;
@@ -176,19 +216,15 @@ class QuoteNotificationStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Back-compat alias — existing QuotesScreen code calls this name.
   void acceptQuote(String quoteId) => clientAcceptQuote(quoteId);
 
   // ---------------------------------------------------------------------
-  // Mechanic-facing API (JobsScreen)
+  // Mechanic-facing API — accept / quote (JobsScreen)
   // ---------------------------------------------------------------------
 
-  /// Requests still open for a mechanic to act on (not yet matched).
   List<HelpRequest> get availableJobs =>
       _requests.where((r) => r.status == RequestStatus.pending).toList();
 
-  /// Normal/Urgent only: mechanic sends a quote. The job stays available to
-  /// other mechanics until the client picks a winner.
   void mechanicSendQuote(
     String requestId, {
     required String mechanicName,
@@ -208,9 +244,6 @@ class QuoteNotificationStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// True while [mechanicName] has an emergency job that's been accepted
-  /// but not yet marked complete. A mechanic can only ride one emergency at
-  /// a time — Normal/Urgent jobs are unaffected and can stack freely.
   bool mechanicHasActiveEmergency(String mechanicName) {
     return _requests.any((r) =>
         r.isEmergency &&
@@ -218,11 +251,6 @@ class QuoteNotificationStore extends ChangeNotifier {
         acceptedQuoteFor(r.id)?.mechanicName == mechanicName);
   }
 
-  /// Emergency only: first mechanic to call this wins. Returns false if the
-  /// job was already grabbed by someone else, OR if this mechanic already
-  /// has an active emergency job — check [mechanicHasActiveEmergency]
-  /// beforehand if you want to show a more specific message than a generic
-  /// failure.
   bool mechanicAcceptEmergency(
     String requestId, {
     required String mechanicName,
@@ -241,7 +269,7 @@ class QuoteNotificationStore extends ChangeNotifier {
       price: price,
       eta: eta,
       rating: rating,
-      accepted: true, // no client comparison for emergencies
+      accepted: true,
     ));
     req.status = RequestStatus.matched;
     if (activeRequest?.id == requestId) _unseenCount++;
@@ -249,7 +277,6 @@ class QuoteNotificationStore extends ChangeNotifier {
     return true;
   }
 
-  /// The winning quote for a matched/completed request, if any.
   MechanicQuote? acceptedQuoteFor(String requestId) {
     for (final q in _allQuotes) {
       if (q.requestId == requestId && q.accepted) return q;
@@ -257,27 +284,127 @@ class QuoteNotificationStore extends ChangeNotifier {
     return null;
   }
 
-  /// Jobs a specific mechanic has won and is currently working. Normal and
-  /// Urgent jobs stack here freely; Emergency is capped to one by
-  /// [mechanicAcceptEmergency] refusing further accepts while one is active.
+  /// Jobs a mechanic has won and is actively working — includes every phase
+  /// up to (but not including) payment. Normal/Urgent stack freely here;
+  /// Emergency is capped to one active by [mechanicAcceptEmergency].
   List<HelpRequest> matchedJobsFor(String mechanicName) => _requests
       .where((r) =>
           r.status == RequestStatus.matched &&
           acceptedQuoteFor(r.id)?.mechanicName == mechanicName)
       .toList();
 
-  /// Jobs a specific mechanic has finished.
+  /// Jobs a mechanic has finished AND been paid for. This is the only
+  /// definition of "completed" — see [clientConfirmPayment].
   List<HelpRequest> completedJobsFor(String mechanicName) => _requests
       .where((r) =>
           r.status == RequestStatus.completed &&
           acceptedQuoteFor(r.id)?.mechanicName == mechanicName)
       .toList();
 
-  void mechanicCompleteJob(String requestId) {
-    final req = _requests.firstWhere((r) => r.id == requestId);
-    req.status = RequestStatus.completed;
-    req.completedAt = DateTime.now();
+  // ---------------------------------------------------------------------
+  // Service-status workflow
+  // ---------------------------------------------------------------------
+
+  /// SYSTEM: called from GPS tracking in MechanicActiveJobScreen once the
+  /// mechanic's position has moved measurably closer to the client since
+  /// navigation started. Idempotent.
+  void mechanicMarkEnRoute(String requestId) {
+    final req = requestFor(requestId);
+    if (req == null || req.enRoute || req.status != RequestStatus.matched) return;
+    req.enRoute = true;
+    req.enRouteAt = DateTime.now();
     notifyListeners();
+  }
+
+  /// SYSTEM: called from GPS tracking once the mechanic is within the
+  /// arrival radius of the client's coordinates. Idempotent.
+  void mechanicMarkArrived(String requestId) {
+    final req = requestFor(requestId);
+    if (req == null || req.arrived || req.status != RequestStatus.matched) return;
+    req.arrived = true;
+    req.arrivedAt = DateTime.now();
+    if (!req.enRoute) {
+      req.enRoute = true;
+      req.enRouteAt = req.arrivedAt;
+    }
+    notifyListeners();
+  }
+
+  /// MECHANIC action only — manual, and only meaningful after arrival.
+  void mechanicStartWork(String requestId) {
+    if (AppSession.instance.currentRole != AppRole.mechanic) {
+      throw StateError('Only the Mechanic UI can start work on a job.');
+    }
+    final req = requestFor(requestId);
+    if (req == null || req.workStarted) return;
+    req.workStarted = true;
+    req.workStartedAt = DateTime.now();
+    notifyListeners();
+  }
+
+  /// MECHANIC action only — manual. Does NOT complete the job; payment is
+  /// still owed, and [RequestStatus] stays [RequestStatus.matched] until
+  /// the client pays via [clientConfirmPayment].
+  void mechanicCompleteService(String requestId) {
+    if (AppSession.instance.currentRole != AppRole.mechanic) {
+      throw StateError('Only the Mechanic UI can mark a service complete.');
+    }
+    final req = requestFor(requestId);
+    if (req == null || req.serviceCompleted) return;
+    req.serviceCompleted = true;
+    req.serviceCompletedAt = DateTime.now();
+    notifyListeners();
+  }
+
+  /// CLIENT action only — the ONLY way payment (and therefore the job) can
+  /// ever be marked complete. Requires the service to actually be finished.
+  /// Returns the points credited to the mechanic, or null if the payment
+  /// couldn't go through (wrong request, already paid, or service not yet
+  /// complete).
+  int? clientConfirmPayment(String requestId) {
+    if (AppSession.instance.currentRole != AppRole.client) {
+      throw StateError('Only the Client UI can confirm a payment.');
+    }
+    final req = requestFor(requestId);
+    if (req == null) return null;
+    if (!req.serviceCompleted) return null;
+    if (req.paymentCompleted) return null;
+
+    final quote = acceptedQuoteFor(requestId);
+    final amount = quote == null ? 0.0 : parsePesoAmount(quote.price);
+    final points = (amount * 0.05).round();
+
+    req.paymentCompleted = true;
+    req.paymentCompletedAt = DateTime.now();
+    req.pointsAwarded = points;
+    req.status = RequestStatus.completed;
+    req.completedAt = req.paymentCompletedAt;
+
+    notifyListeners();
+    return points;
+  }
+
+  // ---------------------------------------------------------------------
+  // Mechanic financials — always DERIVED from real paid jobs, never stored
+  // separately, so there's no way for a balance to drift out of sync or be
+  // inflated before payment actually happens.
+  // ---------------------------------------------------------------------
+
+  double totalEarningsFor(String mechanicName) {
+    double sum = 0;
+    for (final req in completedJobsFor(mechanicName)) {
+      final quote = acceptedQuoteFor(req.id);
+      if (quote != null) sum += parsePesoAmount(quote.price);
+    }
+    return sum;
+  }
+
+  int totalPointsFor(String mechanicName) {
+    int sum = 0;
+    for (final req in completedJobsFor(mechanicName)) {
+      sum += req.pointsAwarded ?? 0;
+    }
+    return sum;
   }
 
   void clear() {
