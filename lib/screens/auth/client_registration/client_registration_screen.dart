@@ -2,13 +2,19 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import '../../../data/client_account_store.dart';
 import '../client_ui/client_home_screen.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/auth_widgets.dart';
 
 class ClientRegistrationScreen extends StatefulWidget {
-  const ClientRegistrationScreen({super.key});
+  /// Set when the client picked "Continue with Google" on the popup shown
+  /// from WelcomeScreen — triggers Google sign-in automatically as soon as
+  /// this screen mounts. If they picked "Fill up manually" instead, this is
+  /// false and the form just starts empty.
+  final bool startWithGoogle;
+
+  const ClientRegistrationScreen({super.key, this.startWithGoogle = false});
 
   @override
   State<ClientRegistrationScreen> createState() =>
@@ -34,13 +40,21 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
   File?  _profilePhoto;     // local file from gallery / camera
   final  _picker = ImagePicker();
 
-  // ── Social auth ───────────────────────────────────────────────────────────────
+  // ── Social auth (Google only) ─────────────────────────────────────────────────
   bool    _isSocialLogin  = false;
-  String? _socialProvider;   // 'Google' | 'Facebook'
-  String? _socialPhotoUrl;   // remote URL from provider
+  String? _socialPhotoUrl;   // remote URL from Google
 
   // ── Validation errors ─────────────────────────────────────────────────────────
   Map<String, String?> _err = {};
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.startWithGoogle) {
+      // Post-frame so the loading overlay has something to render over.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _continueWithGoogle());
+    }
+  }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // Image picker
@@ -71,7 +85,10 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
     setState(() => _isLoading = true);
     try {
       final account = await GoogleSignIn(scopes: ['email', 'profile']).signIn();
-      if (account == null) return;
+      if (account == null) {
+        // Cancelled — fall back to manual entry silently.
+        return;
+      }
 
       final parts = (account.displayName ?? '').trim().split(' ');
       setState(() {
@@ -80,53 +97,18 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
         _lastNameCtrl.text  = parts.length > 1 ? parts.sublist(1).join(' ') : '';
         _socialPhotoUrl     = account.photoUrl;
         _isSocialLogin      = true;
-        _socialProvider     = 'Google';
         _profilePhoto       = null; // use the provider URL instead
         _err                = {};
       });
     } catch (_) {
-      _snack('Google sign-in failed. Please try again.', error: true);
+      _snack('Google sign-in failed. You can continue filling the form manually.', error: true);
     } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _continueWithFacebook() async {
-    setState(() => _isLoading = true);
-    try {
-      final result = await FacebookAuth.instance
-          .login(permissions: ['email', 'public_profile']);
-
-      if (result.status == LoginStatus.cancelled) return;
-      if (result.status != LoginStatus.success) {
-        _snack('Facebook sign-in failed. Please try again.', error: true);
-        return;
-      }
-
-      final data = await FacebookAuth.instance
-          .getUserData(fields: 'name,email,picture.height(200)');
-
-      final parts = (data['name'] as String? ?? '').trim().split(' ');
-      setState(() {
-        _emailCtrl.text     = data['email'] ?? '';
-        _firstNameCtrl.text = parts.isNotEmpty ? parts.first : '';
-        _lastNameCtrl.text  = parts.length > 1 ? parts.sublist(1).join(' ') : '';
-        _socialPhotoUrl     = (data['picture'] as Map?)?['data']?['url'] as String?;
-        _isSocialLogin      = true;
-        _socialProvider     = 'Facebook';
-        _profilePhoto       = null;
-        _err                = {};
-      });
-    } catch (_) {
-      _snack('Facebook sign-in failed. Please try again.', error: true);
-    } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   void _disconnectSocial() => setState(() {
         _isSocialLogin  = false;
-        _socialProvider = null;
         _socialPhotoUrl = null;
         _emailCtrl.clear();
         _firstNameCtrl.clear();
@@ -188,6 +170,12 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
 
   void _submit() {
     if (!_validate()) return;
+
+    ClientAccountStore.instance.registerAccount(
+      name: '${_firstNameCtrl.text.trim()} ${_lastNameCtrl.text.trim()}'.trim(),
+      email: _emailCtrl.text.trim(),
+    );
+
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const ClientHomeScreen()),
       (route) => false,
@@ -247,37 +235,8 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
 
-                      // ── Social section ────────────────────────────────────────
-                      if (!_isSocialLogin) ...[
-                        _SocialButton(
-                          icon: Icons.g_mobiledata_rounded,
-                          iconColor: const Color(0xFFEA4335),
-                          label: 'Continue with Google',
-                          onTap: _continueWithGoogle,
-                        ),
-                        const SizedBox(height: 12),
-                        _SocialButton(
-                          icon: Icons.facebook,
-                          iconColor: const Color(0xFF1877F2),
-                          label: 'Continue with Facebook',
-                          onTap: _continueWithFacebook,
-                        ),
-                        const SizedBox(height: 20),
-                        Row(children: const [
-                          Expanded(child: Divider()),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 12),
-                            child: Text(
-                              'or fill in manually',
-                              style: TextStyle(
-                                  color: AppColors.textGrey, fontSize: 12),
-                            ),
-                          ),
-                          Expanded(child: Divider()),
-                        ]),
-                        const SizedBox(height: 20),
-                      ] else ...[
-                        // ── Connected badge ───────────────────────────────────
+                      // ── Connected badge (only shown once Google succeeds) ──────
+                      if (_isSocialLogin) ...[
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 12),
@@ -288,13 +247,9 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                           ),
                           child: Row(
                             children: [
-                              Icon(
-                                _socialProvider == 'Google'
-                                    ? Icons.g_mobiledata_rounded
-                                    : Icons.facebook,
-                                color: _socialProvider == 'Google'
-                                    ? const Color(0xFFEA4335)
-                                    : const Color(0xFF1877F2),
+                              const Icon(
+                                Icons.g_mobiledata_rounded,
+                                color: Color(0xFFEA4335),
                                 size: 26,
                               ),
                               const SizedBox(width: 10),
@@ -302,9 +257,9 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      'Connected via $_socialProvider',
-                                      style: const TextStyle(
+                                    const Text(
+                                      'Connected via Google',
+                                      style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 13,
                                         color: Color(0xFF2E7D32),
@@ -538,14 +493,14 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: AppColors.borderGrey),
                           ),
-                          child: Row(
+                          child: const Row(
                             children: [
-                              const Icon(Icons.lock_outline,
+                              Icon(Icons.lock_outline,
                                   size: 16, color: AppColors.textGrey),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               Text(
-                                'Password is managed by $_socialProvider',
-                                style: const TextStyle(
+                                'Password is managed by Google',
+                                style: TextStyle(
                                     fontSize: 12, color: AppColors.textGrey),
                               ),
                             ],
@@ -603,52 +558,5 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
     _passCtrl.dispose();
     _confirmPassCtrl.dispose();
     super.dispose();
-  }
-}
-
-// ── Reusable social button ──────────────────────────────────────────────────────
-class _SocialButton extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final String label;
-  final VoidCallback onTap;
-
-  const _SocialButton({
-    required this.icon,
-    required this.iconColor,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 13),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.borderGrey),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: iconColor, size: 22),
-            const SizedBox(width: 10),
-            Text(
-              label,
-              style: const TextStyle(
-                color: AppColors.textDark,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

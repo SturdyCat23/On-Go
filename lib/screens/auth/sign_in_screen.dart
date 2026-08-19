@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../data/client_account_store.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auth_widgets.dart';
 import '../welcome_screen.dart';
@@ -36,6 +37,29 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
+  Future<void> _showNoClientAccountDialog() async {
+    final register = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('No Client Account Found'),
+        content: const Text(
+          'There\'s no client account yet on this device. Create one first, then you can sign in.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Register Now'),
+          ),
+        ],
+      ),
+    );
+    if (register == true && mounted) {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const WelcomeScreen()));
+    }
+  }
+
   void _handleSignIn() {
     final username = _usernameCtrl.text.trim().toLowerCase();
 
@@ -50,6 +74,10 @@ class _SignInScreenState extends State<SignInScreen> {
     }
 
     if (username == 'client' || username == 'demo-client') {
+      if (!ClientAccountStore.instance.hasAccount) {
+        _showNoClientAccountDialog();
+        return;
+      }
       _navigateToHome(const ClientHomeScreen());
       return;
     }
