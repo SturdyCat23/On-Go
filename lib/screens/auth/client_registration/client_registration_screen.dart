@@ -168,12 +168,18 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
     return e.isEmpty;
   }
 
-  void _submit() {
+    void _submit() {
     if (!_validate()) return;
 
     ClientAccountStore.instance.registerAccount(
-      name: '${_firstNameCtrl.text.trim()} ${_lastNameCtrl.text.trim()}'.trim(),
+      firstName: _firstNameCtrl.text.trim(),
+      lastName: _lastNameCtrl.text.trim(),
       email: _emailCtrl.text.trim(),
+      address: _addressCtrl.text.trim(),
+      phone: _phoneCtrl.text.trim(),
+      password: _isSocialLogin ? '' : _passCtrl.text,
+      photoPath: _profilePhoto?.path ?? _socialPhotoUrl,
+      photoIsNetwork: _profilePhoto == null && _socialPhotoUrl != null,
     );
 
     Navigator.of(context).pushAndRemoveUntil(
