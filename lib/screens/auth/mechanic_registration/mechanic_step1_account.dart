@@ -4,6 +4,7 @@ import '../../../widgets/auth_widgets.dart';
 import '../../../data/registration_draft.dart';
 import '../../../utils/step_navigator.dart';
 import 'mechanic_step2_personal.dart';
+import '../../../widgets/password_strength.dart';
 
 class MechanicStep1Account extends StatefulWidget {
   const MechanicStep1Account({super.key});
@@ -203,7 +204,7 @@ class _MechanicStep1AccountState extends State<MechanicStep1Account> {
                   ),
                   const SizedBox(height: 14),
 
-                  _field(
+                                    _field(
                     error: _passError,
                     child: OnGoTextField(
                       label: 'Password',
@@ -212,9 +213,7 @@ class _MechanicStep1AccountState extends State<MechanicStep1Account> {
                       controller: _passCtrl,
                       onChanged: (_) {
                         _autosave();
-                        if (_passError != null) {
-                          setState(() => _passError = null);
-                        }
+                        setState(() => _passError = null);
                       },
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -229,6 +228,7 @@ class _MechanicStep1AccountState extends State<MechanicStep1Account> {
                       ),
                     ),
                   ),
+                  PasswordStrengthMeter(password: _passCtrl.text),
                   const SizedBox(height: 14),
 
                   _field(

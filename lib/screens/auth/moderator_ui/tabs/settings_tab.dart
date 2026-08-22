@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../data/admin_data.dart';
 import '../../../../data/session_store.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../widgets/password_strength.dart';
 
 class SettingsTab extends StatefulWidget {
   const SettingsTab({super.key});
@@ -82,8 +83,10 @@ class _SettingsTabState extends State<SettingsTab> {
               TextField(
                 controller: newController,
                 obscureText: true,
+                onChanged: (_) => setDialogState(() {}),
                 decoration: const InputDecoration(labelText: 'New Password'),
               ),
+              PasswordStrengthMeter(password: newController.text),
               const SizedBox(height: 12),
               TextField(
                 controller: confirmController,

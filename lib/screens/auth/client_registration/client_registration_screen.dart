@@ -6,6 +6,7 @@ import '../../../data/client_account_store.dart';
 import '../client_ui/client_home_screen.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/auth_widgets.dart';
+import '../../../widgets/password_strength.dart';
 
 class ClientRegistrationScreen extends StatefulWidget {
   /// Set when the client picked "Continue with Google" on the popup shown
@@ -470,24 +471,26 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                           ),
                         ),
                         const SizedBox(height: 14),
-                        OnGoTextField(
-                          label: 'Confirm Password *',
+                                                OnGoTextField(
+                          label: 'Password *',
                           hint: '••••••••',
-                          obscure: _obscureConfirm,
-                          controller: _confirmPassCtrl,
-                          errorText: _err['confirmPass'],
+                          obscure: _obscurePass,
+                          controller: _passCtrl,
+                          errorText: _err['password'],
+                          onChanged: (_) => setState(() {}),
                           suffixIcon: IconButton(
                             icon: Icon(
-                              _obscureConfirm
+                              _obscurePass
                                   ? Icons.visibility_off_outlined
                                   : Icons.visibility_outlined,
                               size: 20,
                               color: AppColors.textGrey,
                             ),
-                            onPressed: () => setState(
-                                () => _obscureConfirm = !_obscureConfirm),
+                            onPressed: () =>
+                                setState(() => _obscurePass = !_obscurePass),
                           ),
                         ),
+                        PasswordStrengthMeter(password: _passCtrl.text),
                       ] else ...[
                         // ── Provider note ─────────────────────────────────────
                         const SizedBox(height: 14),
