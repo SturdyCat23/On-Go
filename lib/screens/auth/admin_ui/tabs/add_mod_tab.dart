@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../data/admin_data.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../widgets/password_strength.dart';
 
 class AddModTab extends StatefulWidget {
   const AddModTab({super.key});
@@ -78,10 +79,11 @@ class _AddModTabState extends State<AddModTab> {
               },
             ),
             const SizedBox(height: 12),
-            _label('Temporary Password *'),
+                        _label('Temporary Password *'),
             TextFormField(
               controller: _passwordController,
               obscureText: _obscurePassword,
+              onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 hintText: 'At least 6 characters',
                 suffixIcon: IconButton(
@@ -95,6 +97,8 @@ class _AddModTabState extends State<AddModTab> {
                 return null;
               },
             ),
+            PasswordStrengthMeter(password: _passwordController.text),
+            
             const SizedBox(height: 4),
             const Text('The moderator signs in with this password and can change it later from Settings.',
                 style: TextStyle(fontSize: 11, color: AppColors.textGrey)),

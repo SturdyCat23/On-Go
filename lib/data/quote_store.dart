@@ -1,9 +1,18 @@
 import 'package:flutter/foundation.dart';
 import 'app_session.dart';
+import 'mechanic_account_store.dart';
 
 enum RequestStatus { pending, matched, completed }
 
 /// A quote sent by a mechanic in response to a client's help request.
+///
+/// For Normal/Urgent requests, several of these can exist for the same
+/// [requestId] — the client compares them and picks one (`accepted` flips to
+/// true only on the winner).
+///
+/// For Emergency requests there is only ever ONE MechanicQuote per request:
+/// it's created already `accepted: true` the instant a mechanic taps Accept.
+/// There is no comparison step — first mechanic to accept wins.
 class MechanicQuote {
   final String id;
   final String requestId;
@@ -68,8 +77,8 @@ class HelpRequest {
 
   /// GPS coordinates captured only if the client used "Use Current
   /// Location" — null if they typed a freeform address. Auto-detection of
-  /// En Route / Arrived requires these; without them the mechanic gets a
-  /// manual "Confirm Arrival" fallback (see MechanicActiveJobScreen).
+  /// En Route / Arrived requires these; without them the mechanic falls
+  /// back to a manual "Confirm Arrival" control.
   final double? clientLat;
   final double? clientLng;
 
@@ -133,8 +142,9 @@ class HelpRequest {
 /// THE CLIENT CONTROLS PAYMENT, THE MECHANIC CONTROLS THE SERVICE, THE
 /// SYSTEM HANDLES AUTOMATIC STATUS DETECTION. See the per-method docs below
 /// for exactly who's allowed to call what — several methods assert
-/// [AppSession.instance.currentRole] and throw if called from the wrong
-/// shell, so this isn't just a UI convention.
+/// [AppSession.instance.currentRole] and/or [MechanicAccountStore]'s
+/// approval status and throw/refuse if the caller isn't allowed, so this
+/// isn't just a UI convention.
 class QuoteNotificationStore extends ChangeNotifier {
   QuoteNotificationStore._internal();
   static final QuoteNotificationStore instance = QuoteNotificationStore._internal();
@@ -225,6 +235,13 @@ class QuoteNotificationStore extends ChangeNotifier {
   List<HelpRequest> get availableJobs =>
       _requests.where((r) => r.status == RequestStatus.pending).toList();
 
+  /// Normal/Urgent only: mechanic sends a quote. The job stays available to
+  /// other mechanics until the client picks a winner.
+  ///
+  /// THE gate: refuses to run — throwing rather than silently no-op'ing —
+  /// unless [MechanicAccountStore.canPerformJobActions] is true. This is
+  /// checked here, not just in the UI, so no button/screen anywhere can
+  /// bypass it.
   void mechanicSendQuote(
     String requestId, {
     required String mechanicName,
@@ -232,6 +249,9 @@ class QuoteNotificationStore extends ChangeNotifier {
     required String eta,
     required double rating,
   }) {
+    if (!MechanicAccountStore.instance.canPerformJobActions) {
+      throw StateError('Your mechanic account must be approved before you can send quotes.');
+    }
     _allQuotes.add(MechanicQuote(
       id: '${DateTime.now().microsecondsSinceEpoch}_${_allQuotes.length}',
       requestId: requestId,
@@ -251,6 +271,10 @@ class QuoteNotificationStore extends ChangeNotifier {
         acceptedQuoteFor(r.id)?.mechanicName == mechanicName);
   }
 
+  /// Emergency only: first mechanic to call this wins. Returns false if the
+  /// job was already grabbed by someone else, if this mechanic already has
+  /// an active emergency job, OR if the account isn't approved (same gate
+  /// as [mechanicSendQuote] — see its doc).
   bool mechanicAcceptEmergency(
     String requestId, {
     required String mechanicName,
@@ -261,6 +285,7 @@ class QuoteNotificationStore extends ChangeNotifier {
     final req = _requests.firstWhere((r) => r.id == requestId);
     if (req.status != RequestStatus.pending) return false;
     if (mechanicHasActiveEmergency(mechanicName)) return false;
+    if (!MechanicAccountStore.instance.canPerformJobActions) return false;
 
     _allQuotes.add(MechanicQuote(
       id: '${DateTime.now().microsecondsSinceEpoch}_${_allQuotes.length}',

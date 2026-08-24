@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/client_account_store.dart';
+import '../../data/mechanic_account_store.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auth_widgets.dart';
 import '../welcome_screen.dart';
@@ -83,6 +84,7 @@ class _SignInScreenState extends State<SignInScreen> {
     }
 
     if (username == 'mechanic' || username == 'demo-mechanic') {
+      MechanicAccountStore.instance.enterDemoMode();
       _navigateToHome(const MechanicHomeScreen());
       return;
     }

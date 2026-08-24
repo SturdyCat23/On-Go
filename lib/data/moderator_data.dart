@@ -81,10 +81,12 @@ class ModeratorActivity {
   });
 }
 
-/// Singleton in-memory store for the moderator flows (Queue / History / Accounts)
-/// and the admin-facing activity feed (Notifications).
-/// Swap this for a real API-backed store later — screens only ever talk to
-/// [ModerationStore.instance], so nothing in the UI needs to change.
+/// Singleton in-memory store for the moderator flows (Queue / History /
+/// Accounts) and the admin-facing activity feed (Notifications). Also the
+/// single source of truth for account-approval status — mechanic
+/// registration files a request here via [submitRequest], and
+/// MechanicAccountStore reads that request's [AccountRequest.status] live
+/// to decide whether job actions are unlocked.
 class ModerationStore extends ChangeNotifier {
   ModerationStore._internal() {
     _seed();
@@ -120,11 +122,31 @@ class ModerationStore extends ChangeNotifier {
     return match.isEmpty ? null : match.first;
   }
 
-  /// [actorId] drives moderator throughput (see [AdminStore.recordModeratorAction]).
-  /// Leave both [actorName] and [actorId] unset from Queue — they're derived
-  /// from the active session moderator automatically. Admin's manual
-  /// resolution of an escalation passes actorName: 'Admin' explicitly, which
-  /// intentionally skips throughput crediting since Admin isn't a moderator.
+  /// Files a new Pending approval request — called by registration flows
+  /// (currently: mechanic registration). Shows up in the Moderator Queue
+  /// tab immediately via [pending]. Returns the new request's id so the
+  /// caller can track its status afterwards.
+  String submitRequest({
+    required String name,
+    required String email,
+    required AccountRole role,
+    List<String> documents = const [],
+  }) {
+    final id = 'req_${DateTime.now().millisecondsSinceEpoch}';
+    final userNumber = 'User - ${(_requests.length + 1).toString().padLeft(5, '0')}';
+    _requests.add(AccountRequest(
+      id: id,
+      name: name,
+      email: email,
+      userNumber: userNumber,
+      role: role,
+      submittedAt: DateTime.now(),
+      documents: documents,
+    ));
+    notifyListeners();
+    return id;
+  }
+
   void approve(String id, {String? actorName, String? actorId}) {
     final r = _requests.firstWhere((r) => r.id == id);
     final actor = actorName ?? SessionStore.instance.currentModeratorName;

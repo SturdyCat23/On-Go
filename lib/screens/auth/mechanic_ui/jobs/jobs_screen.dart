@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../../data/mechanic_account_store.dart';
+import '../../../../data/moderator_data.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/common_widgets.dart';
 // Todo: adjust this path to wherever quote_store.dart lives in your project
@@ -15,6 +17,7 @@ class JobsScreen extends StatefulWidget {
 
 class _JobsScreenState extends State<JobsScreen> {
   int _tabIndex = 0;
+  bool? _wasApproved;
 
   static const _mechanicName = QuoteNotificationStore.currentMechanicName;
 
@@ -22,7 +25,41 @@ class _JobsScreenState extends State<JobsScreen> {
   // becomes "Quote Sent" instead of letting them send a second one.
   final Set<String> _myQuotedRequestIds = {};
 
+  @override
+  void initState() {
+    super.initState();
+    MechanicAccountStore.instance.addListener(_onAccountChange);
+    _wasApproved = MechanicAccountStore.instance.canPerformJobActions;
+  }
+
+  @override
+  void dispose() {
+    MechanicAccountStore.instance.removeListener(_onAccountChange);
+    super.dispose();
+  }
+
+  void _onAccountChange() {
+    final account = MechanicAccountStore.instance;
+    final nowApproved = account.canPerformJobActions;
+    if (nowApproved && _wasApproved == false && !account.isDemo) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Your mechanic account has been approved. You can now send quotes and accept jobs.')),
+        );
+      });
+    }
+    _wasApproved = nowApproved;
+  }
+
   Future<void> _sendQuote(HelpRequest request) async {
+    if (!MechanicAccountStore.instance.canPerformJobActions) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Your account must be approved before you can send quotes.')),
+      );
+      return;
+    }
+
     final input = await showModalBottomSheet<QuoteInput>(
       context: context,
       isScrollControlled: true,
@@ -31,14 +68,21 @@ class _JobsScreenState extends State<JobsScreen> {
     );
     if (input == null) return;
 
-    QuoteNotificationStore.instance.mechanicSendQuote(
-      request.id,
-      mechanicName: _mechanicName,
-      price: '₱${input.total.toStringAsFixed(0)}',
-      eta: input.estimatedTime,
-      // Todo: pull this mechanic's real rating from their profile.
-      rating: 4.8,
-    );
+    try {
+      QuoteNotificationStore.instance.mechanicSendQuote(
+        request.id,
+        mechanicName: _mechanicName,
+        price: '₱${input.total.toStringAsFixed(0)}',
+        eta: input.estimatedTime,
+        // Todo: pull this mechanic's real rating from their profile.
+        rating: 4.8,
+      );
+    } on StateError catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      return;
+    }
+
     setState(() => _myQuotedRequestIds.add(request.id));
 
     if (!mounted) return;
@@ -48,6 +92,13 @@ class _JobsScreenState extends State<JobsScreen> {
   }
 
   void _acceptEmergency(HelpRequest request) {
+    if (!MechanicAccountStore.instance.canPerformJobActions) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Your account must be approved before you can accept jobs.')),
+      );
+      return;
+    }
+
     final store = QuoteNotificationStore.instance;
 
     if (store.mechanicHasActiveEmergency(_mechanicName)) {
@@ -104,9 +155,12 @@ class _JobsScreenState extends State<JobsScreen> {
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: QuoteNotificationStore.instance,
+      animation: Listenable.merge([QuoteNotificationStore.instance, MechanicAccountStore.instance]),
       builder: (context, _) {
         final store = QuoteNotificationStore.instance;
+        final account = MechanicAccountStore.instance;
+        final canAct = account.canPerformJobActions;
+
         final allAvailable = store.availableJobs;
         final available = allAvailable.where((r) => !r.isEmergency).toList();
         final emergency = allAvailable.where((r) => r.isEmergency).toList();
@@ -115,6 +169,9 @@ class _JobsScreenState extends State<JobsScreen> {
 
         return Column(
           children: [
+            if (account.isDemo) const _DemoModeBanner(),
+            if (account.isRegistered && account.status != ApprovalStatus.approved)
+              _ApprovalBanner(status: account.status),
             _JobTabBar(
               currentIndex: _tabIndex,
               onChanged: (i) => setState(() => _tabIndex = i),
@@ -127,6 +184,7 @@ class _JobsScreenState extends State<JobsScreen> {
                   _AvailableTab(
                     requests: available,
                     quotedIds: _myQuotedRequestIds,
+                    canAct: canAct,
                     onSendQuote: _sendQuote,
                   ),
                   _AcceptedTab(
@@ -139,6 +197,7 @@ class _JobsScreenState extends State<JobsScreen> {
                     requests: emergency,
                     onAccept: _acceptEmergency,
                     blocked: hasActiveEmergency,
+                    canAct: canAct,
                   ),
                 ],
               ),
@@ -146,6 +205,73 @@ class _JobsScreenState extends State<JobsScreen> {
           ],
         );
       },
+    );
+  }
+}
+
+// ---------------------------------------------------------------------
+// Approval / demo banners
+// ---------------------------------------------------------------------
+
+class _DemoModeBanner extends StatelessWidget {
+  const _DemoModeBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.blue.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.blue.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          Icon(Icons.science_outlined, size: 14, color: AppColors.blue),
+          SizedBox(width: 6),
+          Text('DEMO MODE — for testing only', style: TextStyle(fontSize: 11, color: AppColors.blue, fontWeight: FontWeight.w700)),
+        ],
+      ),
+    );
+  }
+}
+
+class _ApprovalBanner extends StatelessWidget {
+  final ApprovalStatus? status;
+  const _ApprovalBanner({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final rejected = status == ApprovalStatus.rejected;
+    final color = rejected ? AppColors.primary : const Color(0xFFB07A00);
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: (rejected ? AppColors.primary : AppColors.yellow).withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: (rejected ? AppColors.primary : AppColors.yellow).withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(rejected ? Icons.cancel_outlined : Icons.hourglass_top, size: 18, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              rejected
+                  ? 'Your mechanic account was rejected. You can browse jobs, but job actions remain locked.'
+                  : 'Your mechanic account is awaiting approval. You can browse jobs, but job actions are locked until approval.',
+              style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -325,11 +451,13 @@ class _DeadlineRow extends StatelessWidget {
 class _AvailableTab extends StatelessWidget {
   final List<HelpRequest> requests;
   final Set<String> quotedIds;
+  final bool canAct;
   final void Function(HelpRequest) onSendQuote;
 
   const _AvailableTab({
     required this.requests,
     required this.quotedIds,
+    required this.canAct,
     required this.onSendQuote,
   });
 
@@ -352,7 +480,7 @@ class _AvailableTab extends StatelessWidget {
           return _JobCard(
             request: request,
             actionLabel: alreadyQuoted ? 'Quote Sent' : 'Send Quote',
-            actionEnabled: !alreadyQuoted,
+            actionEnabled: canAct && !alreadyQuoted,
             onAction: () => onSendQuote(request),
           );
         }),
@@ -439,8 +567,9 @@ class _EmergencyTab extends StatelessWidget {
   final List<HelpRequest> requests;
   final void Function(HelpRequest) onAccept;
   final bool blocked;
+  final bool canAct;
 
-  const _EmergencyTab({required this.requests, required this.onAccept, required this.blocked});
+  const _EmergencyTab({required this.requests, required this.onAccept, required this.blocked, required this.canAct});
 
   @override
   Widget build(BuildContext context) {
@@ -482,7 +611,7 @@ class _EmergencyTab extends StatelessWidget {
         ...requests.map((request) => _JobCard(
               request: request,
               actionLabel: 'Accept',
-              actionEnabled: !blocked,
+              actionEnabled: canAct && !blocked,
               onAction: () => onAccept(request),
             )),
       ],

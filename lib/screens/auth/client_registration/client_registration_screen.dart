@@ -458,25 +458,6 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                           obscure: _obscurePass,
                           controller: _passCtrl,
                           errorText: _err['password'],
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePass
-                                  ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined,
-                              size: 20,
-                              color: AppColors.textGrey,
-                            ),
-                            onPressed: () =>
-                                setState(() => _obscurePass = !_obscurePass),
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                                                OnGoTextField(
-                          label: 'Password *',
-                          hint: '••••••••',
-                          obscure: _obscurePass,
-                          controller: _passCtrl,
-                          errorText: _err['password'],
                           onChanged: (_) => setState(() {}),
                           suffixIcon: IconButton(
                             icon: Icon(
@@ -491,6 +472,25 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                           ),
                         ),
                         PasswordStrengthMeter(password: _passCtrl.text),
+                        const SizedBox(height: 14),
+                                                OnGoTextField(
+                          label: 'Confirm Password *',
+                          hint: '••••••••',
+                          obscure: _obscureConfirm,
+                          controller: _confirmPassCtrl,
+                          errorText: _err['confirmPassword'],
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureConfirm
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              size: 20,
+                              color: AppColors.textGrey,
+                            ),
+                            onPressed: () =>
+                                setState(() => _obscureConfirm = !_obscureConfirm),
+                          ),
+                        ),
                       ] else ...[
                         // ── Provider note ─────────────────────────────────────
                         const SizedBox(height: 14),

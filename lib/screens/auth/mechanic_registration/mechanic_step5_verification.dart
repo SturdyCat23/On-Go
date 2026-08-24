@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:livelyness_detection/livelyness_detection.dart';
+import '../../../data/mechanic_account_store.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/auth_widgets.dart';
 import '../../../data/registration_draft.dart';
@@ -432,6 +433,19 @@ class _MechanicStep5VerificationState
                     onBack: () => Navigator.pop(context),
                     onNext: () {
                       if (!_validate()) return;
+
+                      MechanicAccountStore.instance.registerAccount(
+                        firstName: _draft.firstName,
+                        lastName: _draft.lastName,
+                        email: _draft.email,
+                        phone: _draft.mobile,
+                        documents: [
+                          if (_draft.validIdPath.isNotEmpty) _draft.validIdPath.split('/').last,
+                          if (_draft.ncIiPath.isNotEmpty) _draft.ncIiPath.split('/').last,
+                          ..._draft.certPaths.map((p) => p.split('/').last),
+                        ],
+                      );
+
                       _draft.clear(); // wipe saved draft on successful completion
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(
