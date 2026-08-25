@@ -38,6 +38,11 @@ class MechanicAccountStore extends ChangeNotifier {
   bool get isDemo => mode == MechanicAccountMode.demo;
   bool get isRegistered => mode == MechanicAccountMode.registered;
 
+  /// True once a real mechanic account has been registered this session —
+  /// checked by SignInScreen before falling back to demo mode, same as
+  /// ClientAccountStore.hasAccount.
+  bool get hasAccount => isRegistered;
+
   AccountRequest? get accountRequest =>
       _accountRequestId == null ? null : ModerationStore.instance.findRequest(_accountRequestId!);
 

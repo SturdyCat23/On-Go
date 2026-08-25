@@ -84,7 +84,13 @@ class _SignInScreenState extends State<SignInScreen> {
     }
 
     if (username == 'mechanic' || username == 'demo-mechanic') {
-      MechanicAccountStore.instance.enterDemoMode();
+      // If a real mechanic account was already registered this session,
+      // sign into THAT account (preserving its approval status) instead of
+      // overwriting it with a throwaway "Demo Mechanic" identity. Only fall
+      // back to true demo mode when nothing's been registered yet.
+      if (!MechanicAccountStore.instance.hasAccount) {
+        MechanicAccountStore.instance.enterDemoMode();
+      }
       _navigateToHome(const MechanicHomeScreen());
       return;
     }

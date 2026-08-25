@@ -60,7 +60,6 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isGoogleAccount = _store.photoIsNetwork && !_store.verifyPassword('');
     // A Google sign-up leaves the local password empty — that's the signal
     // we use to detect it, since this app has no real auth backend yet.
     final hasLocalPassword = !_store.verifyPassword('');

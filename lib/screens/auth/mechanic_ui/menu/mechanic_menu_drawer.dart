@@ -84,7 +84,11 @@ class _MechanicMenuDrawerState extends State<MechanicMenuDrawer> {
                   icon: Icons.logout,
                   label: 'Sign Out',
                   onTap: () {
-                    _store.clear();
+                    // Note: deliberately NOT calling _store.clear() here —
+                    // signing out should preserve the registered account
+                    // (and its approval status) so the mechanic can sign
+                    // back in later without re-registering, same as
+                    // ClientAccountStore's behavior on the client side.
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(builder: (_) => const SignInScreen()),
                       (route) => false,
