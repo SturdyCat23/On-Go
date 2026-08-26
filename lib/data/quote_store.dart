@@ -160,9 +160,18 @@ class QuoteNotificationStore extends ChangeNotifier {
   // Client-facing API (NeedHelpScreen / QuotesScreen / ActiveRequestScreen)
   // ---------------------------------------------------------------------
 
+    /// The most recently submitted request that isn't fully paid off yet —
+  /// pending or matched both count as "active." Deliberately NOT "prefer
+  /// any pending request" (the old behavior): that let a stale pending
+  /// request from earlier testing permanently shadow a newer request that
+  /// had already been matched (e.g. an accepted Emergency job), since
+  /// ActiveRequestScreen treats pending as its own empty state anyway.
   HelpRequest? get activeRequest {
-    final pending = _requests.where((r) => r.status == RequestStatus.pending);
-    if (pending.isNotEmpty) return pending.last;
+    final unfinished = _requests.where((r) => r.status != RequestStatus.completed).toList();
+    if (unfinished.isNotEmpty) {
+      unfinished.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      return unfinished.last;
+    }
     return _requests.isEmpty ? null : _requests.last;
   }
 

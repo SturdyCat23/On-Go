@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../data/app_session.dart';
+import '../../../../data/mechanic_account_store.dart';
+import '../../../../data/moderator_data.dart';
 import '../../../../data/review_store.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/common_widgets.dart';
@@ -12,32 +14,46 @@ class MechanicProfileScreen extends StatefulWidget {
 }
 
 class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
-  // Todo: replace with the logged-in mechanic's real name once auth exists.
-  // Matches the display name used elsewhere (leaderboard, service history)
-  // — see the note on mechanic identity in QuoteNotificationStore.
-  static const _myName = 'Juan Dela Cruz';
-
-  final _store = ReviewStore.instance;
+  final _reviews = ReviewStore.instance;
+  final _account = MechanicAccountStore.instance;
 
   @override
   void initState() {
     super.initState();
-    _store.addListener(_onChange);
+    _reviews.addListener(_onChange);
+    _account.addListener(_onChange);
   }
 
   @override
   void dispose() {
-    _store.removeListener(_onChange);
+    _reviews.removeListener(_onChange);
+    _account.removeListener(_onChange);
     super.dispose();
   }
 
   void _onChange() => setState(() {});
 
+  String get _approvalNote {
+    if (_account.isDemo) return 'Demo Mode';
+    if (!_account.isRegistered) return '';
+    switch (_account.status) {
+      case ApprovalStatus.pending:
+        return 'Pending Approval';
+      case ApprovalStatus.rejected:
+        return 'Account Rejected';
+      case ApprovalStatus.approved:
+      default:
+        return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final reviews = _store.reviewsFor(_myName);
-    final average = _store.averageRatingFor(_myName);
+    final myName = _account.name.isEmpty ? 'Mechanic' : _account.name;
+    final reviews = _reviews.reviewsFor(myName);
+    final average = _reviews.averageRatingFor(myName);
     final viewerId = AppSession.instance.currentViewerName;
+    final approvalNote = _approvalNote;
 
     return ListView(
       padding: const EdgeInsets.all(20),
@@ -75,7 +91,30 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(_myName, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18, fontWeight: FontWeight.w800)),
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(myName,
+                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18, fontWeight: FontWeight.w800),
+                                  overflow: TextOverflow.ellipsis),
+                            ),
+                            if (approvalNote.isNotEmpty) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: (approvalNote == 'Account Rejected' ? AppColors.primary : AppColors.yellow).withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(approvalNote,
+                                    style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: approvalNote == 'Account Rejected' ? AppColors.primary : const Color(0xFFB07A00))),
+                              ),
+                            ],
+                          ],
+                        ),
                         const SizedBox(height: 2),
                         Row(
                           children: [
@@ -167,7 +206,7 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
                         comment: r.comment.isEmpty ? '(No comment left)' : r.comment,
                         helpfulCount: r.helpfulCount,
                         likedByMe: r.likedByViewer(viewerId),
-                        onToggleLike: () => _store.toggleHelpful(r.id),
+                        onToggleLike: () => _reviews.toggleHelpful(r.id),
                       ),
                     )),
             ],
