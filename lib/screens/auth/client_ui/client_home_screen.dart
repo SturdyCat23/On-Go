@@ -5,7 +5,7 @@ import '../../../widgets/app_widgets.dart';
 import '../../../data/quote_store.dart';
 import 'home/need_help_screen.dart';
 import 'home/quotes_screen.dart';
-import 'active/active_request_screen.dart';
+import 'jobs/client_jobs_screen.dart';
 import 'history/service_history_screen.dart';
 import 'rank/leaderboard_screen.dart';
 import 'menu/client_menu_drawer.dart';
@@ -33,7 +33,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   void _goToTab(int index) => setState(() => _currentIndex = index);
 
   /// Bell tap: open the quotes list. If the client accepts a quote there,
-  /// jump to the Active tab to show the confirmed mechanic.
+  /// jump to the Jobs tab to show the confirmed mechanic.
   Future<void> _openQuotes() async {
     QuoteNotificationStore.instance.markSeen();
     final accepted = await Navigator.push<bool>(
@@ -49,7 +49,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   Widget build(BuildContext context) {
     final tabs = [
       NeedHelpScreen(onRequestUploaded: () => _goToTab(1)),
-      const ActiveRequestScreen(),
+      const ClientJobsScreen(),
       const ServiceHistoryScreen(),
       const LeaderboardScreen(),
     ];
@@ -71,8 +71,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.access_time),
-            label: 'Active',
+            icon: Icon(Icons.work_outline),
+            activeIcon: Icon(Icons.work),
+            label: 'Jobs',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.history),

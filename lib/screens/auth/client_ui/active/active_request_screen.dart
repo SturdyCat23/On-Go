@@ -1,7 +1,7 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'dart:async';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/common_widgets.dart';
 // Todo: adjust this path to wherever quote_store.dart lives in your project
@@ -10,7 +10,8 @@ import '../profile/mechanic_profile_view_screen.dart';
 import 'qr_scan_screen.dart';
 
 class ActiveRequestScreen extends StatefulWidget {
-  const ActiveRequestScreen({super.key});
+  final String requestId;
+  const ActiveRequestScreen({super.key, required this.requestId});
 
   @override
   State<ActiveRequestScreen> createState() => _ActiveRequestScreenState();
@@ -66,7 +67,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
     String? raw;
     if (choice == 'camera') {
       raw = await Navigator.push<String>(context, MaterialPageRoute(builder: (_) => const QrScanScreen()));
-      } else {
+    } else {
       final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
       if (picked == null) return;
 
@@ -145,22 +146,28 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final request = _store.activeRequest;
+    final request = _store.requestFor(widget.requestId);
     final quote = request == null ? null : _store.acceptedQuoteFor(request.id);
 
-    if (request == null || request.status == RequestStatus.pending || quote == null) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(20),
-          child: Text(
-            'No active service request yet.\nUpload a problem from the Need Help tab to get started.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textGrey),
-          ),
-        ),
-      );
-    }
+    return Scaffold(
+      backgroundColor: AppColors.white,
+      appBar: AppBar(
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.white,
+        title: const Text('Job Progress'),
+      ),
+      body: (request == null || quote == null)
+          ? const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Text('This job is no longer active.', style: TextStyle(color: AppColors.textGrey)),
+              ),
+            )
+          : _buildBody(request, quote),
+    );
+  }
 
+  Widget _buildBody(HelpRequest request, MechanicQuote quote) {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -300,14 +307,15 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                     child: const Text('Send Payment'),
                   ),
                 ] else ...[
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
-                    child: const Text(
-                      'Payment unlocks once the mechanic marks the service complete.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.textGrey, fontSize: 12),
+                  ElevatedButton.icon(
+                    onPressed: () {},
+                    icon: const Icon(Icons.my_location, size: 18, color: AppColors.white),
+                    label: const Text('Track Mechanic Location'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.green,
+                      foregroundColor: AppColors.white,
+                      minimumSize: const Size(double.infinity, 46),
+                      shape: const StadiumBorder(),
                     ),
                   ),
                 ],

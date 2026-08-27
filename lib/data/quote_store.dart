@@ -160,7 +160,7 @@ class QuoteNotificationStore extends ChangeNotifier {
   // Client-facing API (NeedHelpScreen / QuotesScreen / ActiveRequestScreen)
   // ---------------------------------------------------------------------
 
-    /// The most recently submitted request that isn't fully paid off yet —
+  /// The most recently submitted request that isn't fully paid off yet —
   /// pending or matched both count as "active." Deliberately NOT "prefer
   /// any pending request" (the old behavior): that let a stale pending
   /// request from earlier testing permanently shadow a newer request that
@@ -175,6 +175,14 @@ class QuoteNotificationStore extends ChangeNotifier {
     return _requests.isEmpty ? null : _requests.last;
   }
 
+  /// Every one of this client's requests that has an accepted mechanic and
+  /// isn't fully paid off yet — the data behind ClientJobsScreen's Pending
+  /// and Active sub-tabs. There's no multi-client separation in this demo
+  /// (single client session), so this is simply every matched request.
+  List<HelpRequest> get myActiveJobs =>
+      _requests.where((r) => r.status == RequestStatus.matched).toList();
+
+  /// Quotes for the active request only.
   List<MechanicQuote> get quotes {
     final req = activeRequest;
     if (req == null) return const [];
