@@ -36,22 +36,57 @@ class _ClientJobsScreenState extends State<ClientJobsScreen> {
     );
   }
 
-  void _cancelJob(HelpRequest request) {
-    showDialog(
+    Future<void> _cancelJob(HelpRequest request) async {
+    final choice = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Cancel this request?'),
-        content: Text('This will let your mechanic know you no longer need this service.'),
+        content: const Text('You can put this back in the queue for another mechanic, or remove it completely.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Keep Job')),
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            // Todo: wire up a real cancel-after-match method on QuoteNotificationStore.
-            child: const Text('Cancel Job', style: TextStyle(color: AppColors.primary)),
+            onPressed: () => Navigator.pop(ctx, 'revert'),
+            child: const Text('Revert to Pending'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 'delete'),
+            style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+            child: const Text('Delete Permanently'),
           ),
         ],
       ),
     );
+
+    if (choice == 'revert') {
+      final ok = _store.clientRevertToPending(request.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ok ? 'Request reverted to Pending — open to mechanics again.' : 'Could not revert this request.')),
+      );
+    } else if (choice == 'delete') {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Delete permanently?'),
+          content: const Text('This cannot be undone.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+              child: const Text('Delete'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed == true) {
+        final ok = _store.clientDeleteRequest(request.id);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ok ? 'Request deleted.' : 'Could not delete this request.')),
+        );
+      }
+    }
   }
 
   @override

@@ -160,19 +160,14 @@ class QuoteNotificationStore extends ChangeNotifier {
   // Client-facing API (NeedHelpScreen / QuotesScreen / ActiveRequestScreen)
   // ---------------------------------------------------------------------
 
-  /// The most recently submitted request that isn't fully paid off yet —
-  /// pending or matched both count as "active." Deliberately NOT "prefer
-  /// any pending request" (the old behavior): that let a stale pending
-  /// request from earlier testing permanently shadow a newer request that
-  /// had already been matched (e.g. an accepted Emergency job), since
-  /// ActiveRequestScreen treats pending as its own empty state anyway.
-  HelpRequest? get activeRequest {
-    final unfinished = _requests.where((r) => r.status != RequestStatus.completed).toList();
-    if (unfinished.isNotEmpty) {
-      unfinished.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-      return unfinished.last;
-    }
-    return _requests.isEmpty ? null : _requests.last;
+  /// Every one of this client's requests still awaiting a decision — the
+  /// data behind QuotesScreen, which shows one comparison card per request
+  /// rather than a single global list (a client can have several jobs out
+  /// for quotes simultaneously).
+  List<HelpRequest> get myPendingRequests {
+    final list = _requests.where((r) => r.status == RequestStatus.pending).toList();
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
   }
 
   /// Every one of this client's requests that has an accepted mechanic and
@@ -182,7 +177,23 @@ class QuoteNotificationStore extends ChangeNotifier {
   List<HelpRequest> get myActiveJobs =>
       _requests.where((r) => r.status == RequestStatus.matched).toList();
 
-  /// Quotes for the active request only.
+  /// Compatibility shim: the single most recently submitted unfinished
+  /// request. Most screens now work off specific request ids (via
+  /// [requestFor]) or [myPendingRequests]/[myActiveJobs] instead — this
+  /// remains for anything that still wants "the one active job" framing.
+  HelpRequest? get activeRequest {
+    final unfinished = _requests.where((r) => r.status != RequestStatus.completed).toList();
+    if (unfinished.isNotEmpty) {
+      unfinished.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      return unfinished.last;
+    }
+    return _requests.isEmpty ? null : _requests.last;
+  }
+
+  /// Compatibility shim — quotes for [activeRequest] only. Prefer
+  /// [quotesForRequest] for a specific request; this is what caused quotes
+  /// on a 2nd/3rd job to never show up when there were multiple pending
+  /// requests at once.
   List<MechanicQuote> get quotes {
     final req = activeRequest;
     if (req == null) return const [];
@@ -245,6 +256,48 @@ class QuoteNotificationStore extends ChangeNotifier {
 
   void acceptQuote(String quoteId) => clientAcceptQuote(quoteId);
 
+  /// CLIENT action only. Reverts an already-matched request back to
+  /// Pending and un-accepts its winning quote, so mechanics can quote/accept
+  /// it again — used from ClientJobsScreen's Cancel flow when the client
+  /// wants to keep the job open rather than remove it entirely.
+  bool clientRevertToPending(String requestId) {
+    if (AppSession.instance.currentRole != AppRole.client) {
+      throw StateError('Only the Client UI can cancel a request.');
+    }
+    final req = requestFor(requestId);
+    if (req == null || req.status != RequestStatus.matched) return false;
+
+    for (final q in quotesForRequest(requestId)) {
+      q.accepted = false;
+    }
+    req.status = RequestStatus.pending;
+    req.enRoute = false;
+    req.arrived = false;
+    req.workStarted = false;
+    req.serviceCompleted = false;
+    req.enRouteAt = null;
+    req.arrivedAt = null;
+    req.workStartedAt = null;
+    req.serviceCompletedAt = null;
+    notifyListeners();
+    return true;
+  }
+
+  /// CLIENT action only. Permanently removes a request and all its quotes.
+  /// Refuses to delete a request that's already been paid — that's real
+  /// history, not something to silently disappear.
+  bool clientDeleteRequest(String requestId) {
+    if (AppSession.instance.currentRole != AppRole.client) {
+      throw StateError('Only the Client UI can delete a request.');
+    }
+    final req = requestFor(requestId);
+    if (req == null || req.paymentCompleted) return false;
+    _requests.removeWhere((r) => r.id == requestId);
+    _allQuotes.removeWhere((q) => q.requestId == requestId);
+    notifyListeners();
+    return true;
+  }
+
   // ---------------------------------------------------------------------
   // Mechanic-facing API — accept / quote (JobsScreen)
   // ---------------------------------------------------------------------
@@ -277,7 +330,10 @@ class QuoteNotificationStore extends ChangeNotifier {
       eta: eta,
       rating: rating,
     ));
-    if (activeRequest?.id == requestId) _unseenCount++;
+    // Every new quote is unseen until the client opens QuotesScreen — not
+    // just quotes on whatever happens to be "the" activeRequest, which is
+    // what caused quotes on a 2nd/3rd job to never bump the badge.
+    _unseenCount++;
     notifyListeners();
   }
 
@@ -314,7 +370,7 @@ class QuoteNotificationStore extends ChangeNotifier {
       accepted: true,
     ));
     req.status = RequestStatus.matched;
-    if (activeRequest?.id == requestId) _unseenCount++;
+    _unseenCount++;
     notifyListeners();
     return true;
   }
