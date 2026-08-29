@@ -256,14 +256,23 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Service Status', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                                const Text('Service Status', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
-                const _StatusStep(title: 'Request Accepted', done: true, isFirst: true),
-                _StatusStep(title: 'Mechanic En Route', done: request.enRoute),
-                _StatusStep(title: 'Mechanic Arrived', done: request.arrived),
-                _StatusStep(title: 'Work in Progress', done: request.workStarted),
-                _StatusStep(title: 'Service Complete', done: request.serviceCompleted),
-                _StatusStep(title: 'Payment Complete', done: request.paymentCompleted, isLast: true),
+                if (request.isEmergency) ...[
+                  _StatusStep(title: 'Navigate', done: request.navigating, isFirst: true),
+                  _StatusStep(title: 'Mechanic En Route', done: request.enRoute),
+                  _StatusStep(title: 'Work in Progress', done: request.workStarted),
+                  _StatusStep(title: 'Service Complete', done: request.serviceCompleted),
+                  _StatusStep(title: 'Payment Complete', done: request.paymentCompleted, isLast: true),
+                ] else ...[
+                  const _StatusStep(title: 'Request Accepted', done: true, isFirst: true),
+                  _StatusStep(title: 'Navigating', done: request.navigating),
+                  _StatusStep(title: 'Mechanic En Route', done: request.enRoute),
+                  _StatusStep(title: 'Mechanic Arrived', done: request.arrived),
+                  _StatusStep(title: 'Work in Progress', done: request.workStarted),
+                  _StatusStep(title: 'Service Complete', done: request.serviceCompleted),
+                  _StatusStep(title: 'Payment Complete', done: request.paymentCompleted, isLast: true),
+                ],
                 const SizedBox(height: 12),
                 if (request.paymentCompleted) ...[
                   Container(

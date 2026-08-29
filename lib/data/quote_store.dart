@@ -85,14 +85,19 @@ class HelpRequest {
   RequestStatus status;
 
   // Fine-grained workflow flags. Who's allowed to flip each one:
+  //  - navigating: MECHANIC only (manual "Navigate" button tap — this is
+  //    also what starts GPS tracking; nothing below happens automatically
+  //    until this is true)
   //  - enRoute / arrived: SYSTEM only (GPS-driven, see mechanicMarkEnRoute/Arrived)
   //  - workStarted / serviceCompleted: MECHANIC only (manual button press)
   //  - paymentCompleted: CLIENT only, via clientConfirmPayment after a QR scan
+  bool navigating;
   bool enRoute;
   bool arrived;
   bool workStarted;
   bool serviceCompleted;
   bool paymentCompleted;
+  DateTime? navigatingAt;
   DateTime? enRouteAt;
   DateTime? arrivedAt;
   DateTime? workStartedAt;
@@ -118,11 +123,13 @@ class HelpRequest {
     this.clientLat,
     this.clientLng,
     this.status = RequestStatus.pending,
+    this.navigating = false,
     this.enRoute = false,
     this.arrived = false,
     this.workStarted = false,
     this.serviceCompleted = false,
     this.paymentCompleted = false,
+    this.navigatingAt,
     this.enRouteAt,
     this.arrivedAt,
     this.workStartedAt,
@@ -179,8 +186,7 @@ class QuoteNotificationStore extends ChangeNotifier {
 
   /// Compatibility shim: the single most recently submitted unfinished
   /// request. Most screens now work off specific request ids (via
-  /// [requestFor]) or [myPendingRequests]/[myActiveJobs] instead — this
-  /// remains for anything that still wants "the one active job" framing.
+  /// [requestFor]) or [myPendingRequests]/[myActiveJobs] instead.
   HelpRequest? get activeRequest {
     final unfinished = _requests.where((r) => r.status != RequestStatus.completed).toList();
     if (unfinished.isNotEmpty) {
@@ -191,9 +197,7 @@ class QuoteNotificationStore extends ChangeNotifier {
   }
 
   /// Compatibility shim — quotes for [activeRequest] only. Prefer
-  /// [quotesForRequest] for a specific request; this is what caused quotes
-  /// on a 2nd/3rd job to never show up when there were multiple pending
-  /// requests at once.
+  /// [quotesForRequest] for a specific request.
   List<MechanicQuote> get quotes {
     final req = activeRequest;
     if (req == null) return const [];
@@ -258,8 +262,8 @@ class QuoteNotificationStore extends ChangeNotifier {
 
   /// CLIENT action only. Reverts an already-matched request back to
   /// Pending and un-accepts its winning quote, so mechanics can quote/accept
-  /// it again — used from ClientJobsScreen's Cancel flow when the client
-  /// wants to keep the job open rather than remove it entirely.
+  /// it again. Only reachable while the job is still in the Pending sub-tab
+  /// (i.e. the mechanic hasn't tapped Navigate yet) — see ClientJobsScreen.
   bool clientRevertToPending(String requestId) {
     if (AppSession.instance.currentRole != AppRole.client) {
       throw StateError('Only the Client UI can cancel a request.');
@@ -271,10 +275,12 @@ class QuoteNotificationStore extends ChangeNotifier {
       q.accepted = false;
     }
     req.status = RequestStatus.pending;
+    req.navigating = false;
     req.enRoute = false;
     req.arrived = false;
     req.workStarted = false;
     req.serviceCompleted = false;
+    req.navigatingAt = null;
     req.enRouteAt = null;
     req.arrivedAt = null;
     req.workStartedAt = null;
@@ -330,9 +336,6 @@ class QuoteNotificationStore extends ChangeNotifier {
       eta: eta,
       rating: rating,
     ));
-    // Every new quote is unseen until the client opens QuotesScreen — not
-    // just quotes on whatever happens to be "the" activeRequest, which is
-    // what caused quotes on a 2nd/3rd job to never bump the badge.
     _unseenCount++;
     notifyListeners();
   }
@@ -346,8 +349,7 @@ class QuoteNotificationStore extends ChangeNotifier {
 
   /// Emergency only: first mechanic to call this wins. Returns false if the
   /// job was already grabbed by someone else, if this mechanic already has
-  /// an active emergency job, OR if the account isn't approved (same gate
-  /// as [mechanicSendQuote] — see its doc).
+  /// an active emergency job, OR if the account isn't approved.
   bool mechanicAcceptEmergency(
     String requestId, {
     required String mechanicName,
@@ -402,6 +404,21 @@ class QuoteNotificationStore extends ChangeNotifier {
   // ---------------------------------------------------------------------
   // Service-status workflow
   // ---------------------------------------------------------------------
+
+  /// MECHANIC action only — manual, and entirely at the mechanic's own
+  /// pace ("when they're ready"). This is what unlocks GPS tracking on
+  /// MechanicActiveJobScreen; nothing below this point in the workflow
+  /// happens until it's true.
+  void mechanicStartNavigating(String requestId) {
+    if (AppSession.instance.currentRole != AppRole.mechanic) {
+      throw StateError('Only the Mechanic UI can start navigating to a job.');
+    }
+    final req = requestFor(requestId);
+    if (req == null || req.navigating) return;
+    req.navigating = true;
+    req.navigatingAt = DateTime.now();
+    notifyListeners();
+  }
 
   /// SYSTEM: called from GPS tracking in MechanicActiveJobScreen once the
   /// mechanic's position has moved measurably closer to the client since

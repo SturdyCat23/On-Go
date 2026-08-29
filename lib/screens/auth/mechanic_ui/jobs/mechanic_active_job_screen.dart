@@ -29,7 +29,12 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
   void initState() {
     super.initState();
     _store.addListener(_onChange);
-    _startTracking();
+    // Resume tracking if this screen is reopened after the mechanic already
+    // tapped Navigate in a previous visit — but never auto-start it.
+    final request = _store.requestFor(widget.requestId);
+    if (request != null && request.navigating) {
+      _startTracking(request);
+    }
   }
 
   @override
@@ -41,9 +46,14 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
 
   void _onChange() => setState(() {});
 
-  Future<void> _startTracking() async {
-    final request = _store.requestFor(widget.requestId);
-    if (request == null || request.arrived) return;
+  void _beginNavigating(HelpRequest request) {
+    _store.mechanicStartNavigating(request.id);
+    _startTracking(request);
+  }
+
+  Future<void> _startTracking(HelpRequest request) async {
+    if (_positionSub != null) return; // already tracking
+    if (request.arrived) return; // nothing left to track toward
 
     // No GPS coordinates on this request (client typed a freeform address
     // instead of using "Use Current Location") — nothing to auto-detect
@@ -90,7 +100,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
   /// Fallback only used when the request has no GPS coordinates to compare
   /// against — see [_startTracking].
   void _confirmArrivalManually(HelpRequest request) {
-    _store.mechanicMarkEnRoute(request.id);
+    if (!request.enRoute) _store.mechanicMarkEnRoute(request.id);
     _store.mechanicMarkArrived(request.id);
   }
 
@@ -134,7 +144,9 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                           const Icon(Icons.location_on_outlined, color: AppColors.primary, size: 40),
                           const SizedBox(height: 8),
                           Text(
-                            request.arrived ? "You've arrived" : (request.enRoute ? 'Heading to client' : 'Ready to head out'),
+                            request.arrived
+                                ? "You've arrived"
+                                : (request.navigating ? 'Heading to client' : 'Ready to head out'),
                             style: const TextStyle(color: AppColors.textDark, fontSize: 14, fontWeight: FontWeight.w600),
                           ),
                           if (_trackingError != null) ...[
@@ -185,7 +197,9 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                               decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(10)),
                               child: Row(
                                 children: [
-                                  const _InfoColumn(label: 'Location', value: 'Client'),
+                                  _InfoColumn(label: 'ETA', value: quote?.eta ?? '20 mins'),
+                                  const _VerticalDivider(),
+                                  const _InfoColumn(label: 'Distance', value: '20 km'),
                                   const _VerticalDivider(),
                                   _InfoColumn(label: 'Quote', value: quote?.price ?? '₱200', valueColor: AppColors.green),
                                 ],
@@ -204,12 +218,21 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                     children: [
                       const Text('Service Status', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 12),
-                      const _StatusStep(title: 'Request Accepted', done: true, isFirst: true),
-                      _StatusStep(title: 'Mechanic En Route', done: request.enRoute),
-                      _StatusStep(title: 'Mechanic Arrived', done: request.arrived),
-                      _StatusStep(title: 'Work in Progress', done: request.workStarted),
-                      _StatusStep(title: 'Service Complete', done: request.serviceCompleted),
-                      _StatusStep(title: 'Payment Complete', done: request.paymentCompleted, isLast: true),
+                      if (request.isEmergency) ...[
+                        _StatusStep(title: 'Navigate', done: request.navigating, isFirst: true),
+                        _StatusStep(title: 'Mechanic En Route', done: request.enRoute),
+                        _StatusStep(title: 'Work in Progress', done: request.workStarted),
+                        _StatusStep(title: 'Service Complete', done: request.serviceCompleted),
+                        _StatusStep(title: 'Payment Complete', done: request.paymentCompleted, isLast: true),
+                      ] else ...[
+                        const _StatusStep(title: 'Request Accepted', done: true, isFirst: true),
+                        _StatusStep(title: 'Navigating', done: request.navigating),
+                        _StatusStep(title: 'Mechanic En Route', done: request.enRoute),
+                        _StatusStep(title: 'Mechanic Arrived', done: request.arrived),
+                        _StatusStep(title: 'Work in Progress', done: request.workStarted),
+                        _StatusStep(title: 'Service Complete', done: request.serviceCompleted),
+                        _StatusStep(title: 'Payment Complete', done: request.paymentCompleted, isLast: true),
+                      ],
                       const SizedBox(height: 16),
                       _buildAction(request, quote),
                     ],
@@ -249,8 +272,6 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
     }
 
     if (request.serviceCompleted) {
-      // Waiting for the CLIENT to pay — the mechanic can only display the
-      // QR, never mark this complete themselves.
       final amount = quote == null ? 0.0 : parsePesoAmount(quote.price);
       final qrData = buildPaymentQrData(
         requestId: request.id,
@@ -312,30 +333,47 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
       );
     }
 
-    if (!request.hasClientCoordinates) {
-      return SizedBox(
-        width: double.infinity,
-        child: OutlinedButton(
-          onPressed: () => _confirmArrivalManually(request),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.textDark,
-            side: const BorderSide(color: AppColors.borderGrey),
-            minimumSize: const Size(double.infinity, 46),
-            shape: const StadiumBorder(),
+    if (request.navigating) {
+      if (!request.hasClientCoordinates) {
+        return SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: () => _confirmArrivalManually(request),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.textDark,
+              side: const BorderSide(color: AppColors.borderGrey),
+              minimumSize: const Size(double.infinity, 46),
+              shape: const StadiumBorder(),
+            ),
+            child: const Text('Confirm Arrival'),
           ),
-          child: const Text('Confirm Arrival'),
+        );
+      }
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
+        child: const Text(
+          'Tracking your location — En Route and Arrived will be detected automatically as you travel.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: AppColors.textGrey, fontSize: 12),
         ),
       );
     }
 
-    return Container(
+    // Not navigating yet — the mechanic hasn't left.
+    return SizedBox(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
-      child: const Text(
-        'Tracking your location — En Route and Arrived will be detected automatically as you travel.',
-        textAlign: TextAlign.center,
-        style: TextStyle(color: AppColors.textGrey, fontSize: 12),
+      child: ElevatedButton.icon(
+        onPressed: () => _beginNavigating(request),
+        icon: const Icon(Icons.navigation_outlined, size: 18, color: AppColors.white),
+        label: const Text('Navigate'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.green,
+          foregroundColor: AppColors.white,
+          minimumSize: const Size(double.infinity, 46),
+          shape: const StadiumBorder(),
+        ),
       ),
     );
   }

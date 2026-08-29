@@ -91,7 +91,7 @@ class _JobsScreenState extends State<JobsScreen> {
     );
   }
 
-  void _acceptEmergency(HelpRequest request) {
+  Future<void> _acceptEmergency(HelpRequest request) async {
     if (!MechanicAccountStore.instance.canPerformJobActions) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Your account must be approved before you can accept jobs.')),
@@ -107,6 +107,31 @@ class _JobsScreenState extends State<JobsScreen> {
       );
       return;
     }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: AppColors.primary),
+            SizedBox(width: 8),
+            Expanded(child: Text('Emergency Job')),
+          ],
+        ),
+        content: const Text(
+          'This is an emergency request. Once accepted, you must head to the client\'s location right away — there\'s no time to spare. Are you ready to respond ASAP?',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Not Now')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Accept & Go ASAP'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
 
     final won = store.mechanicAcceptEmergency(
       request.id,
@@ -592,7 +617,7 @@ class _EmergencyTab extends StatelessWidget {
                 TextSpan(
                   text: blocked
                       ? 'Finish your current emergency job before accepting another one.'
-                      : 'Emergencies are first come, first served — tap Accept fast, there\'s no quote comparison. You can only have one active at a time.',
+                      : 'Emergencies are first come, first served — once accepted there\'s no backing out, you\'ll need to respond ASAP.',
                   style: const TextStyle(color: AppColors.primary),
                 ),
               ],
@@ -719,35 +744,52 @@ class _ActiveJobCard extends StatelessWidget {
             ),
             _DeadlineRow(request: request),
             const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: onOpen,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.green,
-                      foregroundColor: AppColors.white,
-                      shape: const StadiumBorder(),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+            // Emergency jobs have no Cancel — once accepted, the mechanic
+            // must respond, no backing out (see the accept-time warning
+            // dialog in _JobsScreenState._acceptEmergency).
+            request.isEmergency
+                ? SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: onOpen,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.green,
+                        foregroundColor: AppColors.white,
+                        shape: const StadiumBorder(),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Navigate'),
                     ),
-                    child: const Text('Navigate'),
+                  )
+                : Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: onOpen,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.green,
+                            foregroundColor: AppColors.white,
+                            shape: const StadiumBorder(),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: const Text('Navigate'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: onCancel,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: AppColors.white,
+                            shape: const StadiumBorder(),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: onCancel,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.white,
-                      shape: const StadiumBorder(),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: const Text('Cancel'),
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
       ),
