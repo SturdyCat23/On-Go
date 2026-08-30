@@ -1,18 +1,30 @@
 import 'package:flutter/foundation.dart';
 
+enum ClientAccountMode { none, demo, registered }
+
 /// Tracks the client's account this session — profile info, photo, and
-/// password. There's no backend yet, so this is intentionally simple and
-/// in-memory, same pattern as every other store in this app
-/// (QuoteNotificationStore, ReviewStore, etc.). Once real auth exists, this
-/// whole file goes away.
+/// password. Mirrors MechanicAccountStore's demo/registered pattern: "client"
+/// on Sign In drops straight into a throwaway Demo Client identity with no
+/// friction, and registering later (Welcome → Register as Client) upgrades
+/// that same session into a real account instead of requiring a fresh
+/// sign-in. There's no backend yet, so this is intentionally simple and
+/// in-memory, same pattern as every other store in this app.
 class ClientAccountStore extends ChangeNotifier {
   ClientAccountStore._internal();
   static final ClientAccountStore instance = ClientAccountStore._internal();
 
   static const Duration photoChangeCooldown = Duration(days: 30);
 
-  bool _hasAccount = false;
-  bool get hasAccount => _hasAccount;
+  ClientAccountMode mode = ClientAccountMode.none;
+
+  bool get isDemo => mode == ClientAccountMode.demo;
+  bool get isRegistered => mode == ClientAccountMode.registered;
+
+  /// True once a real client account has been registered this session —
+  /// checked by SignInScreen the same way MechanicAccountStore.hasAccount
+  /// is, so "client" only falls back to demo mode when nothing real exists
+  /// yet, and re-signs into the real account otherwise.
+  bool get hasAccount => isRegistered;
 
   String firstName = '';
   String lastName = '';
@@ -28,6 +40,20 @@ class ClientAccountStore extends ChangeNotifier {
 
   String get name => '$firstName $lastName'.trim();
 
+  void enterDemoMode() {
+    mode = ClientAccountMode.demo;
+    firstName = 'Demo';
+    lastName = 'Client';
+    email = '';
+    address = '';
+    phone = '';
+    _password = '';
+    photoPath = null;
+    photoIsNetwork = false;
+    photoLastChangedAt = null;
+    notifyListeners();
+  }
+
   void registerAccount({
     required String firstName,
     required String lastName,
@@ -38,7 +64,7 @@ class ClientAccountStore extends ChangeNotifier {
     String? photoPath,
     bool photoIsNetwork = false,
   }) {
-    _hasAccount = true;
+    mode = ClientAccountMode.registered;
     this.firstName = firstName;
     this.lastName = lastName;
     this.email = email;
@@ -82,4 +108,18 @@ class ClientAccountStore extends ChangeNotifier {
   }
 
   bool verifyPassword(String password) => _password == password;
+
+  void clear() {
+    mode = ClientAccountMode.none;
+    firstName = '';
+    lastName = '';
+    email = '';
+    address = '';
+    phone = '';
+    _password = '';
+    photoPath = null;
+    photoIsNetwork = false;
+    photoLastChangedAt = null;
+    notifyListeners();
+  }
 }

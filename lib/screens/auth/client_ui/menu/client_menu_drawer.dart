@@ -57,7 +57,7 @@ class _ClientMenuDrawerState extends State<ClientMenuDrawer> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(displayName, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.white, fontWeight: FontWeight.w700)),
-                    Text('Client', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70)),
+                    Text(_store.isDemo ? 'Demo Mode' : 'Client', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70)),
                   ],
                 ),
               ],

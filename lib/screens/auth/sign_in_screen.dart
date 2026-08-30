@@ -38,29 +38,6 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
-  Future<void> _showNoClientAccountDialog() async {
-    final register = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('No Client Account Found'),
-        content: const Text(
-          'There\'s no client account yet on this device. Create one first, then you can sign in.',
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Register Now'),
-          ),
-        ],
-      ),
-    );
-    if (register == true && mounted) {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const WelcomeScreen()));
-    }
-  }
-
   void _handleSignIn() {
     final username = _usernameCtrl.text.trim().toLowerCase();
 
@@ -75,9 +52,12 @@ class _SignInScreenState extends State<SignInScreen> {
     }
 
     if (username == 'client' || username == 'demo-client') {
+      // If a real client account was already registered this session, sign
+      // into THAT account instead of overwriting it with a throwaway "Demo
+      // Client" identity. Only fall back to true demo mode when nothing's
+      // been registered yet — mirrors the mechanic branch below exactly.
       if (!ClientAccountStore.instance.hasAccount) {
-        _showNoClientAccountDialog();
-        return;
+        ClientAccountStore.instance.enterDemoMode();
       }
       _navigateToHome(const ClientHomeScreen());
       return;
