@@ -4,6 +4,8 @@ import '../../../../data/review_store.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_widgets.dart';
 
+enum _ReviewFilter { all, rating, mostRelevant }
+
 class MechanicProfileViewScreen extends StatefulWidget {
   final String name;
   const MechanicProfileViewScreen({super.key, required this.name});
@@ -14,6 +16,7 @@ class MechanicProfileViewScreen extends StatefulWidget {
 
 class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
   final _store = ReviewStore.instance;
+  _ReviewFilter _filter = _ReviewFilter.all;
 
   @override
   void initState() {
@@ -29,6 +32,21 @@ class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
 
   void _onChange() => setState(() {});
 
+  List<MechanicReview> _applyFilter(List<MechanicReview> reviews) {
+    final list = [...reviews];
+    switch (_filter) {
+      case _ReviewFilter.rating:
+        list.sort((a, b) => b.rating.compareTo(a.rating));
+        break;
+      case _ReviewFilter.mostRelevant:
+        list.sort((a, b) => b.helpfulCount.compareTo(a.helpfulCount));
+        break;
+      case _ReviewFilter.all:
+        break; // reviewsFor already returns most-recent-first
+    }
+    return list;
+  }
+
   String _timeAgo(DateTime date) {
     final diff = DateTime.now().difference(date);
     if (diff.inDays >= 365) {
@@ -41,6 +59,36 @@ class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
     }
     if (diff.inDays >= 1) return '${diff.inDays} day${diff.inDays == 1 ? '' : 's'} ago';
     return 'today';
+  }
+
+  void _viewCertificate(String label) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(label),
+        content: Container(
+          height: 220,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.verified_outlined, size: 48, color: AppColors.textGrey),
+                SizedBox(height: 8),
+                Text('Certificate preview', style: TextStyle(color: AppColors.textGrey, fontSize: 12)),
+              ],
+            ),
+          ),
+        ), // Todo: wire up real certificate image/file preview once documents are hosted
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+        ],
+      ),
+    );
   }
 
   /// CLIENT-ONLY write path — the dialog itself is only reachable from this
@@ -101,7 +149,7 @@ class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final reviews = _store.reviewsFor(widget.name);
+    final reviews = _applyFilter(_store.reviewsFor(widget.name));
     final average = _store.averageRatingFor(widget.name);
     final distribution = _store.ratingDistributionFor(widget.name);
     final alreadyReviewed = _store.reviewByCurrentClientFor(widget.name) != null;
@@ -152,9 +200,9 @@ class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
           const SizedBox(height: 20),
           const Text('Certifications', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
           const SizedBox(height: 10),
-          const _CertificationRow(label: 'NC II'),
+          _CertificationRow(label: 'NC II', onView: () => _viewCertificate('NC II')),
           const SizedBox(height: 6),
-          const _CertificationRow(label: 'Related Certificates'),
+          _CertificationRow(label: 'Related Certificates', onView: () => _viewCertificate('Related Certificates')),
           const SizedBox(height: 20),
           const Text('Review Summary', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
           const SizedBox(height: 10),
@@ -173,7 +221,25 @@ class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text('Reviews', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Reviews', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              _FilterChip(label: 'All', selected: _filter == _ReviewFilter.all, onTap: () => setState(() => _filter = _ReviewFilter.all)),
+              const SizedBox(width: 6),
+              _FilterChip(label: 'Rating', selected: _filter == _ReviewFilter.rating, onTap: () => setState(() => _filter = _ReviewFilter.rating)),
+              const SizedBox(width: 6),
+              _FilterChip(
+                  label: 'Most Relevant',
+                  selected: _filter == _ReviewFilter.mostRelevant,
+                  onTap: () => setState(() => _filter = _ReviewFilter.mostRelevant)),
+            ],
+          ),
           const SizedBox(height: 12),
           if (reviews.isEmpty)
             const _ReviewCard(
@@ -236,7 +302,8 @@ class _StatBox extends StatelessWidget {
 
 class _CertificationRow extends StatelessWidget {
   final String label;
-  const _CertificationRow({required this.label});
+  final VoidCallback onView;
+  const _CertificationRow({required this.label, required this.onView});
 
   @override
   Widget build(BuildContext context) {
@@ -246,11 +313,42 @@ class _CertificationRow extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(child: Text(label, style: const TextStyle(fontSize: 13))),
         TextButton(
-          onPressed: () {},
+          onPressed: onView,
           style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
           child: const Text('View', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600)),
         ),
       ],
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _FilterChip({required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.white,
+          border: Border.all(color: selected ? AppColors.primary : AppColors.borderGrey),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: selected ? AppColors.primary : AppColors.textGrey,
+          ),
+        ),
+      ),
     );
   }
 }

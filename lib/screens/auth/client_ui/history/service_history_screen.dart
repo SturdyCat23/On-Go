@@ -1,39 +1,103 @@
 import 'package:flutter/material.dart';
+import '../../../../data/quote_store.dart';
+import '../../../../data/review_store.dart';
 import '../../../../theme/app_theme.dart';
 import '../profile/mechanic_profile_view_screen.dart';
 
-class ServiceHistoryScreen extends StatelessWidget {
+class ServiceHistoryScreen extends StatefulWidget {
   const ServiceHistoryScreen({super.key});
 
-  static const _history = [
-    {'name': 'Juan Dela Cruz', 'location': 'Puerto Princesa City', 'date': 'May 24, 2026', 'price': '₱200', 'rating': 4},
-    {'name': 'Pedro Santos', 'location': 'Puerto Princesa City', 'date': 'Apr 02, 2026', 'price': '₱350', 'rating': 5},
-    {'name': 'Maria Garcia', 'location': 'Puerto Princesa City', 'date': 'Feb 18, 2026', 'price': '₱150', 'rating': 4},
-  ];
+  @override
+  State<ServiceHistoryScreen> createState() => _ServiceHistoryScreenState();
+}
+
+class _ServiceHistoryScreenState extends State<ServiceHistoryScreen> {
+  final _store = QuoteNotificationStore.instance;
+  final _reviews = ReviewStore.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _store.addListener(_onChange);
+    _reviews.addListener(_onChange);
+  }
+
+  @override
+  void dispose() {
+    _store.removeListener(_onChange);
+    _reviews.removeListener(_onChange);
+    super.dispose();
+  }
+
+  void _onChange() => setState(() {});
+
+  String _formatDate(DateTime? d) {
+    if (d == null) return '';
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return '${months[d.month - 1]} ${d.day.toString().padLeft(2, '0')}, ${d.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
+    final completed = _store.myCompletedJobs;
+
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
         const Text('Service History', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
         const SizedBox(height: 16),
-        ..._history.map((item) => _HistoryCard(item: item)),
+        if (completed.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(
+              child: Text(
+                'Completed jobs will show up here once you\'ve paid a mechanic.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.textGrey, fontSize: 13),
+              ),
+            ),
+          )
+        else
+          ...completed.map((request) {
+            final quote = _store.acceptedQuoteFor(request.id);
+            final mechanicName = quote?.mechanicName ?? 'Mechanic';
+            final myReview = _reviews.reviewByCurrentClientFor(mechanicName);
+            return _HistoryCard(
+              mechanicName: mechanicName,
+              location: request.location,
+              date: _formatDate(request.paymentCompletedAt ?? request.completedAt),
+              price: quote?.price ?? '—',
+              rating: myReview?.rating,
+            );
+          }),
       ],
     );
   }
 }
 
 class _HistoryCard extends StatelessWidget {
-  final Map<String, dynamic> item;
-  const _HistoryCard({required this.item});
+  final String mechanicName;
+  final String location;
+  final String date;
+  final String price;
+  final int? rating;
+
+  const _HistoryCard({
+    required this.mechanicName,
+    required this.location,
+    required this.date,
+    required this.price,
+    required this.rating,
+  });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () => Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => MechanicProfileViewScreen(name: item['name'] as String)),
+        MaterialPageRoute(builder: (_) => MechanicProfileViewScreen(name: mechanicName)),
       ),
       borderRadius: BorderRadius.circular(16),
       child: Container(
@@ -50,11 +114,11 @@ class _HistoryCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(item['name'] as String, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                  Text(mechanicName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                   const SizedBox(height: 2),
-                  Text(item['location'] as String, style: const TextStyle(fontSize: 13, color: AppColors.textDark)),
+                  Text(location, style: const TextStyle(fontSize: 13, color: AppColors.textDark)),
                   const SizedBox(height: 2),
-                  Text(item['date'] as String, style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+                  Text(date, style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -71,16 +135,18 @@ class _HistoryCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(item['price'] as String,
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.green)),
+                Text(price, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.green)),
                 const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const Icon(Icons.star, size: 14, color: AppColors.yellow),
-                    const SizedBox(width: 2),
-                    Text('${item['rating']}', style: const TextStyle(fontSize: 13)),
-                  ],
-                ),
+                if (rating != null)
+                  Row(
+                    children: [
+                      const Icon(Icons.star, size: 14, color: AppColors.yellow),
+                      const SizedBox(width: 2),
+                      Text('$rating', style: const TextStyle(fontSize: 13)),
+                    ],
+                  )
+                else
+                  const Text('Rate this service', style: TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600)),
               ],
             ),
           ],

@@ -184,9 +184,21 @@ class QuoteNotificationStore extends ChangeNotifier {
   List<HelpRequest> get myActiveJobs =>
       _requests.where((r) => r.status == RequestStatus.matched).toList();
 
+  /// Every one of this client's requests that has been fully paid off — the
+  /// data behind ServiceHistoryScreen. Same single-client-demo caveat as
+  /// [myActiveJobs]: this is simply every completed request, most recently
+  /// paid first.
+  List<HelpRequest> get myCompletedJobs {
+    final list = _requests.where((r) => r.status == RequestStatus.completed).toList();
+    list.sort((a, b) =>
+        (b.paymentCompletedAt ?? b.completedAt ?? b.createdAt).compareTo(a.paymentCompletedAt ?? a.completedAt ?? a.createdAt));
+    return list;
+  }
+
   /// Compatibility shim: the single most recently submitted unfinished
   /// request. Most screens now work off specific request ids (via
-  /// [requestFor]) or [myPendingRequests]/[myActiveJobs] instead.
+  /// [requestFor]) or [myPendingRequests]/[myActiveJobs]/[myCompletedJobs]
+  /// instead.
   HelpRequest? get activeRequest {
     final unfinished = _requests.where((r) => r.status != RequestStatus.completed).toList();
     if (unfinished.isNotEmpty) {

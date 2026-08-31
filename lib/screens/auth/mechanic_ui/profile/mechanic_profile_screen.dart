@@ -6,6 +6,8 @@ import '../../../../data/review_store.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/common_widgets.dart';
 
+enum _ReviewFilter { all, rating, mostRelevant }
+
 class MechanicProfileScreen extends StatefulWidget {
   const MechanicProfileScreen({super.key});
 
@@ -16,6 +18,7 @@ class MechanicProfileScreen extends StatefulWidget {
 class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
   final _reviews = ReviewStore.instance;
   final _account = MechanicAccountStore.instance;
+  _ReviewFilter _filter = _ReviewFilter.all;
 
   @override
   void initState() {
@@ -47,10 +50,55 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
     }
   }
 
+  List<MechanicReview> _applyFilter(List<MechanicReview> reviews) {
+    final list = [...reviews];
+    switch (_filter) {
+      case _ReviewFilter.rating:
+        list.sort((a, b) => b.rating.compareTo(a.rating));
+        break;
+      case _ReviewFilter.mostRelevant:
+        list.sort((a, b) => b.helpfulCount.compareTo(a.helpfulCount));
+        break;
+      case _ReviewFilter.all:
+        break; // reviewsFor already returns most-recent-first
+    }
+    return list;
+  }
+
+  void _viewCertificate(String label) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(label),
+        content: Container(
+          height: 220,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.verified_outlined, size: 48, color: AppColors.textGrey),
+                SizedBox(height: 8),
+                Text('Certificate preview', style: TextStyle(color: AppColors.textGrey, fontSize: 12)),
+              ],
+            ),
+          ),
+        ), // Todo: wire up real certificate image/file preview once documents are hosted
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final myName = _account.name.isEmpty ? 'Mechanic' : _account.name;
-    final reviews = _reviews.reviewsFor(myName);
+    final reviews = _applyFilter(_reviews.reviewsFor(myName));
     final average = _reviews.averageRatingFor(myName);
     final viewerId = AppSession.instance.currentViewerName;
     final approvalNote = _approvalNote;
@@ -147,9 +195,9 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
             children: [
               const Text('Certifications', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
               const SizedBox(height: 12),
-              const _CertificationRow(label: 'NC II'),
+              _CertificationRow(label: 'NC II', onView: () => _viewCertificate('NC II')),
               const SizedBox(height: 6),
-              const _CertificationRow(label: 'Related Certificates'),
+              _CertificationRow(label: 'Related Certificates', onView: () => _viewCertificate('Related Certificates')),
             ],
           ),
         ),
@@ -177,13 +225,16 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
               const SizedBox(height: 8),
               const Divider(height: 1),
               const SizedBox(height: 12),
-              const Row(
+              Row(
                 children: [
-                  _FilterChip(label: 'All', selected: true),
-                  SizedBox(width: 6),
-                  _FilterChip(label: 'Rating', selected: false),
-                  SizedBox(width: 6),
-                  _FilterChip(label: 'Most Relevant', selected: false),
+                  _FilterChip(label: 'All', selected: _filter == _ReviewFilter.all, onTap: () => setState(() => _filter = _ReviewFilter.all)),
+                  const SizedBox(width: 6),
+                  _FilterChip(label: 'Rating', selected: _filter == _ReviewFilter.rating, onTap: () => setState(() => _filter = _ReviewFilter.rating)),
+                  const SizedBox(width: 6),
+                  _FilterChip(
+                      label: 'Most Relevant',
+                      selected: _filter == _ReviewFilter.mostRelevant,
+                      onTap: () => setState(() => _filter = _ReviewFilter.mostRelevant)),
                 ],
               ),
               const SizedBox(height: 16),
@@ -260,7 +311,8 @@ class _StatBox extends StatelessWidget {
 
 class _CertificationRow extends StatelessWidget {
   final String label;
-  const _CertificationRow({required this.label});
+  final VoidCallback onView;
+  const _CertificationRow({required this.label, required this.onView});
 
   @override
   Widget build(BuildContext context) {
@@ -270,7 +322,7 @@ class _CertificationRow extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(child: Text(label, style: const TextStyle(fontSize: 13))),
         TextButton(
-          onPressed: () {},
+          onPressed: onView,
           style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
           child: const Text('View', style: TextStyle(color: AppColors.blue, fontSize: 12, fontWeight: FontWeight.w600)),
         ),
@@ -282,23 +334,28 @@ class _CertificationRow extends StatelessWidget {
 class _FilterChip extends StatelessWidget {
   final String label;
   final bool selected;
-  const _FilterChip({required this.label, required this.selected});
+  final VoidCallback onTap;
+  const _FilterChip({required this.label, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: selected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.white,
-        border: Border.all(color: selected ? AppColors.primary : AppColors.borderGrey),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: selected ? AppColors.primary : AppColors.textGrey,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.white,
+          border: Border.all(color: selected ? AppColors.primary : AppColors.borderGrey),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: selected ? AppColors.primary : AppColors.textGrey,
+          ),
         ),
       ),
     );
