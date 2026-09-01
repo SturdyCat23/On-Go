@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'app_session.dart';
+import 'client_account_store.dart';
 
 class MechanicReview {
   final String id;
@@ -42,8 +43,14 @@ class ReviewStore extends ChangeNotifier {
   }
   static final ReviewStore instance = ReviewStore._internal();
 
-  // Todo: replace with the logged-in client's real name/id once auth exists.
-  static const currentClientName = 'Uncle Bob';
+  /// The single source of truth for "who is the client" when writing/owning
+  /// a review — pulled live from ClientAccountStore so demo/registered
+  /// clients are attributed correctly instead of a hardcoded placeholder
+  /// name that never matched who was actually signed in.
+  static String get currentClientName {
+    final name = ClientAccountStore.instance.name;
+    return name.isEmpty ? 'Client' : name;
+  }
 
   final List<MechanicReview> _reviews = [];
 
@@ -124,16 +131,9 @@ class ReviewStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _seed() {
-    _reviews.add(MechanicReview(
-      id: 'rev_seed_001',
-      clientName: 'Uncle Bob',
-      mechanicName: 'Juan Dela Cruz',
-      rating: 4,
-      comment:
-          'High quality products and personnel are very accommodating! A fashion store for all male and female moto drivers.',
-      date: DateTime.now().subtract(const Duration(days: 365 * 3)),
-      likedBy: Set<String>.from(List.generate(100, (i) => 'seed_viewer_$i')),
-    ));
+    void _seed() {
+    // Intentionally empty — reviews only ever come from real clients via
+    // submitReview now. A hardcoded seed review here was showing up as a
+    // false "already reviewed" state whenever viewed from a fresh session.
   }
 }

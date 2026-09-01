@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../../../data/quote_store.dart';
+import '../../../../data/review_store.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_widgets.dart';
+import '../profile/mechanic_profile_screen.dart';
 
 enum _RankFilter { rank, ratings, reviews }
 
@@ -10,12 +13,6 @@ class _Leader {
   final double rating;
   final int reviewCount;
   const _Leader({required this.name, required this.tier, required this.rating, required this.reviewCount});
-
-  int get tierValue => switch (tier) {
-        'Platinum' => 3,
-        'Gold' => 2,
-        _ => 1,
-      };
 }
 
 class MechanicLeaderboardScreen extends StatefulWidget {
@@ -26,24 +23,48 @@ class MechanicLeaderboardScreen extends StatefulWidget {
 }
 
 class _MechanicLeaderboardScreenState extends State<MechanicLeaderboardScreen> {
-  static const _you = 'Juan Dela Cruz';
-
-  static const _leaders = [
-    _Leader(name: 'Pedro Santos', tier: 'Platinum', rating: 5.0, reviewCount: 8000),
-    _Leader(name: _you, tier: 'Gold', rating: 4.8, reviewCount: 6000),
-    _Leader(name: 'Maria Garcia', tier: 'Silver', rating: 4.3, reviewCount: 10000),
-  ];
+  final _reviews = ReviewStore.instance;
 
   _RankFilter _filter = _RankFilter.rank;
   bool _ascending = false;
   bool _filterOpen = false;
   String _query = '';
 
-  List<_Leader> get _sorted {
-    final list = _leaders.where((l) => l.name.toLowerCase().contains(_query.toLowerCase())).toList();
+  @override
+  void initState() {
+    super.initState();
+    _reviews.addListener(_onChange);
+  }
+
+  @override
+  void dispose() {
+    _reviews.removeListener(_onChange);
+    super.dispose();
+  }
+
+  void _onChange() => setState(() {});
+
+  // Todo: there's no multi-mechanic backend yet, so this is always exactly
+  // one real entry — the current mechanic account. When that changes, this
+  // is the only place that needs to grow into a real list.
+  List<_Leader> _buildLeaders() {
+    final myName = QuoteNotificationStore.currentMechanicName;
+    final myReviews = _reviews.reviewsFor(myName);
+    return [
+      _Leader(
+        name: myName,
+        tier: 'Gold',
+        rating: myReviews.isEmpty ? 0.0 : _reviews.averageRatingFor(myName),
+        reviewCount: myReviews.length,
+      ),
+    ];
+  }
+
+  List<_Leader> _applyFilters(List<_Leader> leaders) {
+    final list = leaders.where((l) => l.name.toLowerCase().contains(_query.toLowerCase())).toList();
     list.sort((a, b) {
       final cmp = switch (_filter) {
-        _RankFilter.rank => a.tierValue.compareTo(b.tierValue),
+        _RankFilter.rank => a.rating.compareTo(b.rating), // tier is uniform with one entry; fall back to rating
         _RankFilter.ratings => a.rating.compareTo(b.rating),
         _RankFilter.reviews => a.reviewCount.compareTo(b.reviewCount),
       };
@@ -88,6 +109,12 @@ class _MechanicLeaderboardScreenState extends State<MechanicLeaderboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final myName = QuoteNotificationStore.currentMechanicName;
+    // Computed ONCE per build — see the class doc comment on the file above
+    // this widget for why calling this a second time inside the list below
+    // is exactly what caused the rank number to always show 0.
+    final sorted = _applyFilters(_buildLeaders());
+
     return Stack(
       children: [
         ListView(
@@ -116,9 +143,17 @@ class _MechanicLeaderboardScreenState extends State<MechanicLeaderboardScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            ..._sorted.map((leader) {
-              final isYou = leader.name == _you;
-              return Container(
+                        ...sorted.asMap().entries.map((entry) {
+              final rank = entry.key + 1;
+              final leader = entry.value;
+              final isYou = leader.name == myName;
+              return InkWell(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MechanicProfileScreen()),
+                ),
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
@@ -130,7 +165,7 @@ class _MechanicLeaderboardScreenState extends State<MechanicLeaderboardScreen> {
                   children: [
                     SizedBox(
                       width: 24,
-                      child: Text('${_sorted.indexOf(leader) + 1}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                      child: Text('$rank', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                     ),
                     const SizedBox(width: 8),
                     const CircleAvatar(
@@ -156,6 +191,7 @@ class _MechanicLeaderboardScreenState extends State<MechanicLeaderboardScreen> {
                     ),
                     _trailingFor(leader),
                   ],
+                ),
                 ),
               );
             }),

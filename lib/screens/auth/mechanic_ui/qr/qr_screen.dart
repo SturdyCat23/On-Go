@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import '../../../../data/quote_store.dart';
 import '../../../../theme/app_theme.dart';
-import 'package:on_go/services/local_data.dart';
 
 class QrScreen extends StatefulWidget {
   const QrScreen({super.key});
@@ -11,98 +12,92 @@ class QrScreen extends StatefulWidget {
 }
 
 class _QrScreenState extends State<QrScreen> {
-  late final MobileScannerController _controller;
+  bool _scanning = false;
+  MobileScannerController? _controller;
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = MobileScannerController();
+  void _openScanner() {
+    setState(() {
+      _scanning = true;
+      _controller = MobileScannerController();
+    });
+  }
+
+  void _closeScanner() {
+    _controller?.dispose();
+    setState(() {
+      _scanning = false;
+      _controller = null;
+    });
+  }
+
+  void _onDetect(BarcodeCapture capture) {
+    final barcode = capture.barcodes.isNotEmpty ? capture.barcodes.first : null;
+    final raw = barcode?.rawValue ?? barcode?.displayValue;
+    if (raw == null) return;
+    _closeScanner();
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Code Scanned'),
+        content: Text('Scanned data:\n$raw'),
+        // Todo: hand this off to whatever real cash-out/transfer flow you
+        // integrate — for now this just confirms the scan worked.
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Done')),
+        ],
+      ),
+    );
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        MobileScanner(
-          controller: _controller,
-          onDetect: (capture) {
-            final barcode = capture.barcodes.isNotEmpty ? capture.barcodes.first : null;
-            final String? raw = barcode?.rawValue ?? barcode?.displayValue;
-            if (raw == null) return;
-            final scanned = raw;
-
-            // showDialog is async; ensure we don't use context after dispose
-            showDialog<bool>(
-              context: context,
-              builder: (_) => AlertDialog(
-                title: const Text('QR Scanned'),
-                content: Text('Scanned data:\n$scanned'),
-                actions: [
-                  TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Close')),
-                  TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Mark Completed')),
-                ],
-              ),
-              );
-              final messenger = ScaffoldMessenger.of(context);
-              showDialog<bool>(
-              context: context,
-              builder: (_) => AlertDialog(
-                title: const Text('QR Scanned'),
-                content: Text('Scanned data:\n$scanned'),
-                actions: [
-                  TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Close')),
-                  TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Mark Completed')),
-                ],
-              ),
-              ).then((proceed) async {
-                if (!mounted) return;
-                if (proceed == true) {
-                  await LocalData.addCompletedJobFromQr(scanned);
-                  if (!mounted) return;
-                  messenger.showSnackBar(const SnackBar(content: Text('Job added and balance updated (simulated)')));
-                }
-              });
-          },
-        ),
-        Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 220,
-                height: 220,
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.primary, width: 2),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(Icons.qr_code_2, size: 120, color: AppColors.primary),
-              ),
-              const SizedBox(height: 20),
-              const Text("Scan a client's QR code",
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 6),
-              const Text(
-                'Use this to verify job completion or receive payment.',
-                style: TextStyle(fontSize: 12, color: AppColors.textGrey),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.qr_code_scanner, size: 18),
-                label: const Text('Open Scanner'),
-                style: ElevatedButton.styleFrom(minimumSize: const Size(200, 48)),
-              ),
-            ],
+    if (_scanning) {
+      return Stack(
+        children: [
+          MobileScanner(controller: _controller, onDetect: _onDetect),
+          Positioned(
+            top: 16,
+            left: 16,
+            child: CircleAvatar(
+              backgroundColor: Colors.black54,
+              child: IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: _closeScanner),
+            ),
           ),
-        ),
-      ],
+        ],
+      );
+    }
+
+    final mechanicName = QuoteNotificationStore.currentMechanicName;
+    final qrData = buildMechanicAccountQrData(mechanicName);
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.primary, width: 2),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: QrImageView(data: qrData, size: 200),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: _openScanner,
+            icon: const Icon(Icons.qr_code_scanner, size: 18),
+            label: const Text('Open Scanner'),
+            style: ElevatedButton.styleFrom(minimumSize: const Size(200, 48)),
+          ),
+        ],
+      ),
     );
   }
 }

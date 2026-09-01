@@ -5,6 +5,7 @@ import '../../../../data/moderator_data.dart';
 import '../../../../data/review_store.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/common_widgets.dart';
+import '../../../../data/quote_store.dart';
 
 enum _ReviewFilter { all, rating, mostRelevant }
 
@@ -176,12 +177,14 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+                            const SizedBox(height: 16),
               Row(
-                children: const [
-                  _StatBox(value: '536', label: 'Jobs Done'),
-                  _StatBox(value: '4.8', label: 'Ratings'),
-                  _StatBox(value: '9yr', label: 'Experience'),
+                children: [
+                  _StatBox(value: '${QuoteNotificationStore.instance.completedJobsFor(myName).length}', label: 'Jobs Done'),
+                  _StatBox(value: reviews.isEmpty ? '—' : average.toStringAsFixed(1), label: 'Ratings'),
+                  // Todo: no experience-tracking data source yet — left as
+                  // a static placeholder per instruction, not wired up.
+                  const _StatBox(value: '9yr', label: 'Experience'),
                 ],
               ),
             ],

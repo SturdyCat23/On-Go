@@ -3,6 +3,7 @@ import '../../../../data/app_session.dart';
 import '../../../../data/review_store.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_widgets.dart';
+import '../../../../data/quote_store.dart';
 
 enum _ReviewFilter { all, rating, mostRelevant }
 
@@ -189,14 +190,16 @@ class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: const [
-              _StatBox(value: '536', label: 'Jobs Done'),
-              _StatBox(value: '4.8', label: 'Ratings'),
-              _StatBox(value: '9yr', label: 'Experience'),
-            ],
-          ),
+                        const SizedBox(height: 16),
+              Row(
+                children: [
+                  _StatBox(value: '${QuoteNotificationStore.instance.completedJobsFor(widget.name).length}', label: 'Jobs Done'),
+                  _StatBox(value: reviews.isEmpty ? '—' : average.toStringAsFixed(1), label: 'Ratings'),
+                  // Todo: no experience-tracking data source yet — left as
+                  // a static placeholder, not wired up.
+                  const _StatBox(value: '9yr', label: 'Experience'),
+                ],
+              ),
           const SizedBox(height: 20),
           const Text('Certifications', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
           const SizedBox(height: 10),
@@ -207,9 +210,9 @@ class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
           const Text('Review Summary', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
           const SizedBox(height: 10),
           RatingSummaryBars(
-            average: reviews.isEmpty ? 4.8 : average,
-            distribution: reviews.isEmpty ? const {5: 0.8, 4: 0.15, 3: 0.05, 2: 0, 1: 0} : distribution,
-            reviewCount: reviews.isEmpty ? 1 : reviews.length,
+            average: average,
+            distribution: distribution,
+            reviewCount: reviews.length,
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -241,17 +244,10 @@ class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          if (reviews.isEmpty)
-            const _ReviewCard(
-              reviewId: 'seed_placeholder',
-              name: 'Uncle Bob',
-              timeAgo: '3 years ago',
-              rating: 4,
-              comment:
-                  'High quality products and personnel are very accommodating! A fashion store for all male and female moto drivers.',
-              helpfulCount: 100,
-              likedByMe: false,
-              onToggleLike: null,
+                    if (reviews.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Text('No reviews yet.', style: TextStyle(color: AppColors.textGrey, fontSize: 13)),
             )
           else
             ...reviews.map((r) => Padding(

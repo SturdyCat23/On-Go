@@ -15,8 +15,7 @@ class _EarningScreenState extends State<EarningScreen> {
   bool _showBalance = true;
   final _store = QuoteNotificationStore.instance;
 
-  static const _mechanicName = QuoteNotificationStore.currentMechanicName;
-  static const _topMechanics = ['Pedro Santos', 'Juan Dela Cruz', 'Maria Garcia'];
+  String get _mechanicName => QuoteNotificationStore.currentMechanicName;
 
   @override
   void initState() {
@@ -116,17 +115,23 @@ class _EarningScreenState extends State<EarningScreen> {
           children: [
             const Text('Top Mechanics', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
             TextButton(
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MechanicLeaderboardScreen())),
+              onPressed: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const MechanicLeaderboardScreen())),
               style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
-              child: const Text('View All', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600)),
+              child: const Text('View All',
+                  style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600)),
             ),
           ],
         ),
         const SizedBox(height: 12),
         AppCard(
           padding: const EdgeInsets.all(16),
+          // Todo: there's no multi-mechanic backend yet, so this is always
+          // just the current mechanic — same single-entry source as
+          // MechanicLeaderboardScreen. Capped at 5 for when that changes.
           child: Row(
-            children: _topMechanics
+            children: [_mechanicName]
+                .take(5)
                 .map((name) => Padding(
                       padding: const EdgeInsets.only(right: 12),
                       child: CircleAvatar(

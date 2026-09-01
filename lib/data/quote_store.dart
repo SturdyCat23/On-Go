@@ -41,7 +41,7 @@ double parsePesoAmount(String price) {
 
 /// The payload a mechanic's "Waiting for Client Payment" QR encodes, and the
 /// client's scanner decodes. Kept as a single shared format so both sides
-/// can never drift out of sync with each other.
+/// can never drift out of sync with each other. Tied to a specific job.
 class PaymentQrPayload {
   final String requestId;
   final String mechanicName;
@@ -62,6 +62,18 @@ PaymentQrPayload? parsePaymentQrData(String raw) {
   if (amount == null) return null;
   return PaymentQrPayload(requestId: parts[1], mechanicName: parts[2], amount: amount);
 }
+
+/// The mechanic's permanent, job-agnostic QR code — shown by default on the
+/// QR tab for cashing out via other payment apps. Deliberately NOT the same
+/// payload shape as [buildPaymentQrData]: that one is job-specific (carries
+/// a requestId + amount our own app checks against); this one just
+/// identifies the mechanic's account for third-party apps we don't control
+/// the format of. "One permanent QR" means one stable code per mechanic —
+/// it doesn't change between jobs — not that it's byte-identical to the
+/// per-job payment code.
+const _accountQrPrefix = 'ONGOACCOUNT';
+
+String buildMechanicAccountQrData(String mechanicName) => '$_accountQrPrefix|$mechanicName';
 
 /// The problem report a client uploads from NeedHelpScreen.
 class HelpRequest {
@@ -103,6 +115,12 @@ class HelpRequest {
   DateTime? workStartedAt;
   DateTime? serviceCompletedAt;
   DateTime? paymentCompletedAt;
+  /// When this request was actually matched to a mechanic — set by
+  /// [clientAcceptQuote] (Normal/Urgent) or [mechanicAcceptEmergency]
+  /// (Emergency). Distinct from [createdAt] (when the client first
+  /// submitted the problem) — this is what "Date Accepted" sorting on the
+  /// mechanic's Accepted tab actually sorts by.
+  DateTime? matchedAt;
 
   /// Points credited to the mechanic for this job — 5% of the paid amount,
   /// set exactly once by [QuoteNotificationStore.clientConfirmPayment].
@@ -156,8 +174,15 @@ class QuoteNotificationStore extends ChangeNotifier {
   QuoteNotificationStore._internal();
   static final QuoteNotificationStore instance = QuoteNotificationStore._internal();
 
-  // Todo: replace with real auth-derived identities once login exists.
-  static const currentMechanicName = 'You';
+  /// The single source of truth for "who is the mechanic" across the whole
+  /// app — quotes, accepted jobs, reviews, leaderboards, everything reads
+  /// this. Pulled live from MechanicAccountStore so demo/registered/renamed
+  /// mechanics all stay consistent everywhere, instead of some screens
+  /// showing "You" while others show the real account name.
+  static String get currentMechanicName {
+    final name = MechanicAccountStore.instance.name;
+    return name.isEmpty ? 'You' : name;
+  }
 
   final List<HelpRequest> _requests = [];
   final List<MechanicQuote> _allQuotes = [];
@@ -257,7 +282,7 @@ class QuoteNotificationStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  void clientAcceptQuote(String quoteId) {
+    void clientAcceptQuote(String quoteId) {
     final quote = quoteById(quoteId);
     if (quote == null) return;
     final req = requestFor(quote.requestId);
@@ -267,6 +292,7 @@ class QuoteNotificationStore extends ChangeNotifier {
       q.accepted = q.id == quoteId;
     }
     req.status = RequestStatus.matched;
+    req.matchedAt = DateTime.now();
     notifyListeners();
   }
 
@@ -384,6 +410,7 @@ class QuoteNotificationStore extends ChangeNotifier {
       accepted: true,
     ));
     req.status = RequestStatus.matched;
+    req.matchedAt = DateTime.now();
     _unseenCount++;
     notifyListeners();
     return true;

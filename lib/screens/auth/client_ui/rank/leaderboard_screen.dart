@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../../data/quote_store.dart';
+import '../../../../data/review_store.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_widgets.dart';
 import '../profile/mechanic_profile_view_screen.dart';
@@ -11,12 +13,6 @@ class _Leader {
   final double rating;
   final int reviewCount;
   const _Leader({required this.name, required this.tier, required this.rating, required this.reviewCount});
-
-  int get tierValue => switch (tier) {
-        'Platinum' => 3,
-        'Gold' => 2,
-        _ => 1,
-      };
 }
 
 class LeaderboardScreen extends StatefulWidget {
@@ -27,22 +23,47 @@ class LeaderboardScreen extends StatefulWidget {
 }
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
-  static const _leaders = [
-    _Leader(name: 'Pedro Santos', tier: 'Platinum', rating: 5.0, reviewCount: 8000),
-    _Leader(name: 'Juan Dela Cruz', tier: 'Gold', rating: 4.8, reviewCount: 6000),
-    _Leader(name: 'Maria Garcia', tier: 'Silver', rating: 4.3, reviewCount: 10000),
-  ];
+  final _reviews = ReviewStore.instance;
 
   _RankFilter _filter = _RankFilter.rank;
   bool _ascending = false;
   bool _filterOpen = false;
   String _query = '';
 
-  List<_Leader> get _sorted {
-    final list = _leaders.where((l) => l.name.toLowerCase().contains(_query.toLowerCase())).toList();
+  @override
+  void initState() {
+    super.initState();
+    _reviews.addListener(_onChange);
+  }
+
+  @override
+  void dispose() {
+    _reviews.removeListener(_onChange);
+    super.dispose();
+  }
+
+  void _onChange() => setState(() {});
+
+  // Todo: there's no multi-mechanic backend yet, so this is always exactly
+  // one real entry — the current mechanic account.
+  List<_Leader> _buildLeaders() {
+    final mechanicName = QuoteNotificationStore.currentMechanicName;
+    final mechanicReviews = _reviews.reviewsFor(mechanicName);
+    return [
+      _Leader(
+        name: mechanicName,
+        tier: 'Gold',
+        rating: mechanicReviews.isEmpty ? 0.0 : _reviews.averageRatingFor(mechanicName),
+        reviewCount: mechanicReviews.length,
+      ),
+    ];
+  }
+
+  List<_Leader> _applyFilters(List<_Leader> leaders) {
+    final list = leaders.where((l) => l.name.toLowerCase().contains(_query.toLowerCase())).toList();
     list.sort((a, b) {
       final cmp = switch (_filter) {
-        _RankFilter.rank => a.tierValue.compareTo(b.tierValue),
+        _RankFilter.rank => a.rating.compareTo(b.rating),
         _RankFilter.ratings => a.rating.compareTo(b.rating),
         _RankFilter.reviews => a.reviewCount.compareTo(b.reviewCount),
       };
@@ -87,6 +108,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final sorted = _applyFilters(_buildLeaders());
+
     return Stack(
       children: [
         ListView(
@@ -110,51 +133,49 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 ),
                 const SizedBox(width: 8),
                 IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-                IconButton(
-                  icon: const Icon(Icons.swap_vert),
-                  onPressed: () => setState(() => _ascending = !_ascending),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.filter_list),
-                  onPressed: () => setState(() => _filterOpen = !_filterOpen),
-                ),
+                IconButton(icon: const Icon(Icons.swap_vert), onPressed: () => setState(() => _ascending = !_ascending)),
+                IconButton(icon: const Icon(Icons.filter_list), onPressed: () => setState(() => _filterOpen = !_filterOpen)),
               ],
             ),
             const SizedBox(height: 12),
-            ..._sorted.map((leader) => InkWell(
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => MechanicProfileViewScreen(name: leader.name)),
+            ...sorted.asMap().entries.map((entry) {
+              final rank = entry.key + 1;
+              final leader = entry.value;
+              return InkWell(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => MechanicProfileViewScreen(name: leader.name)),
+                ),
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.borderGrey),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.borderGrey),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 24,
-                          child: Text('${_sorted.indexOf(leader) + 1}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-                        ),
-                        const SizedBox(width: 8),
-                        const CircleAvatar(
-                          radius: 20,
-                          backgroundColor: AppColors.background,
-                          child: Icon(Icons.person, color: AppColors.textGrey),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(leader.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                        ),
-                        _trailingFor(leader),
-                      ],
-                    ),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        child: Text('$rank', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                      ),
+                      const SizedBox(width: 8),
+                      const CircleAvatar(
+                        radius: 20,
+                        backgroundColor: AppColors.background,
+                        child: Icon(Icons.person, color: AppColors.textGrey),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(leader.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                      ),
+                      _trailingFor(leader),
+                    ],
                   ),
-                )),
+                ),
+              );
+            }),
           ],
         ),
         if (_filterOpen) ...[

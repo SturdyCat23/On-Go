@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../theme/app_theme.dart';
@@ -271,7 +272,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
       );
     }
 
-    if (request.serviceCompleted) {
+            if (request.serviceCompleted) {
       final amount = quote == null ? 0.0 : parsePesoAmount(quote.price);
       final qrData = buildPaymentQrData(
         requestId: request.id,
@@ -297,6 +298,29 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
           const SizedBox(height: 10),
           Text('Have the client scan this to pay ${quote?.price ?? ''}',
               style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+          const SizedBox(height: 12),
+          // Fallback for when QR scanning doesn't work (camera issues,
+          // testing on one device, client isn't physically present, etc.) —
+          // the client can paste this code manually instead of scanning.
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(10)),
+            child: SelectableText(
+              qrData,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 11, color: AppColors.textGrey, fontFamily: 'monospace'),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: qrData));
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment code copied')));
+            },
+            icon: const Icon(Icons.copy, size: 16),
+            label: const Text('Copy Code'),
+          ),
         ],
       );
     }

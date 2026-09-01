@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
-import 'dart:async';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/common_widgets.dart';
 // Todo: adjust this path to wherever quote_store.dart lives in your project
@@ -53,10 +50,10 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
               onTap: () => Navigator.pop(ctx, 'camera'),
             ),
             ListTile(
-              leading: const Icon(Icons.image_outlined, color: AppColors.primary),
-              title: const Text('Upload/Scan QR Image'),
-              subtitle: const Text('Pick a photo of the QR code from your gallery'),
-              onTap: () => Navigator.pop(ctx, 'gallery'),
+              leading: const Icon(Icons.keyboard_outlined, color: AppColors.primary),
+              title: const Text('Enter Payment Code'),
+              subtitle: const Text('Paste the code the mechanic copied and sent you'),
+              onTap: () => Navigator.pop(ctx, 'manual'),
             ),
           ],
         ),
@@ -68,44 +65,35 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
     if (choice == 'camera') {
       raw = await Navigator.push<String>(context, MaterialPageRoute(builder: (_) => const QrScanScreen()));
     } else {
-      final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-      if (picked == null) return;
-
-      final controller = MobileScannerController();
-      try {
-        // v3's analyzeImage() doesn't return the result directly — the
-        // decoded barcode (if any) comes through the barcodes stream, so we
-        // listen for it before/while kicking off analysis, with a timeout
-        // in case the image has no readable code at all.
-        final completer = Completer<BarcodeCapture?>();
-        final sub = controller.barcodes.listen((capture) {
-          if (!completer.isCompleted) completer.complete(capture);
-        });
-
-        await controller.analyzeImage(picked.path);
-        final capture = await completer.future.timeout(
-          const Duration(seconds: 3),
-          onTimeout: () => null,
-        );
-        if (capture != null && capture.barcodes.isNotEmpty) {
-          raw = capture.barcodes.first.rawValue ?? capture.barcodes.first.displayValue;
-        }
-        await sub.cancel();
-      } finally {
-        controller.dispose();
-      }
-
-      if (raw == null) {
-        _showSnack('No QR code found in that image.');
-        return;
-      }
+      final controller = TextEditingController();
+      raw = await showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Enter Payment Code'),
+          content: TextField(
+            controller: controller,
+            maxLines: 3,
+            autofocus: true,
+            decoration: const InputDecoration(hintText: 'Paste or type the code the mechanic showed you'),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+              child: const Text('Continue'),
+            ),
+          ],
+        ),
+      );
+      if (raw == null || raw.isEmpty) return;
     }
 
     if (raw == null || !mounted) return;
 
     final payload = parsePaymentQrData(raw);
     if (payload == null || payload.requestId != request.id) {
-      _showSnack("That QR code doesn't match this job.");
+      _showSnack("That code doesn't match this job.");
       return;
     }
 
@@ -256,7 +244,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                                const Text('Service Status', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                const Text('Service Status', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
                 if (request.isEmergency) ...[
                   _StatusStep(title: 'Navigate', done: request.navigating, isFirst: true),

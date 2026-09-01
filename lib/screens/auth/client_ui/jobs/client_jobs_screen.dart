@@ -36,7 +36,7 @@ class _ClientJobsScreenState extends State<ClientJobsScreen> {
     );
   }
 
-  Future<void> _cancelJob(HelpRequest request) async {
+    Future<void> _cancelJob(HelpRequest request) async {
     final choice = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -56,6 +56,7 @@ class _ClientJobsScreenState extends State<ClientJobsScreen> {
         ],
       ),
     );
+    if (!mounted) return;
 
     if (choice == 'revert') {
       final ok = _store.clientRevertToPending(request.id);
@@ -79,6 +80,7 @@ class _ClientJobsScreenState extends State<ClientJobsScreen> {
           ],
         ),
       );
+      if (!mounted) return;
       if (confirmed == true) {
         final ok = _store.clientDeleteRequest(request.id);
         if (!mounted) return;
@@ -320,6 +322,7 @@ class _PendingJobCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Container(
+                    width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(color: AppColors.green, borderRadius: BorderRadius.circular(30)),

@@ -19,7 +19,7 @@ class _JobsScreenState extends State<JobsScreen> {
   int _tabIndex = 0;
   bool? _wasApproved;
 
-  static const _mechanicName = QuoteNotificationStore.currentMechanicName;
+  String get _mechanicName => QuoteNotificationStore.currentMechanicName;
 
   // Requests this mechanic has already sent a quote for, so the button
   // becomes "Quote Sent" instead of letting them send a second one.
@@ -648,7 +648,32 @@ class _EmergencyTab extends StatelessWidget {
 // Accepted tab
 // ---------------------------------------------------------------------
 
-class _AcceptedTab extends StatelessWidget {
+enum _AcceptedFilter { all, emergency, urgent, normal, dateAccepted, remainingTime }
+
+int _urgencyRank(String urgency) {
+  switch (urgency) {
+    case 'Emergency':
+      return 3;
+    case 'Urgent':
+      return 2;
+    default:
+      return 1;
+  }
+}
+
+/// Rough remaining-time estimate used only for the "Remaining Time" sort —
+/// Emergency has no real deadline besides "now," so it always sorts first.
+/// Normal/Urgent deadlines are approximated from [HelpRequest.durationLabel]'s
+/// underlying rule (10 days / 5 days from submission) since there's no
+/// separate stored deadline field.
+Duration _remainingTime(HelpRequest r) {
+  if (r.isEmergency) return Duration.zero;
+  final days = r.urgency == 'Urgent' ? 5 : 10;
+  final deadline = r.createdAt.add(Duration(days: days));
+  return deadline.difference(DateTime.now());
+}
+
+class _AcceptedTab extends StatefulWidget {
   final List<HelpRequest> requests;
   final QuoteNotificationStore store;
   final void Function(HelpRequest) onOpen;
@@ -657,22 +682,179 @@ class _AcceptedTab extends StatelessWidget {
   const _AcceptedTab({required this.requests, required this.store, required this.onOpen, required this.onCancel});
 
   @override
-  Widget build(BuildContext context) {
-    if (requests.isEmpty) {
-      return const Center(child: Text('No active jobs', style: TextStyle(color: AppColors.textGrey)));
+  State<_AcceptedTab> createState() => _AcceptedTabState();
+}
+
+class _AcceptedTabState extends State<_AcceptedTab> {
+  _AcceptedFilter _filter = _AcceptedFilter.all;
+  bool _ascending = false;
+  bool _filterOpen = false;
+  String _query = '';
+
+  List<HelpRequest> get _filteredSorted {
+    List<HelpRequest> list = widget.requests.where((r) => r.clientName.toLowerCase().contains(_query.toLowerCase())).toList();
+
+    switch (_filter) {
+      case _AcceptedFilter.emergency:
+        list = list.where((r) => r.urgency == 'Emergency').toList();
+        break;
+      case _AcceptedFilter.urgent:
+        list = list.where((r) => r.urgency == 'Urgent').toList();
+        break;
+      case _AcceptedFilter.normal:
+        list = list.where((r) => r.urgency == 'Normal').toList();
+        break;
+      case _AcceptedFilter.all:
+      case _AcceptedFilter.dateAccepted:
+      case _AcceptedFilter.remainingTime:
+        break; // no category narrowing — these sort the full list
     }
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      children: requests
-          .map((r) => _ActiveJobCard(
-                request: r,
-                quote: store.acceptedQuoteFor(r.id),
-                onOpen: () => onOpen(r),
-                onCancel: () => onCancel(r),
-              ))
-          .toList(),
+
+    list.sort((a, b) {
+      switch (_filter) {
+        case _AcceptedFilter.dateAccepted:
+          return (a.matchedAt ?? a.createdAt).compareTo(b.matchedAt ?? b.createdAt);
+        case _AcceptedFilter.remainingTime:
+          return _remainingTime(a).compareTo(_remainingTime(b));
+        case _AcceptedFilter.all:
+        case _AcceptedFilter.emergency:
+        case _AcceptedFilter.urgent:
+        case _AcceptedFilter.normal:
+          // Default behavior — Emergency always on top, then Urgent, then
+          // Normal; ties broken by most-recently-accepted first.
+          final urgencyCmp = _urgencyRank(b.urgency).compareTo(_urgencyRank(a.urgency));
+          if (urgencyCmp != 0) return urgencyCmp;
+          return (b.matchedAt ?? b.createdAt).compareTo(a.matchedAt ?? a.createdAt);
+      }
+    });
+
+    return _ascending ? list.reversed.toList() : list;
+  }
+
+  Widget _filterPill(String label, _AcceptedFilter value) {
+    final selected = _filter == value;
+    return GestureDetector(
+      onTap: () => setState(() {
+        _filter = value;
+        _filterOpen = false;
+      }),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary : AppColors.background,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.white : AppColors.textDark)),
+      ),
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.requests.isEmpty) {
+      return const Center(child: Text('No active jobs', style: TextStyle(color: AppColors.textGrey)));
+    }
+
+    final sorted = _filteredSorted;
+
+    return Stack(
+      children: [
+        Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(24)),
+                      child: TextField(
+                        onChanged: (v) => setState(() => _query = v),
+                        decoration: const InputDecoration(
+                          hintText: 'Search by client...',
+                          border: InputBorder.none,
+                          isDense: true,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(icon: const Icon(Icons.swap_vert), onPressed: () => setState(() => _ascending = !_ascending)),
+                  IconButton(icon: const Icon(Icons.filter_list), onPressed: () => setState(() => _filterOpen = !_filterOpen)),
+                ],
+              ),
+            ),
+            Expanded(
+              child: sorted.isEmpty
+                  ? const Center(child: Text('No jobs match this filter', style: TextStyle(color: AppColors.textGrey)))
+                  : ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      children: sorted
+                          .map((r) => _ActiveJobCard(
+                                request: r,
+                                quote: widget.store.acceptedQuoteFor(r.id),
+                                onOpen: () => widget.onOpen(r),
+                                onCancel: () => widget.onCancel(r),
+                              ))
+                          .toList(),
+                    ),
+            ),
+          ],
+        ),
+        if (_filterOpen) ...[
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () => setState(() => _filterOpen = false),
+              child: Container(color: Colors.transparent),
+            ),
+          ),
+          Positioned(
+            top: 46,
+            right: 16,
+            width: 170,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 12, offset: const Offset(0, 4))],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 8),
+                    child: Text('Filter', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                  ),
+                  _filterPill('All', _AcceptedFilter.all),
+                  _filterPill('Emergency', _AcceptedFilter.emergency),
+                  _filterPill('Urgent', _AcceptedFilter.urgent),
+                  _filterPill('Normal', _AcceptedFilter.normal),
+                  _filterPill('Date Accepted', _AcceptedFilter.dateAccepted),
+                  _filterPill('Remaining Time', _AcceptedFilter.remainingTime),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Same phase-tracking naming convention as ClientJobsScreen's Active list,
+/// just from the mechanic's side of the same job.
+String _mechanicStatusLabel(HelpRequest request) {
+  if (!request.navigating) return 'Navigate';
+  if (!request.arrived) return 'En Route';
+  if (!request.workStarted) return 'Mechanic Arrived';
+  if (!request.serviceCompleted) return 'Work in Progress';
+  return 'Awaiting Payment';
 }
 
 class _ActiveJobCard extends StatelessWidget {
@@ -686,6 +868,12 @@ class _ActiveJobCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final problem = _splitProblem(request.problem);
+    final label = _mechanicStatusLabel(request);
+    final statusColor = label == 'Awaiting Payment' ? AppColors.primary : AppColors.green;
+    // Cancel disappears the instant the mechanic starts the job — matches
+    // ClientJobsScreen's Active list, and emergency jobs never had Cancel
+    // at all (see the accept-time warning dialog above).
+    final showCancel = !request.isEmergency && !request.navigating;
 
     return InkWell(
       onTap: onOpen,
@@ -744,35 +932,19 @@ class _ActiveJobCard extends StatelessWidget {
             ),
             _DeadlineRow(request: request),
             const SizedBox(height: 14),
-            // Emergency jobs have no Cancel — once accepted, the mechanic
-            // must respond, no backing out (see the accept-time warning
-            // dialog in _JobsScreenState._acceptEmergency).
-            request.isEmergency
-                ? SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: onOpen,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.green,
-                        foregroundColor: AppColors.white,
-                        shape: const StadiumBorder(),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: const Text('Navigate'),
-                    ),
-                  )
-                : Row(
+            showCancel
+                ? Row(
                     children: [
                       Expanded(
                         child: ElevatedButton(
                           onPressed: onOpen,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.green,
+                            backgroundColor: statusColor,
                             foregroundColor: AppColors.white,
                             shape: const StadiumBorder(),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
-                          child: const Text('Navigate'),
+                          child: Text(label),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -789,6 +961,19 @@ class _ActiveJobCard extends StatelessWidget {
                         ),
                       ),
                     ],
+                  )
+                : SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: onOpen,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: statusColor,
+                        foregroundColor: AppColors.white,
+                        shape: const StadiumBorder(),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(label),
+                    ),
                   ),
           ],
         ),
