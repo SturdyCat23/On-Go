@@ -23,16 +23,13 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Marks this session as Mechanic-shell — see AppSession's doc comment.
-    // This is what makes ReviewStore.submitReview refuse to run from
-    // anywhere in this tree (mechanics can only view/like, never write),
-    // and identifies this mechanic as the viewer for like interactions.
     AppSession.instance.setRole(AppRole.mechanic, viewerName: QuoteNotificationStore.currentMechanicName);
   }
 
   void _goToTab(int index) => setState(() => _currentIndex = index);
 
   Future<void> _openNotifications() async {
+    QuoteNotificationStore.instance.markMechanicNotificationsSeen();
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const MechanicNotificationsScreen()),
@@ -46,7 +43,7 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
       const EarningScreen(),
       const QrScreen(),
       const MechanicLeaderboardScreen(),
-      const MechanicProfileScreen(),
+      const MechanicProfileScreen(standalone: false),
     ];
 
     return Scaffold(

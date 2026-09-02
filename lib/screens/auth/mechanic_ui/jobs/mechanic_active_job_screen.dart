@@ -5,9 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../widgets/chat_icon_button.dart';
 import '../../../../widgets/common_widgets.dart';
-// Todo: adjust this path to wherever quote_store.dart lives in your project
 import '../../../../data/quote_store.dart';
+import '../../../shared/job_chat_screen.dart';
 
 class MechanicActiveJobScreen extends StatefulWidget {
   final String requestId;
@@ -30,8 +31,6 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
   void initState() {
     super.initState();
     _store.addListener(_onChange);
-    // Resume tracking if this screen is reopened after the mechanic already
-    // tapped Navigate in a previous visit — but never auto-start it.
     final request = _store.requestFor(widget.requestId);
     if (request != null && request.navigating) {
       _startTracking(request);
@@ -53,12 +52,8 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
   }
 
   Future<void> _startTracking(HelpRequest request) async {
-    if (_positionSub != null) return; // already tracking
-    if (request.arrived) return; // nothing left to track toward
-
-    // No GPS coordinates on this request (client typed a freeform address
-    // instead of using "Use Current Location") — nothing to auto-detect
-    // against. The UI falls back to a manual "Confirm Arrival" control.
+    if (_positionSub != null) return;
+    if (request.arrived) return;
     if (!request.hasClientCoordinates) return;
 
     try {
@@ -98,8 +93,6 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
     }
   }
 
-  /// Fallback only used when the request has no GPS coordinates to compare
-  /// against — see [_startTracking].
   void _confirmArrivalManually(HelpRequest request) {
     if (!request.enRoute) _store.mechanicMarkEnRoute(request.id);
     _store.mechanicMarkArrived(request.id);
@@ -189,7 +182,13 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                                 ),
                                 _CircleIconButton(icon: Icons.call, color: AppColors.green, onTap: () {}),
                                 const SizedBox(width: 8),
-                                _CircleIconButton(icon: Icons.chat_bubble_outline, color: AppColors.blue, onTap: () {}),
+                                ChatIconButton(
+                                  requestId: request.id,
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => JobChatScreen(requestId: request.id, otherPartyName: request.clientName)),
+                                  ),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 12),
@@ -272,7 +271,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
       );
     }
 
-            if (request.serviceCompleted) {
+        if (request.serviceCompleted) {
       final amount = quote == null ? 0.0 : parsePesoAmount(quote.price);
       final qrData = buildPaymentQrData(
         requestId: request.id,
@@ -385,7 +384,6 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
       );
     }
 
-    // Not navigating yet — the mechanic hasn't left.
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(

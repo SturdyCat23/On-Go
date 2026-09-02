@@ -439,6 +439,8 @@ class _MechanicStep5VerificationState
                         lastName: _draft.lastName,
                         email: _draft.email,
                         phone: _draft.mobile,
+                        password: _draft.password,
+                        photoPath: _profilePhoto?.path,
                         documents: [
                           if (_draft.validIdPath.isNotEmpty) _draft.validIdPath.split('/').last,
                           if (_draft.ncIiPath.isNotEmpty) _draft.ncIiPath.split('/').last,

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../widgets/chat_icon_button.dart';
 import '../../../../widgets/common_widgets.dart';
 import '../../../../data/quote_store.dart';
+import '../../../shared/job_chat_screen.dart';
 import '../active/active_request_screen.dart';
 
 class ClientJobsScreen extends StatefulWidget {
@@ -36,7 +38,7 @@ class _ClientJobsScreenState extends State<ClientJobsScreen> {
     );
   }
 
-    Future<void> _cancelJob(HelpRequest request) async {
+  Future<void> _cancelJob(HelpRequest request) async {
     final choice = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -94,10 +96,6 @@ class _ClientJobsScreenState extends State<ClientJobsScreen> {
   @override
   Widget build(BuildContext context) {
     final all = _store.myActiveJobs;
-    // Emergency jobs skip Pending entirely — the moment a mechanic accepts,
-    // they're expected to respond immediately, so it goes straight to Active.
-    // Normal/Urgent move from Pending to Active the moment the mechanic taps
-    // Navigate (i.e. request.navigating flips true).
     final pending = all.where((r) => !r.isEmergency && !r.navigating).toList();
     final active = all.where((r) => r.isEmergency || r.navigating).toList()
       ..sort((a, b) {
@@ -228,11 +226,6 @@ class _CircleIconButton extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------
-// Pending tab — Cancel (Revert/Delete) lives here only. The instant a job
-// moves to Active, cancellation is off the table.
-// ---------------------------------------------------------------------
-
 class _PendingJobList extends StatelessWidget {
   final List<HelpRequest> requests;
   final QuoteNotificationStore store;
@@ -290,13 +283,30 @@ class _PendingJobCard extends StatelessWidget {
                 const Text('PENDING', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.green, letterSpacing: 0.5)),
               ],
             ),
+            if (request.lastCancelReason != null) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
+                child: Text(
+                  '${request.lastCancelledBy ?? 'Mechanic'} cancelled: ${request.lastCancelReason}',
+                  style: const TextStyle(fontSize: 11, color: AppColors.primary),
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(child: Text(quote?.mechanicName ?? 'Mechanic', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18))),
                 _CircleIconButton(icon: Icons.call, color: AppColors.green, onTap: () {}),
                 const SizedBox(width: 8),
-                _CircleIconButton(icon: Icons.chat_bubble_outline, color: AppColors.blue, onTap: () {}),
+                ChatIconButton(
+                  requestId: request.id,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => JobChatScreen(requestId: request.id, otherPartyName: quote?.mechanicName ?? 'Mechanic')),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -350,11 +360,6 @@ class _PendingJobCard extends StatelessWidget {
     );
   }
 }
-
-// ---------------------------------------------------------------------
-// Active tab — no Cancel at all. Single button whose label tracks phase:
-// Navigate → Mechanic Arrived → Work in Progress → Send Payment.
-// ---------------------------------------------------------------------
 
 class _ActiveJobList extends StatelessWidget {
   final List<HelpRequest> requests;
@@ -426,7 +431,13 @@ class _ActiveJobCard extends StatelessWidget {
                 Expanded(child: Text(quote?.mechanicName ?? 'Mechanic', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18))),
                 _CircleIconButton(icon: Icons.call, color: AppColors.green, onTap: () {}),
                 const SizedBox(width: 8),
-                _CircleIconButton(icon: Icons.chat_bubble_outline, color: AppColors.blue, onTap: () {}),
+                ChatIconButton(
+                  requestId: request.id,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => JobChatScreen(requestId: request.id, otherPartyName: quote?.mechanicName ?? 'Mechanic')),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 8),

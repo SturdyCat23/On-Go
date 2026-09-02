@@ -1,8 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../../data/mechanic_account_store.dart';
 import '../../../../data/moderator_data.dart';
 import '../../../../theme/app_theme.dart';
 import '../../sign_in_screen.dart';
+import '../profile/mechanic_profile_screen.dart';
+import '../settings/mechanic_settings_screen.dart';
 
 class MechanicMenuDrawer extends StatefulWidget {
   const MechanicMenuDrawer({super.key});
@@ -45,6 +48,7 @@ class _MechanicMenuDrawerState extends State<MechanicMenuDrawer> {
   @override
   Widget build(BuildContext context) {
     final displayName = _store.name.isEmpty ? 'Mechanic' : _store.name;
+    final photo = _store.photoPath;
 
     return Drawer(
       child: Column(
@@ -58,7 +62,10 @@ class _MechanicMenuDrawerState extends State<MechanicMenuDrawer> {
                 CircleAvatar(
                   radius: 28,
                   backgroundColor: AppColors.white.withValues(alpha: 0.25),
-                  child: const Icon(Icons.person_outline, color: AppColors.white, size: 32),
+                  backgroundImage: photo == null
+                      ? null
+                      : (_store.photoIsNetwork ? NetworkImage(photo) : FileImage(File(photo))) as ImageProvider?,
+                  child: photo == null ? const Icon(Icons.person_outline, color: AppColors.white, size: 32) : null,
                 ),
                 const SizedBox(width: 14),
                 Column(
@@ -75,20 +82,32 @@ class _MechanicMenuDrawerState extends State<MechanicMenuDrawer> {
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 8),
               children: [
-                _DrawerItem(icon: Icons.person_outline, label: 'My Profile', onTap: () => Navigator.pop(context)),
+                _DrawerItem(
+                  icon: Icons.person_outline,
+                  label: 'My Profile',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const MechanicProfileScreen()));
+                  },
+                ),
                 _DrawerItem(icon: Icons.badge_outlined, label: 'Certifications', onTap: () => Navigator.pop(context)),
-                _DrawerItem(icon: Icons.settings_outlined, label: 'Settings', onTap: () => Navigator.pop(context)),
+                _DrawerItem(
+                  icon: Icons.settings_outlined,
+                  label: 'Settings',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const MechanicSettingsScreen()));
+                  },
+                ),
                 _DrawerItem(icon: Icons.help_outline, label: 'Help & Support', onTap: () => Navigator.pop(context)),
                 _DrawerItem(icon: Icons.call_outlined, label: 'Contact Us', onTap: () => Navigator.pop(context)),
                 _DrawerItem(
                   icon: Icons.logout,
                   label: 'Sign Out',
                   onTap: () {
-                    // Note: deliberately NOT calling _store.clear() here —
-                    // signing out should preserve the registered account
-                    // (and its approval status) so the mechanic can sign
-                    // back in later without re-registering, same as
-                    // ClientAccountStore's behavior on the client side.
+                    // Deliberately NOT calling _store.clear() — signing out
+                    // preserves the registered account so the mechanic can
+                    // sign back in later without re-registering.
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(builder: (_) => const SignInScreen()),
                       (route) => false,

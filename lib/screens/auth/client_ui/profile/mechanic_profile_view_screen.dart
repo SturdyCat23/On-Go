@@ -109,11 +109,13 @@ class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                            Wrap(
+                alignment: WrapAlignment.center,
                 children: List.generate(5, (i) {
                   return IconButton(
-                    icon: Icon(i < selected ? Icons.star : Icons.star_border, color: AppColors.yellow),
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    constraints: const BoxConstraints(),
+                    icon: Icon(i < selected ? Icons.star : Icons.star_border, color: AppColors.yellow, size: 28),
                     onPressed: () => setDialogState(() => selected = i + 1),
                   );
                 }),

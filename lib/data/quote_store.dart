@@ -1,18 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'app_session.dart';
+import 'chat_store.dart';
 import 'mechanic_account_store.dart';
 
 enum RequestStatus { pending, matched, completed }
 
-/// A quote sent by a mechanic in response to a client's help request.
-///
-/// For Normal/Urgent requests, several of these can exist for the same
-/// [requestId] — the client compares them and picks one (`accepted` flips to
-/// true only on the winner).
-///
-/// For Emergency requests there is only ever ONE MechanicQuote per request:
-/// it's created already `accepted: true` the instant a mechanic taps Accept.
-/// There is no comparison step — first mechanic to accept wins.
 class MechanicQuote {
   final String id;
   final String requestId;
@@ -33,15 +25,11 @@ class MechanicQuote {
   });
 }
 
-/// Parses a peso-formatted string like '₱300' into a numeric value.
 double parsePesoAmount(String price) {
   final digits = price.replaceAll(RegExp(r'[^0-9.]'), '');
   return double.tryParse(digits) ?? 0;
 }
 
-/// The payload a mechanic's "Waiting for Client Payment" QR encodes, and the
-/// client's scanner decodes. Kept as a single shared format so both sides
-/// can never drift out of sync with each other. Tied to a specific job.
 class PaymentQrPayload {
   final String requestId;
   final String mechanicName;
@@ -63,14 +51,6 @@ PaymentQrPayload? parsePaymentQrData(String raw) {
   return PaymentQrPayload(requestId: parts[1], mechanicName: parts[2], amount: amount);
 }
 
-/// The mechanic's permanent, job-agnostic QR code — shown by default on the
-/// QR tab for cashing out via other payment apps. Deliberately NOT the same
-/// payload shape as [buildPaymentQrData]: that one is job-specific (carries
-/// a requestId + amount our own app checks against); this one just
-/// identifies the mechanic's account for third-party apps we don't control
-/// the format of. "One permanent QR" means one stable code per mechanic —
-/// it doesn't change between jobs — not that it's byte-identical to the
-/// per-job payment code.
 const _accountQrPrefix = 'ONGOACCOUNT';
 
 String buildMechanicAccountQrData(String mechanicName) => '$_accountQrPrefix|$mechanicName';
@@ -87,22 +67,12 @@ class HelpRequest {
   final String durationLabel;
   final int surcharge;
 
-  /// GPS coordinates captured only if the client used "Use Current
-  /// Location" — null if they typed a freeform address. Auto-detection of
-  /// En Route / Arrived requires these; without them the mechanic falls
-  /// back to a manual "Confirm Arrival" control.
   final double? clientLat;
   final double? clientLng;
 
   RequestStatus status;
+  DateTime? matchedAt;
 
-  // Fine-grained workflow flags. Who's allowed to flip each one:
-  //  - navigating: MECHANIC only (manual "Navigate" button tap — this is
-  //    also what starts GPS tracking; nothing below happens automatically
-  //    until this is true)
-  //  - enRoute / arrived: SYSTEM only (GPS-driven, see mechanicMarkEnRoute/Arrived)
-  //  - workStarted / serviceCompleted: MECHANIC only (manual button press)
-  //  - paymentCompleted: CLIENT only, via clientConfirmPayment after a QR scan
   bool navigating;
   bool enRoute;
   bool arrived;
@@ -115,18 +85,18 @@ class HelpRequest {
   DateTime? workStartedAt;
   DateTime? serviceCompletedAt;
   DateTime? paymentCompletedAt;
-  /// When this request was actually matched to a mechanic — set by
-  /// [clientAcceptQuote] (Normal/Urgent) or [mechanicAcceptEmergency]
-  /// (Emergency). Distinct from [createdAt] (when the client first
-  /// submitted the problem) — this is what "Date Accepted" sorting on the
-  /// mechanic's Accepted tab actually sorts by.
-  DateTime? matchedAt;
 
-  /// Points credited to the mechanic for this job — 5% of the paid amount,
-  /// set exactly once by [QuoteNotificationStore.clientConfirmPayment].
   int? pointsAwarded;
-
   DateTime? completedAt;
+
+  /// Set by [QuoteNotificationStore.mechanicCancelJob] — the client sees
+  /// this on their Pending card. Cleared automatically the moment the
+  /// request is matched to a mechanic again (see clientAcceptQuote /
+  /// mechanicAcceptEmergency), so it never shows a stale reason from a
+  /// previous mechanic.
+  String? lastCancelReason;
+  String? lastCancelledBy;
+  DateTime? lastCancelledAt;
 
   HelpRequest({
     required this.id,
@@ -141,6 +111,7 @@ class HelpRequest {
     this.clientLat,
     this.clientLng,
     this.status = RequestStatus.pending,
+    this.matchedAt,
     this.navigating = false,
     this.enRoute = false,
     this.arrived = false,
@@ -155,30 +126,19 @@ class HelpRequest {
     this.paymentCompletedAt,
     this.pointsAwarded,
     this.completedAt,
+    this.lastCancelReason,
+    this.lastCancelledBy,
+    this.lastCancelledAt,
   });
 
   bool get isEmergency => urgency == 'Emergency';
   bool get hasClientCoordinates => clientLat != null && clientLng != null;
 }
 
-/// App-wide, in-memory store connecting the client's "Need Help" upload to
-/// the mechanic's "Jobs" screen, and back to the client's notification bell.
-///
-/// THE CLIENT CONTROLS PAYMENT, THE MECHANIC CONTROLS THE SERVICE, THE
-/// SYSTEM HANDLES AUTOMATIC STATUS DETECTION. See the per-method docs below
-/// for exactly who's allowed to call what — several methods assert
-/// [AppSession.instance.currentRole] and/or [MechanicAccountStore]'s
-/// approval status and throw/refuse if the caller isn't allowed, so this
-/// isn't just a UI convention.
 class QuoteNotificationStore extends ChangeNotifier {
   QuoteNotificationStore._internal();
   static final QuoteNotificationStore instance = QuoteNotificationStore._internal();
 
-  /// The single source of truth for "who is the mechanic" across the whole
-  /// app — quotes, accepted jobs, reviews, leaderboards, everything reads
-  /// this. Pulled live from MechanicAccountStore so demo/registered/renamed
-  /// mechanics all stay consistent everywhere, instead of some screens
-  /// showing "You" while others show the real account name.
   static String get currentMechanicName {
     final name = MechanicAccountStore.instance.name;
     return name.isEmpty ? 'You' : name;
@@ -187,32 +147,21 @@ class QuoteNotificationStore extends ChangeNotifier {
   final List<HelpRequest> _requests = [];
   final List<MechanicQuote> _allQuotes = [];
   int _unseenCount = 0;
+  final Set<String> _seenMechanicQuoteIds = {};
 
   // ---------------------------------------------------------------------
-  // Client-facing API (NeedHelpScreen / QuotesScreen / ActiveRequestScreen)
+  // Client-facing API
   // ---------------------------------------------------------------------
 
-  /// Every one of this client's requests still awaiting a decision — the
-  /// data behind QuotesScreen, which shows one comparison card per request
-  /// rather than a single global list (a client can have several jobs out
-  /// for quotes simultaneously).
   List<HelpRequest> get myPendingRequests {
     final list = _requests.where((r) => r.status == RequestStatus.pending).toList();
     list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return list;
   }
 
-  /// Every one of this client's requests that has an accepted mechanic and
-  /// isn't fully paid off yet — the data behind ClientJobsScreen's Pending
-  /// and Active sub-tabs. There's no multi-client separation in this demo
-  /// (single client session), so this is simply every matched request.
   List<HelpRequest> get myActiveJobs =>
       _requests.where((r) => r.status == RequestStatus.matched).toList();
 
-  /// Every one of this client's requests that has been fully paid off — the
-  /// data behind ServiceHistoryScreen. Same single-client-demo caveat as
-  /// [myActiveJobs]: this is simply every completed request, most recently
-  /// paid first.
   List<HelpRequest> get myCompletedJobs {
     final list = _requests.where((r) => r.status == RequestStatus.completed).toList();
     list.sort((a, b) =>
@@ -220,10 +169,6 @@ class QuoteNotificationStore extends ChangeNotifier {
     return list;
   }
 
-  /// Compatibility shim: the single most recently submitted unfinished
-  /// request. Most screens now work off specific request ids (via
-  /// [requestFor]) or [myPendingRequests]/[myActiveJobs]/[myCompletedJobs]
-  /// instead.
   HelpRequest? get activeRequest {
     final unfinished = _requests.where((r) => r.status != RequestStatus.completed).toList();
     if (unfinished.isNotEmpty) {
@@ -233,8 +178,6 @@ class QuoteNotificationStore extends ChangeNotifier {
     return _requests.isEmpty ? null : _requests.last;
   }
 
-  /// Compatibility shim — quotes for [activeRequest] only. Prefer
-  /// [quotesForRequest] for a specific request.
   List<MechanicQuote> get quotes {
     final req = activeRequest;
     if (req == null) return const [];
@@ -247,13 +190,17 @@ class QuoteNotificationStore extends ChangeNotifier {
   int get unseenCount => _unseenCount;
   bool get hasAcceptedQuote => quotes.any((q) => q.accepted);
 
-  int get mechanicNotificationCount => _allQuotes
-      .where((q) => q.accepted && q.mechanicName == currentMechanicName)
-      .length;
-
   List<MechanicQuote> get mechanicNotifications => _allQuotes
       .where((q) => q.accepted && q.mechanicName == currentMechanicName)
       .toList();
+
+  int get mechanicNotificationCount =>
+      mechanicNotifications.where((q) => !_seenMechanicQuoteIds.contains(q.id)).length;
+
+  void markMechanicNotificationsSeen() {
+    _seenMechanicQuoteIds.addAll(mechanicNotifications.map((q) => q.id));
+    notifyListeners();
+  }
 
   HelpRequest? requestFor(String requestId) {
     try {
@@ -282,7 +229,7 @@ class QuoteNotificationStore extends ChangeNotifier {
     notifyListeners();
   }
 
-    void clientAcceptQuote(String quoteId) {
+  void clientAcceptQuote(String quoteId) {
     final quote = quoteById(quoteId);
     if (quote == null) return;
     final req = requestFor(quote.requestId);
@@ -293,15 +240,14 @@ class QuoteNotificationStore extends ChangeNotifier {
     }
     req.status = RequestStatus.matched;
     req.matchedAt = DateTime.now();
+    req.lastCancelReason = null;
+    req.lastCancelledBy = null;
+    req.lastCancelledAt = null;
     notifyListeners();
   }
 
   void acceptQuote(String quoteId) => clientAcceptQuote(quoteId);
 
-  /// CLIENT action only. Reverts an already-matched request back to
-  /// Pending and un-accepts its winning quote, so mechanics can quote/accept
-  /// it again. Only reachable while the job is still in the Pending sub-tab
-  /// (i.e. the mechanic hasn't tapped Navigate yet) — see ClientJobsScreen.
   bool clientRevertToPending(String requestId) {
     if (AppSession.instance.currentRole != AppRole.client) {
       throw StateError('Only the Client UI can cancel a request.');
@@ -313,6 +259,7 @@ class QuoteNotificationStore extends ChangeNotifier {
       q.accepted = false;
     }
     req.status = RequestStatus.pending;
+    req.matchedAt = null;
     req.navigating = false;
     req.enRoute = false;
     req.arrived = false;
@@ -327,9 +274,6 @@ class QuoteNotificationStore extends ChangeNotifier {
     return true;
   }
 
-  /// CLIENT action only. Permanently removes a request and all its quotes.
-  /// Refuses to delete a request that's already been paid — that's real
-  /// history, not something to silently disappear.
   bool clientDeleteRequest(String requestId) {
     if (AppSession.instance.currentRole != AppRole.client) {
       throw StateError('Only the Client UI can delete a request.');
@@ -338,24 +282,29 @@ class QuoteNotificationStore extends ChangeNotifier {
     if (req == null || req.paymentCompleted) return false;
     _requests.removeWhere((r) => r.id == requestId);
     _allQuotes.removeWhere((q) => q.requestId == requestId);
+    ChatStore.instance.clearChat(requestId);
     notifyListeners();
     return true;
   }
 
   // ---------------------------------------------------------------------
-  // Mechanic-facing API — accept / quote (JobsScreen)
+  // Mechanic-facing API — accept / quote
   // ---------------------------------------------------------------------
 
   List<HelpRequest> get availableJobs =>
       _requests.where((r) => r.status == RequestStatus.pending).toList();
 
-  /// Normal/Urgent only: mechanic sends a quote. The job stays available to
-  /// other mechanics until the client picks a winner.
-  ///
-  /// THE gate: refuses to run — throwing rather than silently no-op'ing —
-  /// unless [MechanicAccountStore.canPerformJobActions] is true. This is
-  /// checked here, not just in the UI, so no button/screen anywhere can
-  /// bypass it.
+  /// True if [mechanicName] has already sent a quote for [requestId] —
+  /// derived live from the actual quotes, not from any UI-local state, so
+  /// it stays correct across logout/login, app restarts (within a session),
+  /// or navigating away and back.
+  bool mechanicHasQuoted(String requestId, String mechanicName) =>
+      _allQuotes.any((q) => q.requestId == requestId && q.mechanicName == mechanicName);
+
+  /// Normal/Urgent only: mechanic sends a quote. Refuses (throws) if this
+  /// mechanic has already quoted this job — enforced HERE, not just by
+  /// disabling a button, so there's no path that lets a mechanic quote the
+  /// same job twice.
   void mechanicSendQuote(
     String requestId, {
     required String mechanicName,
@@ -365,6 +314,9 @@ class QuoteNotificationStore extends ChangeNotifier {
   }) {
     if (!MechanicAccountStore.instance.canPerformJobActions) {
       throw StateError('Your mechanic account must be approved before you can send quotes.');
+    }
+    if (mechanicHasQuoted(requestId, mechanicName)) {
+      throw StateError('You have already sent a quote for this job.');
     }
     _allQuotes.add(MechanicQuote(
       id: '${DateTime.now().microsecondsSinceEpoch}_${_allQuotes.length}',
@@ -385,9 +337,6 @@ class QuoteNotificationStore extends ChangeNotifier {
         acceptedQuoteFor(r.id)?.mechanicName == mechanicName);
   }
 
-  /// Emergency only: first mechanic to call this wins. Returns false if the
-  /// job was already grabbed by someone else, if this mechanic already has
-  /// an active emergency job, OR if the account isn't approved.
   bool mechanicAcceptEmergency(
     String requestId, {
     required String mechanicName,
@@ -411,6 +360,9 @@ class QuoteNotificationStore extends ChangeNotifier {
     ));
     req.status = RequestStatus.matched;
     req.matchedAt = DateTime.now();
+    req.lastCancelReason = null;
+    req.lastCancelledBy = null;
+    req.lastCancelledAt = null;
     _unseenCount++;
     notifyListeners();
     return true;
@@ -423,17 +375,12 @@ class QuoteNotificationStore extends ChangeNotifier {
     return null;
   }
 
-  /// Jobs a mechanic has won and is actively working — includes every phase
-  /// up to (but not including) payment. Normal/Urgent stack freely here;
-  /// Emergency is capped to one active by [mechanicAcceptEmergency].
   List<HelpRequest> matchedJobsFor(String mechanicName) => _requests
       .where((r) =>
           r.status == RequestStatus.matched &&
           acceptedQuoteFor(r.id)?.mechanicName == mechanicName)
       .toList();
 
-  /// Jobs a mechanic has finished AND been paid for. This is the only
-  /// definition of "completed" — see [clientConfirmPayment].
   List<HelpRequest> completedJobsFor(String mechanicName) => _requests
       .where((r) =>
           r.status == RequestStatus.completed &&
@@ -444,10 +391,6 @@ class QuoteNotificationStore extends ChangeNotifier {
   // Service-status workflow
   // ---------------------------------------------------------------------
 
-  /// MECHANIC action only — manual, and entirely at the mechanic's own
-  /// pace ("when they're ready"). This is what unlocks GPS tracking on
-  /// MechanicActiveJobScreen; nothing below this point in the workflow
-  /// happens until it's true.
   void mechanicStartNavigating(String requestId) {
     if (AppSession.instance.currentRole != AppRole.mechanic) {
       throw StateError('Only the Mechanic UI can start navigating to a job.');
@@ -459,9 +402,6 @@ class QuoteNotificationStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// SYSTEM: called from GPS tracking in MechanicActiveJobScreen once the
-  /// mechanic's position has moved measurably closer to the client since
-  /// navigation started. Idempotent.
   void mechanicMarkEnRoute(String requestId) {
     final req = requestFor(requestId);
     if (req == null || req.enRoute || req.status != RequestStatus.matched) return;
@@ -470,8 +410,6 @@ class QuoteNotificationStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// SYSTEM: called from GPS tracking once the mechanic is within the
-  /// arrival radius of the client's coordinates. Idempotent.
   void mechanicMarkArrived(String requestId) {
     final req = requestFor(requestId);
     if (req == null || req.arrived || req.status != RequestStatus.matched) return;
@@ -484,7 +422,6 @@ class QuoteNotificationStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// MECHANIC action only — manual, and only meaningful after arrival.
   void mechanicStartWork(String requestId) {
     if (AppSession.instance.currentRole != AppRole.mechanic) {
       throw StateError('Only the Mechanic UI can start work on a job.');
@@ -496,9 +433,6 @@ class QuoteNotificationStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// MECHANIC action only — manual. Does NOT complete the job; payment is
-  /// still owed, and [RequestStatus] stays [RequestStatus.matched] until
-  /// the client pays via [clientConfirmPayment].
   void mechanicCompleteService(String requestId) {
     if (AppSession.instance.currentRole != AppRole.mechanic) {
       throw StateError('Only the Mechanic UI can mark a service complete.');
@@ -510,11 +444,47 @@ class QuoteNotificationStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// CLIENT action only — the ONLY way payment (and therefore the job) can
-  /// ever be marked complete. Requires the service to actually be finished.
-  /// Returns the points credited to the mechanic, or null if the payment
-  /// couldn't go through (wrong request, already paid, or service not yet
-  /// complete).
+  /// MECHANIC action only. Cancels an already-accepted job and reverts it
+  /// to Pending so other mechanics can pick it up — requires a non-empty
+  /// [reason], which the client then sees on their Pending card. Emergency
+  /// jobs and jobs already navigating can't be cancelled this way (matches
+  /// JobsScreen only ever showing the Cancel button in those other cases —
+  /// this is the backing enforcement, not just a hidden button).
+  bool mechanicCancelJob(String requestId, String reason) {
+    if (AppSession.instance.currentRole != AppRole.mechanic) {
+      throw StateError('Only the Mechanic UI can cancel a job.');
+    }
+    final req = requestFor(requestId);
+    if (req == null || req.status != RequestStatus.matched) return false;
+    if (req.isEmergency || req.navigating) return false;
+
+    final mechanicName = acceptedQuoteFor(requestId)?.mechanicName;
+
+    for (final q in quotesForRequest(requestId)) {
+      q.accepted = false;
+    }
+    req.status = RequestStatus.pending;
+    req.matchedAt = null;
+    req.navigating = false;
+    req.enRoute = false;
+    req.arrived = false;
+    req.workStarted = false;
+    req.serviceCompleted = false;
+    req.navigatingAt = null;
+    req.enRouteAt = null;
+    req.arrivedAt = null;
+    req.workStartedAt = null;
+    req.serviceCompletedAt = null;
+    req.lastCancelReason = reason;
+    req.lastCancelledBy = mechanicName;
+    req.lastCancelledAt = DateTime.now();
+
+    ChatStore.instance.clearChat(requestId);
+
+    notifyListeners();
+    return true;
+  }
+
   int? clientConfirmPayment(String requestId) {
     if (AppSession.instance.currentRole != AppRole.client) {
       throw StateError('Only the Client UI can confirm a payment.');
@@ -534,14 +504,14 @@ class QuoteNotificationStore extends ChangeNotifier {
     req.status = RequestStatus.completed;
     req.completedAt = req.paymentCompletedAt;
 
+    ChatStore.instance.clearChat(requestId);
+
     notifyListeners();
     return points;
   }
 
   // ---------------------------------------------------------------------
-  // Mechanic financials — always DERIVED from real paid jobs, never stored
-  // separately, so there's no way for a balance to drift out of sync or be
-  // inflated before payment actually happens.
+  // Mechanic financials
   // ---------------------------------------------------------------------
 
   double totalEarningsFor(String mechanicName) {
@@ -565,6 +535,7 @@ class QuoteNotificationStore extends ChangeNotifier {
     _requests.clear();
     _allQuotes.clear();
     _unseenCount = 0;
+    _seenMechanicQuoteIds.clear();
     notifyListeners();
   }
 }

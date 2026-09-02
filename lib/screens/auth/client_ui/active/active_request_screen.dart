@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../widgets/chat_icon_button.dart';
 import '../../../../widgets/common_widgets.dart';
-// Todo: adjust this path to wherever quote_store.dart lives in your project
 import '../../../../data/quote_store.dart';
+import '../../../shared/job_chat_screen.dart';
 import '../profile/mechanic_profile_view_screen.dart';
 import 'qr_scan_screen.dart';
 
@@ -52,7 +53,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
             ListTile(
               leading: const Icon(Icons.keyboard_outlined, color: AppColors.primary),
               title: const Text('Enter Payment Code'),
-              subtitle: const Text('Paste the code the mechanic copied and sent you'),
+              subtitle: const Text('Paste the code the mechanic sent you'),
               onTap: () => Navigator.pop(ctx, 'manual'),
             ),
           ],
@@ -216,7 +217,13 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                           ),
                           _CircleIconButton(icon: Icons.call, color: AppColors.green, onTap: () {}),
                           const SizedBox(width: 8),
-                          _CircleIconButton(icon: Icons.chat_bubble_outline, color: AppColors.blue, onTap: () {}),
+                          ChatIconButton(
+                            requestId: request.id,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => JobChatScreen(requestId: request.id, otherPartyName: quote.mechanicName)),
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -302,6 +309,31 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                       shape: const StadiumBorder(),
                     ),
                     child: const Text('Send Payment'),
+                  ),
+                ] else if (request.lastCancelReason != null) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.info_outline, size: 16, color: AppColors.primary),
+                            const SizedBox(width: 6),
+                            Text('${request.lastCancelledBy ?? 'The mechanic'} cancelled this job',
+                                style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 12)),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(request.lastCancelReason!, style: const TextStyle(color: AppColors.primary, fontSize: 12)),
+                      ],
+                    ),
                   ),
                 ] else ...[
                   ElevatedButton.icon(

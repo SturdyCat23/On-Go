@@ -1,16 +1,24 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../data/app_session.dart';
 import '../../../../data/mechanic_account_store.dart';
 import '../../../../data/moderator_data.dart';
+import '../../../../data/quote_store.dart';
 import '../../../../data/review_store.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/common_widgets.dart';
-import '../../../../data/quote_store.dart';
 
 enum _ReviewFilter { all, rating, mostRelevant }
 
 class MechanicProfileScreen extends StatefulWidget {
-  const MechanicProfileScreen({super.key});
+  /// True when pushed as its own route (drawer, leaderboard tap) — wraps
+  /// the content in a Scaffold with the standard red app bar. False when
+  /// used as a bottom-nav tab body inside MechanicHomeScreen, which already
+  /// supplies its own Scaffold/app bar — wrapping again there would nest
+  /// Scaffolds and duplicate the app bar.
+  final bool standalone;
+  const MechanicProfileScreen({super.key, this.standalone = true});
 
   @override
   State<MechanicProfileScreen> createState() => _MechanicProfileScreenState();
@@ -61,7 +69,7 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
         list.sort((a, b) => b.helpfulCount.compareTo(a.helpfulCount));
         break;
       case _ReviewFilter.all:
-        break; // reviewsFor already returns most-recent-first
+        break;
     }
     return list;
   }
@@ -96,6 +104,53 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
     );
   }
 
+  String _formatDate(DateTime d) => '${d.month.toString().padLeft(2, '0')}/${d.day.toString().padLeft(2, '0')}/${d.year}';
+
+  Future<void> _changePhoto() async {
+    if (!_account.canChangePhoto) {
+      final next = _account.nextPhotoChangeAt;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('You can change your photo again on ${next != null ? _formatDate(next) : 'a later date'}.')),
+      );
+      return;
+    }
+
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined, color: AppColors.primary),
+              title: const Text('Take Photo'),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined, color: AppColors.primary),
+              title: const Text('Choose from Gallery'),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+
+    try {
+      final file = await ImagePicker().pickImage(source: source, maxWidth: 1200, imageQuality: 85);
+      if (file == null) return;
+      final ok = _account.changePhoto(file.path);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ok ? 'Profile photo updated' : 'You can only change your photo once every 30 days.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not update photo: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final myName = _account.name.isEmpty ? 'Mechanic' : _account.name;
@@ -103,8 +158,9 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
     final average = _reviews.averageRatingFor(myName);
     final viewerId = AppSession.instance.currentViewerName;
     final approvalNote = _approvalNote;
+    final photo = _account.photoPath;
 
-    return ListView(
+    final content = ListView(
       padding: const EdgeInsets.all(20),
       children: [
         AppCard(
@@ -115,16 +171,19 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
                 children: [
                   Stack(
                     children: [
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 40,
                         backgroundColor: AppColors.background,
-                        child: Icon(Icons.person, color: AppColors.textGrey, size: 44),
+                        backgroundImage: photo == null
+                            ? null
+                            : (_account.photoIsNetwork ? NetworkImage(photo) : FileImage(File(photo))) as ImageProvider?,
+                        child: photo == null ? const Icon(Icons.person, color: AppColors.textGrey, size: 44) : null,
                       ),
                       Positioned(
                         right: 0,
                         bottom: 0,
                         child: InkWell(
-                          onTap: () {}, // Todo: wire up profile photo edit
+                          onTap: _changePhoto,
                           borderRadius: BorderRadius.circular(14),
                           child: Container(
                             padding: const EdgeInsets.all(6),
@@ -177,13 +236,13 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
                   ),
                 ],
               ),
-                            const SizedBox(height: 16),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   _StatBox(value: '${QuoteNotificationStore.instance.completedJobsFor(myName).length}', label: 'Jobs Done'),
                   _StatBox(value: reviews.isEmpty ? '—' : average.toStringAsFixed(1), label: 'Ratings'),
                   // Todo: no experience-tracking data source yet — left as
-                  // a static placeholder per instruction, not wired up.
+                  // a static placeholder, not wired up.
                   const _StatBox(value: '9yr', label: 'Experience'),
                 ],
               ),
@@ -266,7 +325,19 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
             ],
           ),
         ),
-      ],
+            ],
+    );
+
+    if (!widget.standalone) return content;
+
+    return Scaffold(
+      backgroundColor: AppColors.white,
+      appBar: AppBar(
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.white,
+        title: const Text('Mechanic Profile'),
+      ),
+      body: content,
     );
   }
 
