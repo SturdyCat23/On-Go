@@ -40,7 +40,7 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
   Widget build(BuildContext context) {
     final tabs = [
       const JobsScreen(),
-      const EarningScreen(),
+      EarningScreen(onViewAll: () => _goToTab(3)),
       const QrScreen(),
       const MechanicLeaderboardScreen(),
       const MechanicProfileScreen(standalone: false),

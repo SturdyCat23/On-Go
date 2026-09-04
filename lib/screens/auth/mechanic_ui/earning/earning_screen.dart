@@ -5,7 +5,9 @@ import '../../../../widgets/common_widgets.dart';
 import '../rank/mechanic_leaderboard_screen.dart';
 
 class EarningScreen extends StatefulWidget {
-  const EarningScreen({super.key});
+  const EarningScreen({super.key, this.onViewAll});
+
+  final VoidCallback? onViewAll;
 
   @override
   State<EarningScreen> createState() => _EarningScreenState();
@@ -115,8 +117,10 @@ class _EarningScreenState extends State<EarningScreen> {
           children: [
             const Text('Top Mechanics', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
             TextButton(
-              onPressed: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const MechanicLeaderboardScreen())),
+              onPressed: widget.onViewAll ?? () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MechanicLeaderboardScreen()),
+                  ),
               style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
               child: const Text('View All',
                   style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600)),
