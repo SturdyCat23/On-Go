@@ -93,6 +93,16 @@ class HelpRequest {
   String? lastCancelledBy;
   DateTime? lastCancelledAt;
 
+  /// The actual price the mechanic and client settled on, set by the
+  /// mechanic via [QuoteNotificationStore.mechanicSetPaymentAmount] before
+  /// a payment code can be shared. REQUIRED for Emergency jobs — those have
+  /// no MechanicQuote price at all, since emergencies skip quoting
+  /// entirely and the price is negotiated in person. For Normal/Urgent,
+  /// this OVERRIDES the original quote price once set, covering cases
+  /// where the final in-person price differs from the quote.
+  double? agreedPaymentAmount;
+  DateTime? agreedPaymentAmountSetAt;
+
   HelpRequest({
     required this.id,
     required this.problem,
@@ -124,6 +134,8 @@ class HelpRequest {
     this.lastCancelReason,
     this.lastCancelledBy,
     this.lastCancelledAt,
+    this.agreedPaymentAmount,
+    this.agreedPaymentAmountSetAt,
   });
 
   bool get isEmergency => urgency == 'Emergency';
@@ -143,10 +155,6 @@ class QuoteNotificationStore extends ChangeNotifier {
   final List<MechanicQuote> _allQuotes = [];
   int _unseenCount = 0;
   final Set<String> _seenMechanicQuoteIds = {};
-
-  /// Per-request seen-tracking for the CLIENT side — backs the "Uploaded"
-  /// button's badge and each job card's own "Quotes" badge. Deliberately
-  /// separate from [_seenMechanicQuoteIds] (mechanic-side notifications).
   final Set<String> _seenClientQuoteIds = {};
 
   // ---------------------------------------------------------------------
@@ -190,18 +198,12 @@ class QuoteNotificationStore extends ChangeNotifier {
   int get unseenCount => _unseenCount;
   bool get hasAcceptedQuote => quotes.any((q) => q.accepted);
 
-  /// Unseen quotes for one specific request — feeds the small badge on that
-  /// job's "Quotes" button in UploadedJobsScreen.
   int unseenQuoteCountForRequest(String requestId) =>
       quotesForRequest(requestId).where((q) => !_seenClientQuoteIds.contains(q.id)).length;
 
-  /// Total unseen quotes across every still-pending request — feeds the
-  /// badge on the "Uploaded" app bar button.
   int get totalUnseenQuoteCountForClient =>
       myPendingRequests.fold(0, (sum, r) => sum + unseenQuoteCountForRequest(r.id));
 
-  /// Call when the client opens the quotes view for a specific request —
-  /// clears just that job's badge, not every job's.
   void markRequestQuotesSeen(String requestId) {
     _seenClientQuoteIds.addAll(quotesForRequest(requestId).map((q) => q.id));
     notifyListeners();
@@ -287,6 +289,8 @@ class QuoteNotificationStore extends ChangeNotifier {
     req.arrivedAt = null;
     req.workStartedAt = null;
     req.serviceCompletedAt = null;
+    req.agreedPaymentAmount = null;
+    req.agreedPaymentAmountSetAt = null;
     notifyListeners();
     return true;
   }
@@ -346,6 +350,12 @@ class QuoteNotificationStore extends ChangeNotifier {
         acceptedQuoteFor(r.id)?.mechanicName == mechanicName);
   }
 
+  /// Emergency only: first mechanic to call this wins. Note the [price]
+  /// passed in is NOT shown to anyone as a final price anymore — Emergency
+  /// jobs skip quoting entirely and the real price is set later via
+  /// [mechanicSetPaymentAmount] once the mechanic and client agree in
+  /// person. This kept-around price only exists for internal bookkeeping
+  /// on the MechanicQuote record (eta/rating still matter for display).
   bool mechanicAcceptEmergency(
     String requestId, {
     required String mechanicName,
@@ -453,6 +463,25 @@ class QuoteNotificationStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// MECHANIC action only. Sets (or updates) the price the mechanic and
+  /// client actually agreed on — REQUIRED before a payment code can be
+  /// generated. Calling this again after a code was already shared is how
+  /// the mechanic "asks for a new code" when the client disagrees with the
+  /// first price: the QR/copy-code on MechanicActiveJobScreen always
+  /// reflects whatever this was most recently set to.
+  bool mechanicSetPaymentAmount(String requestId, double amount) {
+    if (AppSession.instance.currentRole != AppRole.mechanic) {
+      throw StateError('Only the Mechanic UI can set the payment amount.');
+    }
+    if (amount <= 0) return false;
+    final req = requestFor(requestId);
+    if (req == null || req.paymentCompleted) return false;
+    req.agreedPaymentAmount = amount;
+    req.agreedPaymentAmountSetAt = DateTime.now();
+    notifyListeners();
+    return true;
+  }
+
   bool mechanicCancelJob(String requestId, String reason) {
     if (AppSession.instance.currentRole != AppRole.mechanic) {
       throw StateError('Only the Mechanic UI can cancel a job.');
@@ -478,6 +507,8 @@ class QuoteNotificationStore extends ChangeNotifier {
     req.arrivedAt = null;
     req.workStartedAt = null;
     req.serviceCompletedAt = null;
+    req.agreedPaymentAmount = null;
+    req.agreedPaymentAmountSetAt = null;
     req.lastCancelReason = reason;
     req.lastCancelledBy = mechanicName;
     req.lastCancelledAt = DateTime.now();
@@ -488,6 +519,12 @@ class QuoteNotificationStore extends ChangeNotifier {
     return true;
   }
 
+  /// CLIENT action only — the ONLY way payment (and therefore the job) can
+  /// ever be marked complete. The amount charged is whatever the mechanic
+  /// most recently set via [mechanicSetPaymentAmount] — falling back to
+  /// the original quote price only if that was somehow never set (should
+  /// only happen for old data; the UI now requires it before any code
+  /// exists to scan/enter in the first place).
   int? clientConfirmPayment(String requestId) {
     if (AppSession.instance.currentRole != AppRole.client) {
       throw StateError('Only the Client UI can confirm a payment.');
@@ -498,7 +535,7 @@ class QuoteNotificationStore extends ChangeNotifier {
     if (req.paymentCompleted) return null;
 
     final quote = acceptedQuoteFor(requestId);
-    final amount = quote == null ? 0.0 : parsePesoAmount(quote.price);
+    final amount = req.agreedPaymentAmount ?? (quote == null ? 0.0 : parsePesoAmount(quote.price));
     final points = (amount * 0.05).round();
 
     req.paymentCompleted = true;
@@ -521,7 +558,7 @@ class QuoteNotificationStore extends ChangeNotifier {
     double sum = 0;
     for (final req in completedJobsFor(mechanicName)) {
       final quote = acceptedQuoteFor(req.id);
-      if (quote != null) sum += parsePesoAmount(quote.price);
+      sum += req.agreedPaymentAmount ?? (quote == null ? 0.0 : parsePesoAmount(quote.price));
     }
     return sum;
   }

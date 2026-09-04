@@ -247,6 +247,14 @@ Color _urgencyColor(String urgency) {
   }
 }
 
+String _paymentDisplay(HelpRequest request, MechanicQuote? quote) {
+  if (request.isEmergency) {
+    if (request.agreedPaymentAmount != null) return '₱${request.agreedPaymentAmount!.toStringAsFixed(0)}';
+    return 'To be agreed';
+  }
+  return quote?.price ?? '₱200';
+}
+
 Widget _locationBlock(String location) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -556,7 +564,7 @@ class _PendingJobCard extends StatelessWidget {
                   children: [
                     const Text('Payment', style: TextStyle(fontSize: 11, color: AppColors.textGrey)),
                     const SizedBox(height: 2),
-                    Text(quote?.price ?? '₱200', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.green)),
+                    Text(_paymentDisplay(request, quote), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.green)),
                   ],
                 ),
               ],

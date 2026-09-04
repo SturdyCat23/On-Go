@@ -110,6 +110,9 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
             const SizedBox(height: 8),
             Text('₱${payload.amount.toStringAsFixed(0)}',
                 style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppColors.primary)),
+            const SizedBox(height: 4),
+            const Text('If this doesn\'t match what you agreed on, cancel and ask the mechanic for an updated code.',
+                style: TextStyle(fontSize: 11, color: AppColors.textGrey)),
           ],
         ),
         actions: [
@@ -230,15 +233,23 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(10)),
-                        child: Row(
-                          children: [
-                            _InfoColumn(label: 'ETA', value: quote.eta),
-                            const _VerticalDivider(),
-                            _InfoColumn(label: 'Rating', value: quote.rating.toStringAsFixed(1)),
-                            const _VerticalDivider(),
-                            _InfoColumn(label: 'Quote', value: quote.price, valueColor: AppColors.green),
-                          ],
-                        ),
+                        child: request.isEmergency
+                            ? Row(
+                                children: [
+                                  _InfoColumn(label: 'ETA', value: quote.eta),
+                                  const _VerticalDivider(),
+                                  _InfoColumn(label: 'Rating', value: quote.rating.toStringAsFixed(1)),
+                                ],
+                              )
+                            : Row(
+                                children: [
+                                  _InfoColumn(label: 'ETA', value: quote.eta),
+                                  const _VerticalDivider(),
+                                  _InfoColumn(label: 'Rating', value: quote.rating.toStringAsFixed(1)),
+                                  const _VerticalDivider(),
+                                  _InfoColumn(label: 'Quote', value: quote.price, valueColor: AppColors.green),
+                                ],
+                              ),
                       ),
                     ],
                   ),
@@ -283,7 +294,8 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                         const Icon(Icons.check_circle, color: AppColors.green),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: Text('Payment complete — ${quote.price} sent to ${quote.mechanicName}.',
+                          child: Text(
+                              'Payment complete — ₱${(request.agreedPaymentAmount ?? 0).toStringAsFixed(0)} sent to ${quote.mechanicName}.',
                               style: const TextStyle(color: AppColors.green, fontWeight: FontWeight.w600, fontSize: 13)),
                         ),
                       ],
@@ -300,16 +312,28 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                     style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 46), shape: const StadiumBorder()),
                   ),
                 ] else if (request.serviceCompleted) ...[
-                  ElevatedButton(
-                    onPressed: () => _sendPayment(request),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.white,
-                      minimumSize: const Size(double.infinity, 46),
-                      shape: const StadiumBorder(),
+                  if (request.agreedPaymentAmount == null)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
+                      child: const Text(
+                        'Waiting for the mechanic to set a payment amount. Once they share a code, you can pay here.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: AppColors.textGrey, fontSize: 12),
+                      ),
+                    )
+                  else
+                    ElevatedButton(
+                      onPressed: () => _sendPayment(request),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.white,
+                        minimumSize: const Size(double.infinity, 46),
+                        shape: const StadiumBorder(),
+                      ),
+                      child: const Text('Send Payment'),
                     ),
-                    child: const Text('Send Payment'),
-                  ),
                 ] else if (request.lastCancelReason != null) ...[
                   Container(
                     width: double.infinity,

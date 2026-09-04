@@ -341,6 +341,14 @@ Color _urgencyColor(String urgency) {
   }
 }
 
+String _paymentDisplay(HelpRequest request, MechanicQuote? quote) {
+  if (request.isEmergency) {
+    if (request.agreedPaymentAmount != null) return '₱${request.agreedPaymentAmount!.toStringAsFixed(0)}';
+    return 'To be agreed';
+  }
+  return quote?.price ?? '₱200';
+}
+
 String _timeAgo(DateTime time) {
   final diff = DateTime.now().difference(time);
   if (diff.inMinutes < 1) return 'just now';
@@ -774,7 +782,7 @@ class _ActiveJobCard extends StatelessWidget {
                   children: [
                     const Text('Payment', style: TextStyle(fontSize: 11, color: AppColors.textGrey)),
                     const SizedBox(height: 2),
-                    Text(quote?.price ?? '₱200',
+                    Text(_paymentDisplay(request, quote),
                         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.green)),
                   ],
                 ),
