@@ -4,12 +4,8 @@ import 'moderator_data.dart';
 enum MechanicAccountMode { none, demo, registered }
 
 /// Tracks the mechanic's account this session — mirrors ClientAccountStore's
-/// demo/registered pattern, plus password and photo, so mechanic Settings
-/// and Profile can offer the same change-password / change-photo flows the
-/// client side already has.
-///
-/// [canPerformJobActions] is the single source of truth for whether job
-/// actions are allowed — QuoteNotificationStore checks THIS getter directly.
+/// demo/registered pattern, plus password, photo, and address, so mechanic
+/// Settings and Profile can offer the same flows the client side has.
 class MechanicAccountStore extends ChangeNotifier {
   MechanicAccountStore._internal() {
     ModerationStore.instance.addListener(notifyListeners);
@@ -24,13 +20,13 @@ class MechanicAccountStore extends ChangeNotifier {
   String lastName = '';
   String email = '';
   String phone = '';
+  String address = '';
   String _password = '';
 
   String? photoPath;
   bool photoIsNetwork = false;
   DateTime? photoLastChangedAt;
 
-  /// Links this account to its approval request in ModerationStore.
   String? _accountRequestId;
 
   String get name => '$firstName $lastName'.trim();
@@ -55,6 +51,7 @@ class MechanicAccountStore extends ChangeNotifier {
     lastName = 'Mechanic';
     email = '';
     phone = '';
+    address = '';
     _password = '';
     photoPath = null;
     photoIsNetwork = false;
@@ -63,13 +60,12 @@ class MechanicAccountStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Registers a mechanic account and immediately files it with
-  /// ModerationStore as a Pending approval request.
   void registerAccount({
     required String firstName,
     required String lastName,
     required String email,
     required String phone,
+    String address = '',
     String password = '',
     String? photoPath,
     bool photoIsNetwork = false,
@@ -80,6 +76,7 @@ class MechanicAccountStore extends ChangeNotifier {
     this.lastName = lastName;
     this.email = email;
     this.phone = phone;
+    this.address = address;
     _password = password;
     this.photoPath = photoPath;
     this.photoIsNetwork = photoIsNetwork;
@@ -101,8 +98,6 @@ class MechanicAccountStore extends ChangeNotifier {
 
   DateTime? get nextPhotoChangeAt => photoLastChangedAt?.add(photoChangeCooldown);
 
-  /// Returns false (and leaves the photo untouched) if the monthly cooldown
-  /// hasn't elapsed yet.
   bool changePhoto(String newPath, {bool isNetwork = false}) {
     if (!canChangePhoto) return false;
     photoPath = newPath;
@@ -112,8 +107,6 @@ class MechanicAccountStore extends ChangeNotifier {
     return true;
   }
 
-  /// Verifies [currentPassword] before setting [newPassword]. Returns false
-  /// (and leaves the password untouched) if the current password is wrong.
   bool changePassword({required String currentPassword, required String newPassword}) {
     if (_password != currentPassword) return false;
     _password = newPassword;
@@ -129,6 +122,7 @@ class MechanicAccountStore extends ChangeNotifier {
     lastName = '';
     email = '';
     phone = '';
+    address = '';
     _password = '';
     photoPath = null;
     photoIsNetwork = false;

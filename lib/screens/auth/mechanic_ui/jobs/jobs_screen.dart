@@ -8,6 +8,7 @@ import '../../../../widgets/common_widgets.dart';
 import '../../../shared/job_chat_screen.dart';
 import 'send_quote_sheet.dart';
 import 'mechanic_active_job_screen.dart';
+import '../../../../widgets/job_photo_preview.dart';
 
 class JobsScreen extends StatefulWidget {
   const JobsScreen({super.key});
@@ -582,10 +583,9 @@ class _JobCard extends StatelessWidget {
           Text(problem.issue, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
           const SizedBox(height: 2),
           Text(problem.description, style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
-          if (request.photoPaths.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text('${request.photoPaths.length} photo${request.photoPaths.length == 1 ? '' : 's'} attached',
-                style: const TextStyle(fontSize: 11, color: AppColors.textGrey)),
+                    if (request.photoPaths.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            JobPhotoPreview(photoPaths: request.photoPaths),
           ],
           const SizedBox(height: 10),
           _LocationBlock(location: request.location),

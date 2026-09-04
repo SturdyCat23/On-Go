@@ -89,11 +89,6 @@ class HelpRequest {
   int? pointsAwarded;
   DateTime? completedAt;
 
-  /// Set by [QuoteNotificationStore.mechanicCancelJob] — the client sees
-  /// this on their Pending card. Cleared automatically the moment the
-  /// request is matched to a mechanic again (see clientAcceptQuote /
-  /// mechanicAcceptEmergency), so it never shows a stale reason from a
-  /// previous mechanic.
   String? lastCancelReason;
   String? lastCancelledBy;
   DateTime? lastCancelledAt;
@@ -149,6 +144,11 @@ class QuoteNotificationStore extends ChangeNotifier {
   int _unseenCount = 0;
   final Set<String> _seenMechanicQuoteIds = {};
 
+  /// Per-request seen-tracking for the CLIENT side — backs the "Uploaded"
+  /// button's badge and each job card's own "Quotes" badge. Deliberately
+  /// separate from [_seenMechanicQuoteIds] (mechanic-side notifications).
+  final Set<String> _seenClientQuoteIds = {};
+
   // ---------------------------------------------------------------------
   // Client-facing API
   // ---------------------------------------------------------------------
@@ -189,6 +189,23 @@ class QuoteNotificationStore extends ChangeNotifier {
 
   int get unseenCount => _unseenCount;
   bool get hasAcceptedQuote => quotes.any((q) => q.accepted);
+
+  /// Unseen quotes for one specific request — feeds the small badge on that
+  /// job's "Quotes" button in UploadedJobsScreen.
+  int unseenQuoteCountForRequest(String requestId) =>
+      quotesForRequest(requestId).where((q) => !_seenClientQuoteIds.contains(q.id)).length;
+
+  /// Total unseen quotes across every still-pending request — feeds the
+  /// badge on the "Uploaded" app bar button.
+  int get totalUnseenQuoteCountForClient =>
+      myPendingRequests.fold(0, (sum, r) => sum + unseenQuoteCountForRequest(r.id));
+
+  /// Call when the client opens the quotes view for a specific request —
+  /// clears just that job's badge, not every job's.
+  void markRequestQuotesSeen(String requestId) {
+    _seenClientQuoteIds.addAll(quotesForRequest(requestId).map((q) => q.id));
+    notifyListeners();
+  }
 
   List<MechanicQuote> get mechanicNotifications => _allQuotes
       .where((q) => q.accepted && q.mechanicName == currentMechanicName)
@@ -294,17 +311,9 @@ class QuoteNotificationStore extends ChangeNotifier {
   List<HelpRequest> get availableJobs =>
       _requests.where((r) => r.status == RequestStatus.pending).toList();
 
-  /// True if [mechanicName] has already sent a quote for [requestId] —
-  /// derived live from the actual quotes, not from any UI-local state, so
-  /// it stays correct across logout/login, app restarts (within a session),
-  /// or navigating away and back.
   bool mechanicHasQuoted(String requestId, String mechanicName) =>
       _allQuotes.any((q) => q.requestId == requestId && q.mechanicName == mechanicName);
 
-  /// Normal/Urgent only: mechanic sends a quote. Refuses (throws) if this
-  /// mechanic has already quoted this job — enforced HERE, not just by
-  /// disabling a button, so there's no path that lets a mechanic quote the
-  /// same job twice.
   void mechanicSendQuote(
     String requestId, {
     required String mechanicName,
@@ -444,12 +453,6 @@ class QuoteNotificationStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// MECHANIC action only. Cancels an already-accepted job and reverts it
-  /// to Pending so other mechanics can pick it up — requires a non-empty
-  /// [reason], which the client then sees on their Pending card. Emergency
-  /// jobs and jobs already navigating can't be cancelled this way (matches
-  /// JobsScreen only ever showing the Cancel button in those other cases —
-  /// this is the backing enforcement, not just a hidden button).
   bool mechanicCancelJob(String requestId, String reason) {
     if (AppSession.instance.currentRole != AppRole.mechanic) {
       throw StateError('Only the Mechanic UI can cancel a job.');
@@ -536,6 +539,7 @@ class QuoteNotificationStore extends ChangeNotifier {
     _allQuotes.clear();
     _unseenCount = 0;
     _seenMechanicQuoteIds.clear();
+    _seenClientQuoteIds.clear();
     notifyListeners();
   }
 }

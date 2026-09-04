@@ -84,7 +84,7 @@ class _QrScreenState extends State<QrScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.primary, width: 2),
+              border: Border.all(color: AppColors.textDark, width: 2),
               borderRadius: BorderRadius.circular(16),
             ),
             child: QrImageView(data: qrData, size: 200),
@@ -93,7 +93,7 @@ class _QrScreenState extends State<QrScreen> {
           ElevatedButton.icon(
             onPressed: _openScanner,
             icon: const Icon(Icons.qr_code_scanner, size: 18),
-            label: const Text('Open Scanner'),
+            label: Text('Open Scanner'),
             style: ElevatedButton.styleFrom(minimumSize: const Size(200, 48)),
           ),
         ],

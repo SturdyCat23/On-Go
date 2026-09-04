@@ -5,14 +5,12 @@ import '../data/quote_store.dart';
 import '../screens/auth/client_ui/home/quotes_screen.dart';
 
 /// Red app bar with a menu button (opens the drawer), "On Go" branding,
-/// and a notification bell. Used as the appBar for the Client & Mechanic shells.
-///
-/// The bell now doubles as the "Quotes" entry point: once a client uploads a
-/// help request, incoming mechanic quotes show up as a badge count here, and
-/// tapping the bell opens QuotesScreen so the client can compare and accept one.
+/// an optional secondary action (e.g. the client's "Uploaded" button), and
+/// a notification bell.
 class OnGoAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String subtitle;
   final bool showMenuButton;
+  final Widget? secondaryAction;
   final Widget? notificationAction;
   final VoidCallback? onNotificationTap;
 
@@ -20,6 +18,7 @@ class OnGoAppBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     this.subtitle = 'Service Anywhere',
     this.showMenuButton = true,
+    this.secondaryAction,
     this.notificationAction,
     this.onNotificationTap,
   });
@@ -56,7 +55,11 @@ class OnGoAppBar extends StatelessWidget implements PreferredSizeWidget {
           ],
         ),
       ),
-      actions: [notificationAction ?? _buildDefaultNotification(context)],
+      actions: [
+        // ignore: use_null_aware_elements
+        if (secondaryAction != null) secondaryAction!,
+        notificationAction ?? _buildDefaultNotification(context),
+      ],
     );
   }
 
@@ -114,7 +117,7 @@ class NotificationBell extends StatelessWidget {
               decoration: BoxDecoration(
                 color: badgeColor,
                 shape: BoxShape.circle,
-                  boxShadow: [
+                boxShadow: [
                   BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 2, offset: Offset(0, 1)),
                 ],
               ),

@@ -434,11 +434,12 @@ class _MechanicStep5VerificationState
                     onNext: () {
                       if (!_validate()) return;
 
-                      MechanicAccountStore.instance.registerAccount(
+                        MechanicAccountStore.instance.registerAccount(
                         firstName: _draft.firstName,
                         lastName: _draft.lastName,
                         email: _draft.email,
                         phone: _draft.mobile,
+                        address: _draft.address,
                         password: _draft.password,
                         photoPath: _profilePhoto?.path,
                         documents: [

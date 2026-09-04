@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../data/app_session.dart';
 import '../../../data/review_store.dart';
 import '../../../widgets/app_widgets.dart';
-import '../../../data/quote_store.dart';
 import 'home/need_help_screen.dart';
-import 'home/quotes_screen.dart';
 import 'jobs/client_jobs_screen.dart';
 import 'history/service_history_screen.dart';
 import 'rank/leaderboard_screen.dart';
@@ -23,27 +21,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Marks this session as Client-shell so role-gated store methods
-    // (ReviewStore.submitReview, QuoteNotificationStore.clientConfirmPayment)
-    // are actually reachable, and identifies this client as the viewer for
-    // like/helpful interactions on reviews — see AppSession's doc comment.
     AppSession.instance.setRole(AppRole.client, viewerName: ReviewStore.currentClientName);
   }
 
   void _goToTab(int index) => setState(() => _currentIndex = index);
-
-  /// Bell tap: open the quotes list. If the client accepts a quote there,
-  /// jump to the Jobs tab to show the confirmed mechanic.
-  Future<void> _openQuotes() async {
-    QuoteNotificationStore.instance.markSeen();
-    final accepted = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(builder: (_) => const QuotesScreen()),
-    );
-    if (accepted == true) {
-      _goToTab(1);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +37,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: OnGoAppBar(onNotificationTap: _openQuotes),
+      appBar: const OnGoAppBar(
+        // Bell has no function yet — kept in place for a future use.
+        notificationAction: NotificationBell(count: 0, onTap: null),
+      ),
       drawer: const ClientMenuDrawer(),
       body: IndexedStack(index: _currentIndex, children: tabs),
       bottomNavigationBar: BottomNavigationBar(
@@ -65,25 +49,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         type: BottomNavigationBarType.fixed,
         showUnselectedLabels: true,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.work_outline),
-            activeIcon: Icon(Icons.work),
-            label: 'Jobs',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'History',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.emoji_events_outlined),
-            activeIcon: Icon(Icons.emoji_events),
-            label: 'Rank',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.work_outline), activeIcon: Icon(Icons.work), label: 'Jobs'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+          BottomNavigationBarItem(icon: Icon(Icons.emoji_events_outlined), activeIcon: Icon(Icons.emoji_events), label: 'Rank'),
         ],
       ),
     );

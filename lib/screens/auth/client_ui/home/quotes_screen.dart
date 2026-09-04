@@ -4,17 +4,34 @@ import '../../../../widgets/common_widgets.dart';
 // Todo: adjust this path to wherever quote_store.dart lives in your project
 import '../../../../data/quote_store.dart';
 
-class QuotesScreen extends StatelessWidget {
-  const QuotesScreen({super.key});
+class QuotesScreen extends StatefulWidget {
+  /// When set, only this request's quotes are shown (used by the "Quotes"
+  /// button on each Uploaded job card). When null, every pending request is
+  /// listed — kept for backward compatibility, though nothing wires the
+  /// bell to this anymore.
+  final String? requestId;
+
+  const QuotesScreen({super.key, this.requestId});
+
+  @override
+  State<QuotesScreen> createState() => _QuotesScreenState();
+}
+
+class _QuotesScreenState extends State<QuotesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.requestId != null) {
+        QuoteNotificationStore.instance.markRequestQuotesSeen(widget.requestId!);
+      } else {
+        QuoteNotificationStore.instance.markSeen();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Mark quotes as seen the moment the client opens this screen
-    // (clears the badge on the bell icon).
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      QuoteNotificationStore.instance.markSeen();
-    });
-
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
@@ -26,7 +43,14 @@ class QuotesScreen extends StatelessWidget {
         animation: QuoteNotificationStore.instance,
         builder: (context, _) {
           final store = QuoteNotificationStore.instance;
-          final pending = store.myPendingRequests;
+
+          List<HelpRequest> pending;
+          if (widget.requestId != null) {
+            final single = store.requestFor(widget.requestId!);
+            pending = (single != null && single.status == RequestStatus.pending) ? [single] : [];
+          } else {
+            pending = store.myPendingRequests;
+          }
 
           if (pending.isEmpty) {
             return Padding(
@@ -36,15 +60,17 @@ class QuotesScreen extends StatelessWidget {
                 children: [
                   const Icon(Icons.hourglass_empty, size: 48, color: AppColors.textGrey),
                   const SizedBox(height: 12),
-                  const Text(
-                    'No quotes yet',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  Text(
+                    widget.requestId != null ? 'No quotes for this job yet' : 'No quotes yet',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'Upload a problem from the Need Help tab and mechanic quotes will show up here.',
+                  Text(
+                    widget.requestId != null
+                        ? 'This job has either already been matched or is still waiting on mechanics.'
+                        : 'Upload a problem from the Need Help tab and mechanic quotes will show up here.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: AppColors.textGrey),
+                    style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
                   ),
                 ],
               ),
@@ -189,9 +215,9 @@ class _RequestQuoteCard extends StatelessWidget {
                                   shape: const StadiumBorder(),
                                   padding: EdgeInsets.zero,
                                   minimumSize: const Size(70, 32),
-                                  textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                                  textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
                                 ),
-                                child: const Text('Accept'),
+                                child: const Text('Accept', style: TextStyle(color: Colors.white)),
                               ),
                       ),
                     ],

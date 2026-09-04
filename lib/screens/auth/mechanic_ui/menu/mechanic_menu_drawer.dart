@@ -4,8 +4,8 @@ import '../../../../data/mechanic_account_store.dart';
 import '../../../../data/moderator_data.dart';
 import '../../../../theme/app_theme.dart';
 import '../../sign_in_screen.dart';
-import '../profile/mechanic_profile_screen.dart';
 import '../settings/mechanic_settings_screen.dart';
+import '../profile/mechanic_profile_info_screen.dart';
 
 class MechanicMenuDrawer extends StatefulWidget {
   const MechanicMenuDrawer({super.key});
@@ -87,7 +87,7 @@ class _MechanicMenuDrawerState extends State<MechanicMenuDrawer> {
                   label: 'My Profile',
                   onTap: () {
                     Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const MechanicProfileScreen()));
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const MechanicProfileInfoScreen()));
                   },
                 ),
                 _DrawerItem(icon: Icons.badge_outlined, label: 'Certifications', onTap: () => Navigator.pop(context)),

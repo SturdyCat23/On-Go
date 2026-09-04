@@ -45,8 +45,7 @@ class ChatStore extends ChangeNotifier {
   }
 
   /// Sends as whichever role the active shell currently is. Throws if
-  /// called from neither client nor mechanic (e.g. admin/moderator shells,
-  /// which have no chat UI).
+  /// called from neither client nor mechanic.
   void sendMessage(String requestId, {String? text, String? imagePath, String? replyToId}) {
     final role = AppSession.instance.currentRole;
     final ChatSender sender;
@@ -73,9 +72,7 @@ class ChatStore extends ChangeNotifier {
   }
 
   /// Number of messages from the OTHER party sent after [forRole] last
-  /// opened this conversation. Returns the full message count if [forRole]
-  /// has never opened it — a brand-new conversation with messages already
-  /// in it should read as unread.
+  /// opened this conversation.
   int unreadCountFor(String requestId, AppRole forRole) {
     if (forRole != AppRole.client && forRole != AppRole.mechanic) return 0;
     final messages = _messages[requestId];
@@ -87,9 +84,20 @@ class ChatStore extends ChangeNotifier {
     return messages.where((m) => m.sender == theirSender && (lastSeen == null || m.sentAt.isAfter(lastSeen))).length;
   }
 
-  /// Call the moment a conversation is opened by [forRole].
+  /// Call the moment a conversation is opened by [forRole], or whenever a
+  /// new message might have just arrived while it's already open.
+  ///
+  /// CRITICAL: only notifies listeners when there was actually something
+  /// unread to clear. Without this guard, a screen that listens to this
+  /// store AND calls markSeen from its own change-listener (as
+  /// JobChatScreen does, to clear the badge the instant a new message
+  /// arrives) creates an infinite synchronous loop — notify triggers the
+  /// listener, which calls markSeen, which notifies again, forever — and
+  /// freezes/crashes the app. Making this a true no-op once nothing is
+  /// unread breaks that loop.
   void markSeen(String requestId, AppRole forRole) {
     if (forRole != AppRole.client && forRole != AppRole.mechanic) return;
+    if (unreadCountFor(requestId, forRole) == 0) return;
     _lastSeen.putIfAbsent(requestId, () => {})[forRole] = DateTime.now();
     notifyListeners();
   }

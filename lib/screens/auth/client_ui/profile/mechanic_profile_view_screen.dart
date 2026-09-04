@@ -109,16 +109,19 @@ class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-                            Wrap(
-                alignment: WrapAlignment.center,
-                children: List.generate(5, (i) {
-                  return IconButton(
-                    padding: const EdgeInsets.symmetric(horizontal: 2),
-                    constraints: const BoxConstraints(),
-                    icon: Icon(i < selected ? Icons.star : Icons.star_border, color: AppColors.yellow, size: 28),
-                    onPressed: () => setDialogState(() => selected = i + 1),
-                  );
-                }),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(5, (i) {
+                    return IconButton(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      constraints: const BoxConstraints(),
+                      icon: Icon(i < selected ? Icons.star : Icons.star_border, color: AppColors.yellow, size: 30),
+                      onPressed: () => setDialogState(() => selected = i + 1),
+                    );
+                  }),
+                ),
               ),
               TextField(
                 controller: controller,

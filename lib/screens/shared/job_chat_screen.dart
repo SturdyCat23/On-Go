@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../data/app_session.dart';
 import '../../data/chat_store.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/photo_gallery_viewer_screen.dart';
 
 class JobChatScreen extends StatefulWidget {
   final String requestId;
@@ -26,7 +27,17 @@ class _JobChatScreenState extends State<JobChatScreen> {
   void initState() {
     super.initState();
     _store.addListener(_onChange);
-    _store.markSeen(widget.requestId, AppSession.instance.currentRole);
+    // Deferred to after this frame — calling markSeen synchronously here
+    // fires notifyListeners() WHILE the navigation transition is still
+    // building the widget tree (initState runs during build). Any other
+    // ChatIconButton still mounted elsewhere (e.g. on the card you just
+    // navigated from) would then try to setState() mid-build and crash
+    // with "setState() called during build". Post-frame scheduling lets
+    // the current build finish first.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _store.markSeen(widget.requestId, AppSession.instance.currentRole);
+    });
   }
 
   @override
@@ -37,7 +48,17 @@ class _JobChatScreenState extends State<JobChatScreen> {
     super.dispose();
   }
 
-  void _onChange() => setState(() {});
+  void _onChange() {
+    if (!mounted) return;
+    setState(() {});
+    // Same reasoning as initState above: a message arriving while this
+    // screen is open should clear the badge, but marking it seen must
+    // happen after the current build/notify cycle finishes, not inside it.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _store.markSeen(widget.requestId, AppSession.instance.currentRole);
+    });
+  }
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -93,7 +114,9 @@ class _JobChatScreenState extends State<JobChatScreen> {
                 onTap: () {
                   Clipboard.setData(ClipboardData(text: msg.text!));
                   Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Copied')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Copied'), duration: Duration(milliseconds: 700)),
+                  );
                 },
               ),
             ListTile(
@@ -176,9 +199,17 @@ class _JobChatScreenState extends State<JobChatScreen> {
                                     ),
                                   ),
                                 msg.imagePath != null
-                                    ? ClipRRect(
-                                        borderRadius: BorderRadius.circular(10),
-                                        child: Image.file(File(msg.imagePath!), width: 180, fit: BoxFit.cover),
+                                    ? GestureDetector(
+                                        onTap: () => Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => PhotoGalleryViewerScreen(photoPaths: [msg.imagePath!]),
+                                          ),
+                                        ),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(10),
+                                          child: Image.file(File(msg.imagePath!), width: 180, fit: BoxFit.cover),
+                                        ),
                                       )
                                     : Text(msg.text ?? '', style: const TextStyle(fontSize: 13, color: AppColors.textDark)),
                               ],

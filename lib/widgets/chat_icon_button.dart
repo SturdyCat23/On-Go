@@ -27,7 +27,10 @@ class _ChatIconButtonState extends State<ChatIconButton> {
     super.dispose();
   }
 
-  void _onChange() => setState(() {});
+  void _onChange() {
+    if (!mounted) return;
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {

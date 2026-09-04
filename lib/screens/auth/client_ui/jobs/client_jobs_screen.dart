@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
-import '../../../../widgets/chat_icon_button.dart';
 import '../../../../widgets/common_widgets.dart';
+import '../../../../widgets/job_photo_preview.dart';
 import '../../../../data/quote_store.dart';
-import '../../../shared/job_chat_screen.dart';
+import '../home/quotes_screen.dart';
 import '../active/active_request_screen.dart';
+import '../../../../widgets/chat_icon_button.dart';
+import '../../../shared/job_chat_screen.dart';
 
 class ClientJobsScreen extends StatefulWidget {
   const ClientJobsScreen({super.key});
@@ -38,7 +40,39 @@ class _ClientJobsScreenState extends State<ClientJobsScreen> {
     );
   }
 
-  Future<void> _cancelJob(HelpRequest request) async {
+  void _openQuotes(HelpRequest request) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => QuotesScreen(requestId: request.id)),
+    );
+  }
+
+  Future<void> _deleteUploaded(HelpRequest request) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete this request?'),
+        content: const Text('This removes it permanently and can\'t be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Keep')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || confirmed != true) return;
+
+    final ok = _store.clientDeleteRequest(request.id);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(ok ? 'Request deleted.' : 'Could not delete this request.')),
+    );
+  }
+
+  Future<void> _cancelMatched(HelpRequest request) async {
     final choice = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -95,6 +129,7 @@ class _ClientJobsScreenState extends State<ClientJobsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final uploaded = _store.myPendingRequests;
     final all = _store.myActiveJobs;
     final pending = all.where((r) => !r.isEmergency && !r.navigating).toList();
     final active = all.where((r) => r.isEmergency || r.navigating).toList()
@@ -108,17 +143,23 @@ class _ClientJobsScreenState extends State<ClientJobsScreen> {
         _JobTabBar(
           currentIndex: _tabIndex,
           onChanged: (i) => setState(() => _tabIndex = i),
-          counts: [pending.length, active.length],
+          counts: [uploaded.length, pending.length, active.length],
         ),
         Expanded(
           child: IndexedStack(
             index: _tabIndex,
             children: [
+              _UploadedJobList(
+                requests: uploaded,
+                store: _store,
+                onQuotes: _openQuotes,
+                onCancel: _deleteUploaded,
+              ),
               _PendingJobList(
                 requests: pending,
                 store: _store,
                 onOpen: _openJob,
-                onCancel: _cancelJob,
+                onCancel: _cancelMatched,
               ),
               _ActiveJobList(
                 requests: active,
@@ -133,6 +174,10 @@ class _ClientJobsScreenState extends State<ClientJobsScreen> {
   }
 }
 
+// ---------------------------------------------------------------------
+// Tab bar
+// ---------------------------------------------------------------------
+
 class _JobTabBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onChanged;
@@ -140,20 +185,20 @@ class _JobTabBar extends StatelessWidget {
 
   const _JobTabBar({required this.currentIndex, required this.onChanged, required this.counts});
 
-  static const _labels = ['Pending', 'Active'];
+  static const _labels = ['Uploaded', 'Pending', 'Active'];
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Row(
-        children: List.generate(2, (i) {
+        children: List.generate(3, (i) {
           final selected = i == currentIndex;
           return Expanded(
             child: GestureDetector(
               onTap: () => onChanged(i),
               child: Container(
-                margin: EdgeInsets.only(right: i < 1 ? 8 : 0),
+                margin: EdgeInsets.only(right: i < 2 ? 8 : 0),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
@@ -174,6 +219,10 @@ class _JobTabBar extends StatelessWidget {
   }
 }
 
+// ---------------------------------------------------------------------
+// Shared helpers
+// ---------------------------------------------------------------------
+
 class _ProblemText {
   final String issue;
   final String description;
@@ -185,6 +234,17 @@ _ProblemText _splitProblem(String problem) {
   if (idx == -1 || idx > 40) return _ProblemText('Reported Issue', problem);
   final rest = problem.substring(idx + 1).trim();
   return _ProblemText(problem.substring(0, idx).trim(), rest.isEmpty ? problem : rest);
+}
+
+Color _urgencyColor(String urgency) {
+  switch (urgency) {
+    case 'Emergency':
+      return AppColors.primary;
+    case 'Urgent':
+      return AppColors.yellow;
+    default:
+      return AppColors.green;
+  }
 }
 
 Widget _locationBlock(String location) {
@@ -225,6 +285,176 @@ class _CircleIconButton extends StatelessWidget {
     );
   }
 }
+
+/// Every action button on every job card (Quotes, Pending pill, Cancel,
+/// Navigate, Send Payment, etc.) renders through this ONE widget with a
+/// hard-fixed height and identical padding/text style — so two buttons
+/// sitting side-by-side in a Row can never end up different sizes again,
+/// regardless of whether one of them happens to carry a badge overlay.
+class _JobActionButton extends StatelessWidget {
+  final String label;
+  final Color color;
+  final VoidCallback? onTap;
+  final Widget? badge;
+
+  const _JobActionButton({required this.label, required this.color, required this.onTap, this.badge});
+
+  static const double _height = 44;
+
+  @override
+  Widget build(BuildContext context) {
+    final button = SizedBox(
+      height: _height,
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          disabledBackgroundColor: color,
+          foregroundColor: AppColors.white,
+          disabledForegroundColor: AppColors.white,
+          shape: const StadiumBorder(),
+          padding: EdgeInsets.zero,
+          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
+        child: Text(label),
+      ),
+    );
+
+    if (badge == null) return button;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        button,
+        Positioned(right: -4, top: -4, child: badge!),
+      ],
+    );
+  }
+}
+
+Widget _countBadge(int count) {
+  return Container(
+    padding: const EdgeInsets.all(4),
+    constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+    decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+    child: Text(
+      '$count',
+      textAlign: TextAlign.center,
+      style: const TextStyle(fontSize: 10, color: AppColors.white, fontWeight: FontWeight.w700),
+    ),
+  );
+}
+
+// ---------------------------------------------------------------------
+// Uploaded tab — still awaiting a decision (no mechanic accepted yet)
+// ---------------------------------------------------------------------
+
+class _UploadedJobList extends StatelessWidget {
+  final List<HelpRequest> requests;
+  final QuoteNotificationStore store;
+  final void Function(HelpRequest) onQuotes;
+  final void Function(HelpRequest) onCancel;
+
+  const _UploadedJobList({required this.requests, required this.store, required this.onQuotes, required this.onCancel});
+
+  @override
+  Widget build(BuildContext context) {
+    if (requests.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            'Nothing uploaded yet — problems you submit from Need Help will show up here while they\'re awaiting quotes.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppColors.textGrey),
+          ),
+        ),
+      );
+    }
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      children: requests
+          .map((r) => _UploadedJobCard(request: r, store: store, onQuotes: () => onQuotes(r), onCancel: () => onCancel(r)))
+          .toList(),
+    );
+  }
+}
+
+class _UploadedJobCard extends StatelessWidget {
+  final HelpRequest request;
+  final QuoteNotificationStore store;
+  final VoidCallback onQuotes;
+  final VoidCallback onCancel;
+
+  const _UploadedJobCard({required this.request, required this.store, required this.onQuotes, required this.onCancel});
+
+  @override
+  Widget build(BuildContext context) {
+    final problem = _splitProblem(request.problem);
+    final urgencyColor = _urgencyColor(request.urgency);
+    final quoteCount = store.quotesForRequest(request.id).length;
+    final unseen = store.unseenQuoteCountForRequest(request.id);
+
+    return AppCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.green, shape: BoxShape.circle)),
+              const SizedBox(width: 6),
+              const Text('UPLOADED', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.green, letterSpacing: 0.5)),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(color: urgencyColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20)),
+                child: Text(request.urgency, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: urgencyColor)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(problem.issue, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+          const SizedBox(height: 2),
+          Text(problem.description, style: const TextStyle(fontSize: 13, color: AppColors.textGrey)),
+          if (request.photoPaths.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            JobPhotoPreview(photoPaths: request.photoPaths),
+          ],
+          const SizedBox(height: 10),
+          _locationBlock(request.location),
+          const SizedBox(height: 4),
+          Text(
+            quoteCount == 0 ? 'Waiting for quotes...' : '$quoteCount quote${quoteCount == 1 ? '' : 's'} received',
+            style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _JobActionButton(
+                  label: 'Quotes',
+                  color: AppColors.green,
+                  onTap: onQuotes,
+                  badge: unseen > 0 ? _countBadge(unseen) : null,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _JobActionButton(label: 'Cancel', color: AppColors.primary, onTap: onCancel),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------
+// Pending tab — matched, mechanic hasn't started navigating yet
+// ---------------------------------------------------------------------
 
 class _PendingJobList extends StatelessWidget {
   final List<HelpRequest> requests;
@@ -295,7 +525,7 @@ class _PendingJobCard extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 8),
-            Row(
+                        Row(
               children: [
                 Expanded(child: Text(quote?.mechanicName ?? 'Mechanic', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18))),
                 _CircleIconButton(icon: Icons.call, color: AppColors.green, onTap: () {}),
@@ -312,6 +542,10 @@ class _PendingJobCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(problem.issue, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
             Text(problem.description, style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+            if (request.photoPaths.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              JobPhotoPreview(photoPaths: request.photoPaths),
+            ],
             const SizedBox(height: 12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,28 +564,9 @@ class _PendingJobCard extends StatelessWidget {
             const SizedBox(height: 14),
             Row(
               children: [
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(color: AppColors.green, borderRadius: BorderRadius.circular(30)),
-                    child: const Text('Pending', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.w600, fontSize: 14)),
-                  ),
-                ),
+                Expanded(child: _JobActionButton(label: 'Pending', color: AppColors.green, onTap: null)),
                 const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: onCancel,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.white,
-                      shape: const StadiumBorder(),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: const Text('Cancel'),
-                  ),
-                ),
+                Expanded(child: _JobActionButton(label: 'Cancel', color: AppColors.primary, onTap: onCancel)),
               ],
             ),
           ],
@@ -360,6 +575,10 @@ class _PendingJobCard extends StatelessWidget {
     );
   }
 }
+
+// ---------------------------------------------------------------------
+// Active tab — no Cancel, single button whose label tracks phase
+// ---------------------------------------------------------------------
 
 class _ActiveJobList extends StatelessWidget {
   final List<HelpRequest> requests;
@@ -443,6 +662,10 @@ class _ActiveJobCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(problem.issue, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
             Text(problem.description, style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+            if (request.photoPaths.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              JobPhotoPreview(photoPaths: request.photoPaths),
+            ],
             const SizedBox(height: 12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -459,19 +682,7 @@ class _ActiveJobCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: onOpen,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _statusColor,
-                  foregroundColor: AppColors.white,
-                  shape: const StadiumBorder(),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                child: Text(_statusLabel),
-              ),
-            ),
+            _JobActionButton(label: _statusLabel, color: _statusColor, onTap: onOpen),
           ],
         ),
       ),
