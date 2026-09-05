@@ -76,7 +76,7 @@ class _SignInScreenState extends State<SignInScreen> {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Use admin, moderator, client, or mechanic as the demo username')),
+      const SnackBar(content: Text('Use admin, moderator, client, or mechanic as the demo username'), duration: AppDurations.snackBar),
     );
   }
 

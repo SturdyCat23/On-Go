@@ -35,7 +35,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
 
   void _showSnack(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), duration: AppDurations.snackBar));
   }
 
   Future<void> _sendPayment(HelpRequest request, MechanicQuote? quote) async {

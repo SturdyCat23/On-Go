@@ -143,7 +143,7 @@ class _MechanicStep5VerificationState
       setState(() => _livenessPass = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Face verification error: $e')),
+          SnackBar(content: Text('Face verification error: $e'), duration: AppDurations.snackBar),
         );
       }
     } finally {

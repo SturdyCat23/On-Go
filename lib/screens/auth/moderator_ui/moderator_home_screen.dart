@@ -155,7 +155,7 @@ class _ModeratorDrawer extends StatelessWidget {
                                 if (sheetCtx.mounted) Navigator.pop(sheetCtx);
                               } else if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Incorrect password')),
+                                  const SnackBar(content: Text('Incorrect password'), duration: AppDurations.snackBar),
                                 );
                               }
                             },

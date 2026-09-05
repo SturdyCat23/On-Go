@@ -55,7 +55,7 @@ class _MechanicSettingsScreenState extends State<MechanicSettingsScreen> {
     _currentCtrl.clear();
     _newCtrl.clear();
     _confirmCtrl.clear();
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password updated')));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password updated'), duration: AppDurations.snackBar));
   }
 
   @override

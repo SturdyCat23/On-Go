@@ -214,6 +214,7 @@ class _MechanicStep4DocumentsState extends State<MechanicStep4Documents> {
                       if (!_validateRequired()) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
+                            duration: AppDurations.snackBar,
                             content: Text(
                                 'Please upload Valid ID and NCII before continuing.'),
                           ),

@@ -111,7 +111,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not access camera/gallery: $e')),
+        SnackBar(content: Text('Could not access camera/gallery: $e'), duration: AppDurations.snackBar),
       );
     }
   }
@@ -163,7 +163,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
 
   void _showSnack(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), duration: AppDurations.snackBar));
   }
 
   // ---------------------------------------------------------------------
@@ -206,6 +206,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Request uploaded! Mechanics will send quotes to your notifications 🔔'),
+        duration: AppDurations.snackBar,
       ),
     );
 

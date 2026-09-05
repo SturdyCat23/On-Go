@@ -43,7 +43,7 @@ class _JobsScreenState extends State<JobsScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Your mechanic account has been approved. You can now send quotes and accept jobs.')),
+          const SnackBar(content: Text('Your mechanic account has been approved. You can now send quotes and accept jobs.'), duration: AppDurations.snackBar),
         );
       });
     }
@@ -53,7 +53,7 @@ class _JobsScreenState extends State<JobsScreen> {
   Future<void> _sendQuote(HelpRequest request) async {
     if (!MechanicAccountStore.instance.canPerformJobActions) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Your account must be approved before you can send quotes.')),
+        const SnackBar(content: Text('Your account must be approved before you can send quotes.'), duration: AppDurations.snackBar),
       );
       return;
     }
@@ -77,20 +77,20 @@ class _JobsScreenState extends State<JobsScreen> {
       );
     } on StateError catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message), duration: AppDurations.snackBar));
       return;
     }
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Quote sent — the client will compare offers and choose.')),
+      const SnackBar(content: Text('Quote sent — the client will compare offers and choose.'), duration: AppDurations.snackBar),
     );
   }
 
   Future<void> _acceptEmergency(HelpRequest request) async {
     if (!MechanicAccountStore.instance.canPerformJobActions) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Your account must be approved before you can accept jobs.')),
+        const SnackBar(content: Text('Your account must be approved before you can accept jobs.'), duration: AppDurations.snackBar),
       );
       return;
     }
@@ -99,7 +99,7 @@ class _JobsScreenState extends State<JobsScreen> {
 
     if (store.mechanicHasActiveEmergency(_mechanicName)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Finish your current emergency job before accepting another.')),
+        const SnackBar(content: Text('Finish your current emergency job before accepting another.'), duration: AppDurations.snackBar),
       );
       return;
     }
@@ -144,6 +144,7 @@ class _JobsScreenState extends State<JobsScreen> {
         content: Text(won
             ? 'Job accepted! Head to the client now.'
             : 'Too late — another mechanic already took this emergency.'),
+        duration: AppDurations.snackBar,
       ),
     );
   }
@@ -193,11 +194,11 @@ class _JobsScreenState extends State<JobsScreen> {
       final ok = QuoteNotificationStore.instance.mechanicCancelJob(request.id, reason);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ok ? 'Job cancelled — the client has been notified.' : 'Could not cancel this job.')),
+        SnackBar(content: Text(ok ? 'Job cancelled — the client has been notified.' : 'Could not cancel this job.'), duration: AppDurations.snackBar),
       );
     } on StateError catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message), duration: AppDurations.snackBar));
     }
   }
 
@@ -487,12 +488,6 @@ class _DeadlineRow extends StatelessWidget {
           Expanded(
             child: Text(request.durationLabel, style: const TextStyle(fontSize: 11, color: AppColors.textGrey)),
           ),
-          if (request.surcharge > 0)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: AppColors.yellow.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-              child: Text('+₱${request.surcharge} rush', style: const TextStyle(fontSize: 10, color: Color(0xFFB07A00), fontWeight: FontWeight.w700)),
-            ),
         ],
       ),
     );

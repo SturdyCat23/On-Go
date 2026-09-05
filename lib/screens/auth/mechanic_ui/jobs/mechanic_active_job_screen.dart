@@ -131,7 +131,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
             onPressed: () {
               final value = double.tryParse(controller.text.trim());
               if (value == null || value <= 0) {
-                ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Enter a valid amount.')));
+                ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Enter a valid amount.'), duration: AppDurations.snackBar));
                 return;
               }
               Navigator.pop(ctx, value);
@@ -406,7 +406,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                 TextButton.icon(
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: qrData));
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment code copied')));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment code copied'), duration: AppDurations.snackBar));
                   },
                   icon: const Icon(Icons.copy, size: 16),
                   label: const Text('Copy Code'),
@@ -469,7 +469,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
           TextButton.icon(
             onPressed: () {
               Clipboard.setData(ClipboardData(text: qrData));
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment code copied')));
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment code copied'), duration: AppDurations.snackBar));
             },
             icon: const Icon(Icons.copy, size: 16),
             label: const Text('Copy Code'),

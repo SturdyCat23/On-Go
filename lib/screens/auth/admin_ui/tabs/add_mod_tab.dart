@@ -49,7 +49,7 @@ class _AddModTabState extends State<AddModTab> {
       _canReject = true;
       _canEscalate = false;
     });
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Moderator added')));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Moderator added'), duration: AppDurations.snackBar));
   }
 
   @override

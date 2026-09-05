@@ -145,10 +145,10 @@ class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
       try {
         _store.submitReview(mechanicName: widget.name, rating: selected, comment: controller.text.trim());
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Review saved')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Review saved'), duration: AppDurations.snackBar));
       } on StateError catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message), duration: AppDurations.snackBar));
       }
     }
   }

@@ -110,7 +110,7 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
     if (!_account.canChangePhoto) {
       final next = _account.nextPhotoChangeAt;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('You can change your photo again on ${next != null ? _formatDate(next) : 'a later date'}.')),
+        SnackBar(content: Text('You can change your photo again on ${next != null ? _formatDate(next) : 'a later date'}.'), duration: AppDurations.snackBar),
       );
       return;
     }
@@ -143,11 +143,11 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
       final ok = _account.changePhoto(file.path);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ok ? 'Profile photo updated' : 'You can only change your photo once every 30 days.')),
+        SnackBar(content: Text(ok ? 'Profile photo updated' : 'You can only change your photo once every 30 days.'), duration: AppDurations.snackBar),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not update photo: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not update photo: $e'), duration: AppDurations.snackBar));
     }
   }
 

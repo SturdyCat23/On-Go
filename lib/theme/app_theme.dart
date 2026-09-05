@@ -17,6 +17,10 @@ class AppColors {
   static const Color purple = Color(0xFF9F19FF);
 }
 
+class AppDurations {
+  static const Duration snackBar = Duration(seconds: 1);
+}
+
 class AppTheme {
   static ThemeData get theme => ThemeData(
         primaryColor: AppColors.primary,

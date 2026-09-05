@@ -55,7 +55,7 @@ class _QueueTabState extends State<QueueTab> {
 
   void _noPermission(String action) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("You don't have permission to $action")),
+      SnackBar(content: Text("You don't have permission to $action"), duration: AppDurations.snackBar),
     );
   }
 

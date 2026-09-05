@@ -131,7 +131,7 @@ class _SettingsTabState extends State<SettingsTab> {
     );
 
     if (result == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password updated')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password updated'), duration: AppDurations.snackBar));
     }
   }
 

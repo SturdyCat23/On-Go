@@ -80,7 +80,7 @@ class _JobChatScreenState extends State<JobChatScreen> {
       setState(() => _replyingTo = null);
       _scrollToBottom();
     } on StateError catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message), duration: AppDurations.snackBar));
     }
   }
 
@@ -93,10 +93,10 @@ class _JobChatScreenState extends State<JobChatScreen> {
       _scrollToBottom();
     } on StateError catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message), duration: AppDurations.snackBar));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not attach photo: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not attach photo: $e'), duration: AppDurations.snackBar));
     }
   }
 

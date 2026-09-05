@@ -68,7 +68,7 @@ class _ClientJobsScreenState extends State<ClientJobsScreen> {
     final ok = _store.clientDeleteRequest(request.id);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(ok ? 'Request deleted.' : 'Could not delete this request.')),
+      SnackBar(content: Text(ok ? 'Request deleted.' : 'Could not delete this request.'), duration: AppDurations.snackBar),
     );
   }
 
@@ -98,7 +98,7 @@ class _ClientJobsScreenState extends State<ClientJobsScreen> {
       final ok = _store.clientRevertToPending(request.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ok ? 'Request reverted to Pending — open to mechanics again.' : 'Could not revert this request.')),
+        SnackBar(content: Text(ok ? 'Request reverted to Pending — open to mechanics again.' : 'Could not revert this request.'), duration: AppDurations.snackBar),
       );
     } else if (choice == 'delete') {
       final confirmed = await showDialog<bool>(
@@ -121,7 +121,7 @@ class _ClientJobsScreenState extends State<ClientJobsScreen> {
         final ok = _store.clientDeleteRequest(request.id);
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(ok ? 'Request deleted.' : 'Could not delete this request.')),
+          SnackBar(content: Text(ok ? 'Request deleted.' : 'Could not delete this request.'), duration: AppDurations.snackBar),
         );
       }
     }

@@ -194,6 +194,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg),
       backgroundColor: error ? Colors.red : AppColors.primary,
+      duration: AppDurations.snackBar,
     ));
   }
 
