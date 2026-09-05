@@ -93,13 +93,13 @@ class HelpRequest {
   String? lastCancelledBy;
   DateTime? lastCancelledAt;
 
-  /// The actual price the mechanic and client settled on, set by the
-  /// mechanic via [QuoteNotificationStore.mechanicSetPaymentAmount] before
-  /// a payment code can be shared. REQUIRED for Emergency jobs — those have
-  /// no MechanicQuote price at all, since emergencies skip quoting
-  /// entirely and the price is negotiated in person. For Normal/Urgent,
-  /// this OVERRIDES the original quote price once set, covering cases
-  /// where the final in-person price differs from the quote.
+  /// EMERGENCY ONLY. Normal/Urgent jobs already have a firm price from the
+  /// mechanic's quote (sent and accepted before the job started) — that
+  /// price never changes and is never negotiated in-app, so this field
+  /// stays null for them. Emergency jobs skip quoting entirely, so this is
+  /// how the mechanic sets (and can update) the price once they and the
+  /// client agree on one in person. See [effectivePaymentAmount] for the
+  /// single rule both charging and display always follow.
   double? agreedPaymentAmount;
   DateTime? agreedPaymentAmountSetAt;
 
@@ -140,6 +140,20 @@ class HelpRequest {
 
   bool get isEmergency => urgency == 'Emergency';
   bool get hasClientCoordinates => clientLat != null && clientLng != null;
+}
+
+/// THE single rule for "how much does this job actually cost" — every
+/// screen and every calculation (QR generation, payment confirmation,
+/// earnings totals, card displays) goes through this and NOTHING computes
+/// its own version of this logic separately:
+///   - Emergency: whatever the mechanic most recently set via
+///     mechanicSetPaymentAmount — null until they set one.
+///   - Normal/Urgent: the accepted quote's price, always. Never negotiable,
+///     never overridden — the client already agreed to this exact number
+///     when they accepted the quote.
+double? effectivePaymentAmount(HelpRequest request, MechanicQuote? acceptedQuote) {
+  if (request.isEmergency) return request.agreedPaymentAmount;
+  return acceptedQuote == null ? null : parsePesoAmount(acceptedQuote.price);
 }
 
 class QuoteNotificationStore extends ChangeNotifier {
@@ -350,12 +364,6 @@ class QuoteNotificationStore extends ChangeNotifier {
         acceptedQuoteFor(r.id)?.mechanicName == mechanicName);
   }
 
-  /// Emergency only: first mechanic to call this wins. Note the [price]
-  /// passed in is NOT shown to anyone as a final price anymore — Emergency
-  /// jobs skip quoting entirely and the real price is set later via
-  /// [mechanicSetPaymentAmount] once the mechanic and client agree in
-  /// person. This kept-around price only exists for internal bookkeeping
-  /// on the MechanicQuote record (eta/rating still matter for display).
   bool mechanicAcceptEmergency(
     String requestId, {
     required String mechanicName,
@@ -463,19 +471,20 @@ class QuoteNotificationStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// MECHANIC action only. Sets (or updates) the price the mechanic and
-  /// client actually agreed on — REQUIRED before a payment code can be
-  /// generated. Calling this again after a code was already shared is how
-  /// the mechanic "asks for a new code" when the client disagrees with the
-  /// first price: the QR/copy-code on MechanicActiveJobScreen always
-  /// reflects whatever this was most recently set to.
+  /// EMERGENCY-ONLY. Sets (or updates) the price the mechanic and client
+  /// agreed on in person — refuses outright for Normal/Urgent jobs, which
+  /// always use their quote price and never go through this negotiation
+  /// step at all. See [effectivePaymentAmount] for the full rule.
   bool mechanicSetPaymentAmount(String requestId, double amount) {
     if (AppSession.instance.currentRole != AppRole.mechanic) {
       throw StateError('Only the Mechanic UI can set the payment amount.');
     }
-    if (amount <= 0) return false;
     final req = requestFor(requestId);
     if (req == null || req.paymentCompleted) return false;
+    if (!req.isEmergency) {
+      throw StateError('Normal and Urgent jobs use their quoted price — only Emergency jobs need a payment amount set.');
+    }
+    if (amount <= 0) return false;
     req.agreedPaymentAmount = amount;
     req.agreedPaymentAmountSetAt = DateTime.now();
     notifyListeners();
@@ -513,18 +522,17 @@ class QuoteNotificationStore extends ChangeNotifier {
     req.lastCancelledBy = mechanicName;
     req.lastCancelledAt = DateTime.now();
 
-    ChatStore.instance.clearChat(requestId);
+    // Chat intentionally NOT cleared — the job reverts to Pending (still
+    // visible, still chattable there), not removed. See clientDeleteRequest
+    // for the one action that actually clears chat.
 
     notifyListeners();
     return true;
   }
 
   /// CLIENT action only — the ONLY way payment (and therefore the job) can
-  /// ever be marked complete. The amount charged is whatever the mechanic
-  /// most recently set via [mechanicSetPaymentAmount] — falling back to
-  /// the original quote price only if that was somehow never set (should
-  /// only happen for old data; the UI now requires it before any code
-  /// exists to scan/enter in the first place).
+  /// ever be marked complete. Amount is [effectivePaymentAmount] — never
+  /// anything parsed from a scanned/pasted code, which could be stale.
   int? clientConfirmPayment(String requestId) {
     if (AppSession.instance.currentRole != AppRole.client) {
       throw StateError('Only the Client UI can confirm a payment.');
@@ -535,7 +543,9 @@ class QuoteNotificationStore extends ChangeNotifier {
     if (req.paymentCompleted) return null;
 
     final quote = acceptedQuoteFor(requestId);
-    final amount = req.agreedPaymentAmount ?? (quote == null ? 0.0 : parsePesoAmount(quote.price));
+    final amount = effectivePaymentAmount(req, quote);
+    if (amount == null) return null;
+
     final points = (amount * 0.05).round();
 
     req.paymentCompleted = true;
@@ -544,7 +554,7 @@ class QuoteNotificationStore extends ChangeNotifier {
     req.status = RequestStatus.completed;
     req.completedAt = req.paymentCompletedAt;
 
-    ChatStore.instance.clearChat(requestId);
+    // Chat intentionally NOT cleared — see clientDeleteRequest.
 
     notifyListeners();
     return points;
@@ -558,7 +568,7 @@ class QuoteNotificationStore extends ChangeNotifier {
     double sum = 0;
     for (final req in completedJobsFor(mechanicName)) {
       final quote = acceptedQuoteFor(req.id);
-      sum += req.agreedPaymentAmount ?? (quote == null ? 0.0 : parsePesoAmount(quote.price));
+      sum += effectivePaymentAmount(req, quote) ?? 0;
     }
     return sum;
   }

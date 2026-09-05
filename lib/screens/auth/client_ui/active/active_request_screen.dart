@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/chat_icon_button.dart';
 import '../../../../widgets/common_widgets.dart';
@@ -37,7 +38,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  Future<void> _sendPayment(HelpRequest request) async {
+  Future<void> _sendPayment(HelpRequest request, MechanicQuote? quote) async {
     final choice = await showModalBottomSheet<String>(
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
@@ -51,8 +52,8 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
               onTap: () => Navigator.pop(ctx, 'camera'),
             ),
             ListTile(
-              leading: const Icon(Icons.keyboard_outlined, color: AppColors.primary),
-              title: const Text('Enter Payment Code'),
+              leading: const Icon(Icons.content_paste, color: AppColors.primary),
+              title: const Text('Paste Payment Code'),
               subtitle: const Text('Paste the code the mechanic sent you'),
               onTap: () => Navigator.pop(ctx, 'manual'),
             ),
@@ -69,22 +70,54 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
       final controller = TextEditingController();
       raw = await showDialog<String>(
         context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Enter Payment Code'),
-          content: TextField(
-            controller: controller,
-            maxLines: 3,
-            autofocus: true,
-            decoration: const InputDecoration(hintText: 'Paste or type the code the mechanic showed you'),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-              child: const Text('Continue'),
+        builder: (ctx) => StatefulBuilder(
+          builder: (ctx, setDialogState) => AlertDialog(
+            title: const Text('Payment Code'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Paste the code the mechanic shared with you. It can\'t be typed or edited manually.',
+                  style: TextStyle(fontSize: 12, color: AppColors.textGrey),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: controller,
+                  readOnly: true,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: 'No code pasted yet',
+                    suffixIcon: controller.text.isEmpty
+                        ? null
+                        : IconButton(
+                            icon: const Icon(Icons.close, size: 18),
+                            onPressed: () => setDialogState(() => controller.clear()),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final data = await Clipboard.getData('text/plain');
+                    if (data?.text != null) {
+                      setDialogState(() => controller.text = data!.text!.trim());
+                    }
+                  },
+                  icon: const Icon(Icons.paste, size: 16),
+                  label: const Text('Paste from Clipboard'),
+                ),
+              ],
             ),
-          ],
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                onPressed: controller.text.trim().isEmpty ? null : () => Navigator.pop(ctx, controller.text.trim()),
+                child: const Text('Continue'),
+              ),
+            ],
+          ),
         ),
       );
       if (raw == null || raw.isEmpty) return;
@@ -98,6 +131,18 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
       return;
     }
 
+    // The amount embedded in the scanned/pasted code is never trusted for
+    // display or charging. effectivePaymentAmount is the single source of
+    // truth: for Normal/Urgent it's the fixed quote price; for Emergency
+    // it's whatever the mechanic most recently set.
+    final currentRequest = _store.requestFor(request.id);
+    final currentQuote = _store.acceptedQuoteFor(request.id);
+    final currentAmount = currentRequest == null ? null : effectivePaymentAmount(currentRequest, currentQuote);
+    if (currentAmount == null) {
+      _showSnack('A payment amount isn\'t available for this job yet.');
+      return;
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -108,11 +153,8 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
           children: [
             Text('Pay ${payload.mechanicName}', style: const TextStyle(fontSize: 14, color: AppColors.textGrey)),
             const SizedBox(height: 8),
-            Text('₱${payload.amount.toStringAsFixed(0)}',
+            Text('₱${currentAmount.toStringAsFixed(0)}',
                 style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppColors.primary)),
-            const SizedBox(height: 4),
-            const Text('If this doesn\'t match what you agreed on, cancel and ask the mechanic for an updated code.',
-                style: TextStyle(fontSize: 11, color: AppColors.textGrey)),
           ],
         ),
         actions: [
@@ -295,7 +337,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                              'Payment complete — ₱${(request.agreedPaymentAmount ?? 0).toStringAsFixed(0)} sent to ${quote.mechanicName}.',
+                              'Payment complete — ₱${(effectivePaymentAmount(request, quote) ?? 0).toStringAsFixed(0)} sent to ${quote.mechanicName}.',
                               style: const TextStyle(color: AppColors.green, fontWeight: FontWeight.w600, fontSize: 13)),
                         ),
                       ],
@@ -312,7 +354,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                     style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 46), shape: const StadiumBorder()),
                   ),
                 ] else if (request.serviceCompleted) ...[
-                  if (request.agreedPaymentAmount == null)
+                  if (request.isEmergency && request.agreedPaymentAmount == null)
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
@@ -325,7 +367,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                     )
                   else
                     ElevatedButton(
-                      onPressed: () => _sendPayment(request),
+                      onPressed: () => _sendPayment(request, quote),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: AppColors.white,

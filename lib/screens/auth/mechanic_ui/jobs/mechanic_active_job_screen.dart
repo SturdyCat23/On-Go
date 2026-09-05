@@ -98,10 +98,10 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
     _store.mechanicMarkArrived(request.id);
   }
 
-  Future<void> _setPaymentAmount(HelpRequest request, MechanicQuote? quote) async {
-    final suggested = request.agreedPaymentAmount ??
-        (request.isEmergency ? null : (quote != null ? parsePesoAmount(quote.price) : null));
-    final controller = TextEditingController(text: suggested != null && suggested > 0 ? suggested.toStringAsFixed(0) : '');
+  Future<void> _setEmergencyPaymentAmount(HelpRequest request) async {
+    final controller = TextEditingController(
+      text: request.agreedPaymentAmount != null ? request.agreedPaymentAmount!.toStringAsFixed(0) : '',
+    );
 
     final amount = await showDialog<double>(
       context: context,
@@ -111,11 +111,9 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              request.isEmergency
-                  ? 'Emergency jobs have no fixed quote — enter the price you and the client agreed on.'
-                  : 'Enter the final price you and the client agreed on. This can differ from the original quote.',
-              style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
+            const Text(
+              'Emergency jobs have no fixed quote — enter the price you and the client agreed on.',
+              style: TextStyle(fontSize: 12, color: AppColors.textGrey),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -306,6 +304,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
 
   Widget _buildAction(HelpRequest request, MechanicQuote? quote) {
     if (request.paymentCompleted) {
+      final amount = effectivePaymentAmount(request, quote) ?? 0;
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(14),
@@ -320,7 +319,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Payment received — ₱${(request.agreedPaymentAmount ?? 0).toStringAsFixed(0)} · +${request.pointsAwarded ?? 0} points',
+                'Payment received — ₱${amount.toStringAsFixed(0)} · +${request.pointsAwarded ?? 0} points',
                 style: const TextStyle(color: AppColors.green, fontWeight: FontWeight.w700, fontSize: 13),
               ),
             ),
@@ -330,38 +329,107 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
     }
 
     if (request.serviceCompleted) {
-      if (request.agreedPaymentAmount == null) {
+      // ── Emergency: negotiated price, must be set before any code exists ──
+      if (request.isEmergency) {
+        if (request.agreedPaymentAmount == null) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
+                child: const Text(
+                  'Emergency jobs have no set price. Agree on a price with the client, then set it here to generate a payment code.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: AppColors.textGrey),
+                ),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: () => _setEmergencyPaymentAmount(request),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.white,
+                  minimumSize: const Size(double.infinity, 46),
+                  shape: const StadiumBorder(),
+                ),
+                child: const Text('Set Payment Amount'),
+              ),
+            ],
+          );
+        }
+
+        final amount = request.agreedPaymentAmount!;
+        final qrData = buildPaymentQrData(
+          requestId: request.id,
+          mechanicName: quote?.mechanicName ?? QuoteNotificationStore.currentMechanicName,
+          amount: amount,
+        );
         return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
-              child: Text(
-                request.isEmergency
-                    ? 'Emergency jobs have no set price. Agree on a price with the client, then set it here to generate a payment code.'
-                    : 'Set the final agreed price before sharing a payment code.',
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(color: AppColors.yellow.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
+              child: const Text('Waiting for Client Payment',
+                  textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFFB07A00))),
+            ),
+            const SizedBox(height: 8),
+            Text('Agreed price: ₱${amount.toStringAsFixed(0)}',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.green)),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(border: Border.all(color: AppColors.borderGrey), borderRadius: BorderRadius.circular(16)),
+              child: QrImageView(data: qrData, size: 200),
+            ),
+            const SizedBox(height: 10),
+            Text('Have the client scan this to pay ₱${amount.toStringAsFixed(0)}',
+                style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(10)),
+              child: SelectableText(
+                qrData,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
+                style: const TextStyle(fontSize: 11, color: AppColors.textGrey, fontFamily: 'monospace'),
               ),
             ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: () => _setPaymentAmount(request, quote),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.white,
-                minimumSize: const Size(double.infinity, 46),
-                shape: const StadiumBorder(),
-              ),
-              child: const Text('Set Payment Amount'),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextButton.icon(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: qrData));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment code copied')));
+                  },
+                  icon: const Icon(Icons.copy, size: 16),
+                  label: const Text('Copy Code'),
+                ),
+                TextButton.icon(
+                  onPressed: () => _setEmergencyPaymentAmount(request),
+                  icon: const Icon(Icons.edit_outlined, size: 16),
+                  label: const Text('Edit Amount'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'If the client disagrees with this price, tap Edit Amount to agree on a new one.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 11, color: AppColors.textGrey),
             ),
           ],
         );
       }
 
-      final amount = request.agreedPaymentAmount!;
+      // ── Normal/Urgent: fixed quote price, no negotiation, no set step ──
+      final amount = quote != null ? parsePesoAmount(quote.price) : 0.0;
       final qrData = buildPaymentQrData(
         requestId: request.id,
         mechanicName: quote?.mechanicName ?? QuoteNotificationStore.currentMechanicName,
@@ -377,9 +445,6 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
             child: const Text('Waiting for Client Payment',
                 textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFFB07A00))),
           ),
-          const SizedBox(height: 8),
-          Text('Agreed price: ₱${amount.toStringAsFixed(0)}',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.green)),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(16),
@@ -387,7 +452,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
             child: QrImageView(data: qrData, size: 200),
           ),
           const SizedBox(height: 10),
-          Text('Have the client scan this to pay ₱${amount.toStringAsFixed(0)}',
+          Text('Have the client scan this to pay ${quote?.price ?? ''}',
               style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
           const SizedBox(height: 12),
           Container(
@@ -401,29 +466,13 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextButton.icon(
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: qrData));
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment code copied')));
-                },
-                icon: const Icon(Icons.copy, size: 16),
-                label: const Text('Copy Code'),
-              ),
-              TextButton.icon(
-                onPressed: () => _setPaymentAmount(request, quote),
-                icon: const Icon(Icons.edit_outlined, size: 16),
-                label: const Text('Edit Amount'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'If the client disagrees with this price, tap Edit Amount to agree on a new one — the code above updates immediately.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 11, color: AppColors.textGrey),
+          TextButton.icon(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: qrData));
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment code copied')));
+            },
+            icon: const Icon(Icons.copy, size: 16),
+            label: const Text('Copy Code'),
           ),
         ],
       );
