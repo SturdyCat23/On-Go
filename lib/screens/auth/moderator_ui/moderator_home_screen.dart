@@ -131,7 +131,7 @@ class _ModeratorDrawer extends StatelessWidget {
                     padding: EdgeInsets.fromLTRB(16, 8, 16, 24),
                     child: Text(
                       'No moderator accounts yet. Add one from the Admin panel.',
-                      style: TextStyle(color: AppColors.textGrey, fontSize: 13),
+                      style: TextStyle(color: AppColors.grey, fontSize: 13),
                     ),
                   )
                 else
@@ -139,8 +139,8 @@ class _ModeratorDrawer extends StatelessWidget {
                     final active = session.currentModerator?.id == m.id;
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: AppColors.borderGrey.withValues(alpha: 0.5),
-                        child: Text(m.initials, style: const TextStyle(color: AppColors.textDark, fontWeight: FontWeight.w700, fontSize: 12)),
+                        backgroundColor: AppColors.grey.withValues(alpha: 0.25),
+                        child: Text(m.initials, style: const TextStyle(color: AppColors.dark, fontWeight: FontWeight.w700, fontSize: 12)),
                       ),
                       title: Text(m.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                       subtitle: Text(m.email, style: const TextStyle(fontSize: 12)),
@@ -181,7 +181,7 @@ class _ModeratorDrawer extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               child: const Text(
                 'Moderator',
-                style: TextStyle(color: AppColors.white, fontSize: 18, fontWeight: FontWeight.w700),
+                style: TextStyle(color: AppColors.background, fontSize: 18, fontWeight: FontWeight.w700),
               ),
             ),
             ListTile(

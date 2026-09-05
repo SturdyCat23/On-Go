@@ -193,7 +193,7 @@ class _MechanicStep2PersonalState extends State<MechanicStep2Personal> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
           const _RegHeader(),
@@ -213,7 +213,7 @@ class _MechanicStep2PersonalState extends State<MechanicStep2Personal> {
                       style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textDark)),
+                          color: AppColors.dark)),
                   const SizedBox(height: 16),
 
                   // First Name
@@ -292,7 +292,7 @@ class _MechanicStep2PersonalState extends State<MechanicStep2Personal> {
                       suffixIcon: GestureDetector(
                         onTap: _openCalendar,
                         child: const Icon(Icons.calendar_today_outlined,
-                            size: 18, color: AppColors.textGrey),
+                            size: 18, color: AppColors.grey),
                       ),
                     ),
                   ),
@@ -403,12 +403,12 @@ class _RegHeader extends StatelessWidget {
         children: [
           Text('On Go Registration',
               style: TextStyle(
-                  color: AppColors.white,
+                  color: AppColors.background,
                   fontSize: 20,
                   fontWeight: FontWeight.w700)),
           SizedBox(height: 4),
           Text('Complete all steps to provide services',
-              style: TextStyle(color: AppColors.white, fontSize: 12)),
+              style: TextStyle(color: AppColors.background, fontSize: 12)),
         ],
       ),
     );

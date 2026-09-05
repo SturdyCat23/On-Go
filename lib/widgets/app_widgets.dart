@@ -34,7 +34,7 @@ class OnGoAppBar extends StatelessWidget implements PreferredSizeWidget {
       centerTitle: false,
       leading: showMenuButton
           ? IconButton(
-              icon: const Icon(Icons.menu, color: AppColors.white),
+              icon: const Icon(Icons.menu, color: AppColors.background),
               onPressed: () => Scaffold.of(context).openDrawer(),
             )
           : const SizedBox(width: 48),
@@ -46,11 +46,11 @@ class OnGoAppBar extends StatelessWidget implements PreferredSizeWidget {
           children: [
             Text(
               'On Go',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppColors.white),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppColors.background),
             ),
             Text(
               subtitle,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.white.withValues(alpha: 0.95)),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.background.withValues(alpha: 0.95)),
             ),
           ],
         ),
@@ -95,7 +95,7 @@ class NotificationBell extends StatelessWidget {
     required this.count,
     this.onTap,
     this.badgeColor = AppColors.primary,
-    this.iconColor = AppColors.white,
+    this.iconColor = AppColors.background,
   });
 
   @override
@@ -127,7 +127,7 @@ class NotificationBell extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.white,
+                  color: AppColors.background,
                 ),
               ),
             ),
@@ -173,7 +173,7 @@ class TierBadge extends StatelessWidget {
       case 'Silver':
         return const Color(0xFF9E9E9E);
       default:
-        return AppColors.textGrey;
+        return AppColors.grey;
     }
   }
 
@@ -226,7 +226,7 @@ class RatingSummaryBars extends StatelessWidget {
                   children: [
                     Text('$star',
                         style: const TextStyle(
-                            fontSize: 11, color: AppColors.textGrey)),
+                            fontSize: 11, color: AppColors.grey)),
                     const SizedBox(width: 6),
                     Expanded(
                       child: ClipRRect(
@@ -235,7 +235,7 @@ class RatingSummaryBars extends StatelessWidget {
                           value: value,
                           minHeight: 6,
                           backgroundColor:
-                              AppColors.borderGrey.withValues(alpha: 0.4),
+                              AppColors.grey.withValues(alpha: 0.25),
                           valueColor:
                               const AlwaysStoppedAnimation(Colors.amber),
                         ),
@@ -266,7 +266,7 @@ class RatingSummaryBars extends StatelessWidget {
               ),
             ),
             Text('$reviewCount reviews',
-                style: const TextStyle(fontSize: 10, color: AppColors.textGrey)),
+                style: const TextStyle(fontSize: 10, color: AppColors.grey)),
           ],
         ),
       ],

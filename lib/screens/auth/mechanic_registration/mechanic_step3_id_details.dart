@@ -242,7 +242,7 @@ class _MechanicStep3IdDetailsState extends State<MechanicStep3IdDetails> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
           const _RegHeader(),
@@ -260,10 +260,10 @@ class _MechanicStep3IdDetailsState extends State<MechanicStep3IdDetails> {
                   const SizedBox(height: 8),
                   const Text('Valid ID Details',
                       style: TextStyle(
-                          fontSize: 14, color: AppColors.textGrey)),
+                          fontSize: 14, color: AppColors.grey)),
                   const Text(
                     'Please enter the details exactly as they appear on your ID',
-                    style: TextStyle(fontSize: 12, color: AppColors.textGrey),
+                    style: TextStyle(fontSize: 12, color: AppColors.grey),
                   ),
                   const SizedBox(height: 16),
 
@@ -325,7 +325,7 @@ class _MechanicStep3IdDetailsState extends State<MechanicStep3IdDetails> {
                         hint: const Text('Type of ID'),
                         decoration: InputDecoration(
                           filled: true,
-                          fillColor: AppColors.inputFill,
+                          fillColor: AppColors.background,
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 14),
                           border: OutlineInputBorder(
@@ -333,7 +333,7 @@ class _MechanicStep3IdDetailsState extends State<MechanicStep3IdDetails> {
                             borderSide: BorderSide(
                               color: _idTypeError != null
                                   ? Colors.red
-                                  : AppColors.borderGrey,
+                                  : AppColors.grey,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
@@ -341,7 +341,7 @@ class _MechanicStep3IdDetailsState extends State<MechanicStep3IdDetails> {
                             borderSide: BorderSide(
                               color: _idTypeError != null
                                   ? Colors.red
-                                  : AppColors.borderGrey,
+                                  : AppColors.grey,
                             ),
                           ),
                         ),
@@ -474,7 +474,7 @@ class _MechanicStep3IdDetailsState extends State<MechanicStep3IdDetails> {
                       suffixIcon: GestureDetector(
                         onTap: _openCalendar,
                         child: const Icon(Icons.calendar_today_outlined,
-                            size: 18, color: AppColors.textGrey),
+                            size: 18, color: AppColors.grey),
                       ),
                     ),
                   ),
@@ -567,12 +567,12 @@ class _RegHeader extends StatelessWidget {
         children: [
           Text('On Go Registration',
               style: TextStyle(
-                  color: AppColors.white,
+                  color: AppColors.background,
                   fontSize: 20,
                   fontWeight: FontWeight.w700)),
           SizedBox(height: 4),
           Text('Complete all steps to provide services',
-              style: TextStyle(color: AppColors.white, fontSize: 12)),
+              style: TextStyle(color: AppColors.background, fontSize: 12)),
         ],
       ),
     );

@@ -92,7 +92,7 @@ class _AdminDrawer extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               child: const Text(
                 'Admin',
-                style: TextStyle(color: AppColors.white, fontSize: 18, fontWeight: FontWeight.w700),
+                style: TextStyle(color: AppColors.background, fontSize: 18, fontWeight: FontWeight.w700),
               ),
             ),
             ListTile(

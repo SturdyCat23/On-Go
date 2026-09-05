@@ -2,78 +2,11 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/common_widgets.dart';
 
-/// White top bar used across all Admin screens: blue square logo,
-/// screen title + role dropdown, notification bell with unread badge, avatar.
-class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String title;
-  final String roleLabel;
-  final int notificationCount;
-  final String avatarInitials;
-
-  const AdminAppBar({
-    super.key,
-    required this.title,
-    this.roleLabel = 'ADMIN',
-    this.notificationCount = 0,
-    this.avatarInitials = 'AP',
-  });
-
-  @override
-  Size get preferredSize => const Size.fromHeight(64);
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBar(
-      backgroundColor: AppColors.surface,
-      elevation: 0,
-      surfaceTintColor: Colors.transparent,
-      titleSpacing: 16,
-      leadingWidth: 64,
-      leading: Padding(
-        padding: const EdgeInsets.only(right: 6, left: 12),
-        child: CircleAvatar(
-          radius: 20,
-          backgroundColor: AppColors.primary,
-          child: Text(avatarInitials, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.white, fontWeight: FontWeight.w700)),
-        ),
-      ),
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(title, style: Theme.of(context).textTheme.titleMedium),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(roleLabel, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600)),
-              const Icon(Icons.arrow_drop_down, color: AppColors.primary, size: 16),
-            ],
-          ),
-        ],
-      ),
-      actions: [
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            IconButton(icon: const Icon(Icons.notifications_none, color: AppColors.primary), onPressed: () {}),
-            if (notificationCount > 0)
-              Positioned(
-                right: 8,
-                top: 10,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                  constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                  child: Text('$notificationCount',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                ),
-              ),
-          ],
-        ),
-      ],
-    );
-  }
+/// Peso label for the Admin revenue figures. Real fee revenue starts small,
+/// so exact pesos are shown until the number passes a thousand.
+String formatAdminPeso(double value) {
+  if (value.abs() < 1000) return '₱${value.toStringAsFixed(0)}';
+  return '₱${(value / 1000).toStringAsFixed(1)}K';
 }
 
 /// Small stat card used on the Overview & Income tabs.
@@ -117,7 +50,7 @@ class AdminStatCard extends StatelessWidget {
           Text(label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10.5, color: AppColors.textGrey)),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10.5, color: AppColors.grey)),
           if (trend != null) ...[
             const SizedBox(height: 2),
             Text(trend!,
@@ -129,12 +62,6 @@ class AdminStatCard extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Shared accent color for the revenue line & bar charts (blue, distinct
-/// from the red/green/purple/yellow already defined on AppColors).
-class AdminChartColors {
-  static const Color blue = Color(0xFF3D6BFF);
 }
 
 /// Small floating callout bubble used to annotate the highlighted point on
@@ -149,7 +76,7 @@ class AdminChartTooltip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.14), blurRadius: 10, offset: const Offset(0, 4)),
@@ -159,17 +86,17 @@ class AdminChartTooltip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textDark, fontWeight: FontWeight.w600)),
+          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.dark, fontWeight: FontWeight.w600)),
           const SizedBox(height: 2),
-          Text('Revenue : \$${value.toStringAsFixed(0)}',
-              style: const TextStyle(fontSize: 12, color: AdminChartColors.blue, fontWeight: FontWeight.w700)),
+          Text('Revenue : ₱${value.toStringAsFixed(0)}',
+              style: const TextStyle(fontSize: 12, color: AppColors.blue, fontWeight: FontWeight.w700)),
         ],
       ),
     );
   }
 }
 
-/// Left-hand "$Xk" axis labels shared by the revenue line & bar charts.
+/// Left-hand "₱Xk" axis labels shared by the revenue line & bar charts.
 class AdminYAxisLabels extends StatelessWidget {
   final double maxValue;
   final double height;
@@ -186,8 +113,10 @@ class AdminYAxisLabels extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: List.generate(steps + 1, (i) {
           final v = maxValue * (steps - i) / steps;
-          return Text('\$${(v / 1000).toStringAsFixed(0)}k',
-              style: const TextStyle(fontSize: 10, color: AppColors.textGrey));
+          // One unit for the whole axis, picked from the top of the scale —
+          // small real amounts read as ₱150, not a column of ₱0k.
+          final label = maxValue >= 1000 ? '₱${(v / 1000).toStringAsFixed(0)}k' : '₱${v.toStringAsFixed(0)}';
+          return Text(label, style: const TextStyle(fontSize: 10, color: AppColors.grey));
         }),
       ),
     );

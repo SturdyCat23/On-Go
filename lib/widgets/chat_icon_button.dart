@@ -60,7 +60,7 @@ class _ChatIconButtonState extends State<ChatIconButton> {
                 child: Text(
                   unread > 9 ? '9+' : '$unread',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 9, color: AppColors.white, fontWeight: FontWeight.w700),
+                  style: const TextStyle(fontSize: 9, color: AppColors.background, fontWeight: FontWeight.w700),
                 ),
               ),
             ),

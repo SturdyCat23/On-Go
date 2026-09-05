@@ -21,7 +21,7 @@ class WelcomeScreen extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.fromLTRB(20, 0, 20, 12),
               child: Text('Choose how you\'d like to create your account',
-                  style: TextStyle(fontSize: 12, color: AppColors.textGrey)),
+                  style: TextStyle(fontSize: 12, color: AppColors.grey)),
             ),
             ListTile(
               leading: const Icon(Icons.g_mobiledata_rounded, color: Color(0xFFEA4335), size: 32),
@@ -52,7 +52,7 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: AuthBottomCard(
           children: [
@@ -62,14 +62,14 @@ class WelcomeScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 30,
                 fontWeight: FontWeight.w800,
-                color: AppColors.white,
+                color: AppColors.background,
               ),
             ),
             const SizedBox(height: 8),
             const Text(
               'Please select how you want to register',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: AppColors.white),
+              style: TextStyle(fontSize: 13, color: AppColors.background),
             ),
             const SizedBox(height: 24),
             AuthRoleButton(

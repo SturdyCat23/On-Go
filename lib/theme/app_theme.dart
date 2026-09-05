@@ -1,20 +1,30 @@
 import 'package:flutter/material.dart';
 
+/// The whole palette: four base colors and four status colors, and nothing
+/// else. Every surface, border, divider and piece of text in the app is one
+/// of the four base colors (at whatever opacity the spot calls for) — there
+/// are deliberately no separate white / surface / text / border shades to
+/// drift apart from each other.
 class AppColors {
-  static const Color primary = Color.fromARGB(255, 221, 0, 0);
-  static const Color primaryDark = Color.fromARGB(255, 179, 0, 0);
-  static const Color white = Color(0xFFFFFFFF);
-  static const Color background = Color.fromARGB(255, 255, 251, 249);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color textDark = Color(0xFF111111);
-  static const Color textGrey = Color(0xFF8F8F8F);
-  static const Color borderGrey = Color(0xFFE6E6E6);
-  static const Color inputFill = Color(0xFFFFFFFF);
-  static const Color googleBtn = Color(0xFFEFEFEF);
-  static const Color blue = Color(0xFF1976FF);
-  static const Color green = Color(0xFF00A429);
-  static const Color yellow = Color(0xFFFFBB00);
-  static const Color purple = Color(0xFF9F19FF);
+  /// The brand red: primary actions, accents, and anything that reads as
+  /// "ONGO" or "urgent".
+  static const Color primary = Color.fromARGB(255, 209, 0, 0);
+
+  /// The app background, and every light surface sitting on it — cards,
+  /// sheets, inputs, and text or icons placed on a dark or colored fill.
+  static const Color background = Color(0xFFF7F0F0);
+
+  /// Secondary text, borders, dividers, disabled controls and other muted UI.
+  static const Color grey = Color.fromARGB(255, 145, 145, 150);
+
+  /// Primary text and dark UI elements.
+  static const Color dark = Color(0xFF1E1E1F);
+
+  // Status colors — use these only where that status is what's being said.
+  static const Color blue = Color.fromARGB(255, 42, 33, 218);
+  static const Color green = Color(0xFF11B848);
+  static const Color yellow = Color(0xFFF2B530);
+  static const Color purple = Color(0xFFAC22D6);
 }
 
 class AppDurations {
@@ -28,24 +38,24 @@ class AppTheme {
         fontFamily: 'Roboto',
         colorScheme: const ColorScheme.light(
           primary: AppColors.primary,
-          secondary: AppColors.primaryDark,
-          surface: AppColors.surface,
+          secondary: AppColors.primary,
+          surface: AppColors.background,
         ),
         appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.primary,
           elevation: 0,
           centerTitle: false,
           titleTextStyle: TextStyle(
-            color: AppColors.white,
+            color: AppColors.background,
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
-          iconTheme: IconThemeData(color: AppColors.white),
+          iconTheme: IconThemeData(color: AppColors.background),
         ),
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-          backgroundColor: AppColors.surface,
+          backgroundColor: AppColors.background,
           selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textGrey,
+          unselectedItemColor: AppColors.grey,
           selectedLabelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
           unselectedLabelStyle: TextStyle(fontSize: 12),
           type: BottomNavigationBarType.fixed,
@@ -54,7 +64,7 @@ class AppTheme {
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.white,
+            foregroundColor: AppColors.background,
             minimumSize: const Size(double.infinity, 48),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -68,16 +78,16 @@ class AppTheme {
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: AppColors.inputFill,
+          fillColor: AppColors.background,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AppColors.borderGrey),
+            borderSide: BorderSide(color: AppColors.grey.withValues(alpha: 0.3)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AppColors.borderGrey),
+            borderSide: BorderSide(color: AppColors.grey.withValues(alpha: 0.3)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
@@ -85,20 +95,20 @@ class AppTheme {
                 const BorderSide(color: AppColors.primary, width: 1.5),
           ),
           hintStyle: const TextStyle(
-            color: AppColors.textGrey,
+            color: AppColors.grey,
             fontSize: 14,
           ),
         ),
         textTheme: const TextTheme(
-          titleLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textDark),
-          titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textDark),
-          bodyLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textDark),
-          bodyMedium: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textGrey),
-          bodySmall: TextStyle(fontSize: 12, color: AppColors.textGrey),
+          titleLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.dark),
+          titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.dark),
+          bodyLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.dark),
+          bodyMedium: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.grey),
+          bodySmall: TextStyle(fontSize: 12, color: AppColors.grey),
         ),
         cardTheme: const CardThemeData(
           elevation: 2,
-          color: AppColors.surface,
+          color: AppColors.background,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(12)),
           ),
@@ -106,8 +116,8 @@ class AppTheme {
         ),
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
           backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.white,
+          foregroundColor: AppColors.background,
         ),
-        dividerTheme: const DividerThemeData(color: AppColors.borderGrey, thickness: 1),
+        dividerTheme: DividerThemeData(color: AppColors.grey.withValues(alpha: 0.3), thickness: 1),
       );
 }

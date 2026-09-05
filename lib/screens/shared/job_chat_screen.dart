@@ -143,10 +143,10 @@ class _JobChatScreenState extends State<JobChatScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.white,
+        foregroundColor: AppColors.background,
         title: Text(widget.otherPartyName),
       ),
       body: Column(
@@ -154,7 +154,7 @@ class _JobChatScreenState extends State<JobChatScreen> {
           Expanded(
             child: messages.isEmpty
                 ? const Center(
-                    child: Text('Send a message to get started', style: TextStyle(color: AppColors.textGrey, fontSize: 12)),
+                    child: Text('Send a message to get started', style: TextStyle(color: AppColors.grey, fontSize: 12)),
                   )
                 : ListView.builder(
                     controller: _scrollController,
@@ -187,7 +187,7 @@ class _JobChatScreenState extends State<JobChatScreen> {
                                     margin: const EdgeInsets.only(bottom: 6),
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                                     decoration: BoxDecoration(
-                                      color: AppColors.white,
+                                      color: AppColors.background,
                                       borderRadius: BorderRadius.circular(8),
                                       border: const Border(left: BorderSide(color: AppColors.primary, width: 3)),
                                     ),
@@ -195,7 +195,7 @@ class _JobChatScreenState extends State<JobChatScreen> {
                                       repliedTo.text ?? (repliedTo.imagePath != null ? 'Photo' : ''),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 11, color: AppColors.textGrey),
+                                      style: const TextStyle(fontSize: 11, color: AppColors.grey),
                                     ),
                                   ),
                                 msg.imagePath != null
@@ -211,7 +211,7 @@ class _JobChatScreenState extends State<JobChatScreen> {
                                           child: Image.file(File(msg.imagePath!), width: 180, fit: BoxFit.cover),
                                         ),
                                       )
-                                    : Text(msg.text ?? '', style: const TextStyle(fontSize: 13, color: AppColors.textDark)),
+                                    : Text(msg.text ?? '', style: const TextStyle(fontSize: 13, color: AppColors.dark)),
                               ],
                             ),
                           ),
@@ -238,7 +238,7 @@ class _JobChatScreenState extends State<JobChatScreen> {
                           _replyingTo!.text ?? (_replyingTo!.imagePath != null ? 'Photo' : ''),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
+                          style: const TextStyle(fontSize: 12, color: AppColors.grey),
                         ),
                       ],
                     ),
@@ -257,11 +257,11 @@ class _JobChatScreenState extends State<JobChatScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.camera_alt_outlined, color: AppColors.textGrey),
+                    icon: const Icon(Icons.camera_alt_outlined, color: AppColors.grey),
                     onPressed: () => _pickImage(ImageSource.camera),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.image_outlined, color: AppColors.textGrey),
+                    icon: const Icon(Icons.image_outlined, color: AppColors.grey),
                     onPressed: () => _pickImage(ImageSource.gallery),
                   ),
                   Expanded(

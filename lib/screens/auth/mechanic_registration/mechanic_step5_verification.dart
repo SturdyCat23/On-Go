@@ -175,7 +175,7 @@ class _MechanicStep5VerificationState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
           _buildHeader(),
@@ -197,7 +197,7 @@ class _MechanicStep5VerificationState
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textDark,
+                      color: AppColors.dark,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -219,7 +219,7 @@ class _MechanicStep5VerificationState
                   const Text(
                     'Upload a clear photo of yourself. You can update it every 3 months for security purposes.',
                     style:
-                        TextStyle(fontSize: 11, color: AppColors.textGrey),
+                        TextStyle(fontSize: 11, color: AppColors.grey),
                   ),
                   const SizedBox(height: 10),
 
@@ -325,7 +325,7 @@ class _MechanicStep5VerificationState
                   const Text(
                     'We need to confirm you are a real person. You will be asked to blink and smile.',
                     style:
-                        TextStyle(fontSize: 11, color: AppColors.textGrey),
+                        TextStyle(fontSize: 11, color: AppColors.grey),
                   ),
                   const SizedBox(height: 20),
 
@@ -340,14 +340,14 @@ class _MechanicStep5VerificationState
                             ? Colors.green.shade50
                             : _faceScanError
                                 ? Colors.red.shade50
-                                : AppColors.inputFill,
+                                : AppColors.background,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: _livenessPass
                               ? Colors.green
                               : _faceScanError
                                   ? Colors.red
-                                  : AppColors.borderGrey,
+                                  : AppColors.grey,
                           width: 1.5,
                         ),
                       ),
@@ -364,7 +364,7 @@ class _MechanicStep5VerificationState
                                 ? Colors.green
                                 : _faceScanError
                                     ? Colors.red
-                                    : AppColors.textGrey,
+                                    : AppColors.grey,
                           ),
                           const SizedBox(height: 12),
                           Text(
@@ -380,7 +380,7 @@ class _MechanicStep5VerificationState
                                   ? Colors.green
                                   : _faceScanError
                                       ? Colors.red
-                                      : AppColors.textGrey,
+                                      : AppColors.grey,
                             ),
                           ),
                           if (_livenessPass) ...[
@@ -477,12 +477,12 @@ class _MechanicStep5VerificationState
         children: [
           Text('On Go Registration',
               style: TextStyle(
-                  color: AppColors.white,
+                  color: AppColors.background,
                   fontSize: 20,
                   fontWeight: FontWeight.w700)),
           SizedBox(height: 4),
           Text('Complete all steps to provide services',
-              style: TextStyle(color: AppColors.white, fontSize: 12)),
+              style: TextStyle(color: AppColors.background, fontSize: 12)),
         ],
       ),
     );

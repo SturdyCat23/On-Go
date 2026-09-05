@@ -51,7 +51,7 @@ class _AccountsTabState extends State<AccountsTab> {
         ),
         Expanded(
           child: accounts.isEmpty
-              ? const Center(child: Text('No accounts found', style: TextStyle(color: AppColors.textGrey)))
+              ? const Center(child: Text('No accounts found', style: TextStyle(color: AppColors.grey)))
               : ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: accounts
@@ -59,7 +59,7 @@ class _AccountsTabState extends State<AccountsTab> {
                             margin: const EdgeInsets.only(bottom: 10),
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                                border: Border.all(color: AppColors.borderGrey),
+                                border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)),
                                 borderRadius: BorderRadius.circular(16)),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,8 +67,8 @@ class _AccountsTabState extends State<AccountsTab> {
                                 Container(
                                   width: 44,
                                   height: 44,
-                                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.textDark, width: 1.3)),
-                                  child: const Icon(Icons.person_outline, size: 26, color: AppColors.textDark),
+                                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.dark, width: 1.3)),
+                                  child: const Icon(Icons.person_outline, size: 26, color: AppColors.dark),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -90,14 +90,14 @@ class _AccountsTabState extends State<AccountsTab> {
                                       const SizedBox(height: 2),
                                       Row(
                                         children: [
-                                          Text(a.userNumber, style: const TextStyle(fontSize: 13, color: AppColors.textGrey)),
+                                          Text(a.userNumber, style: const TextStyle(fontSize: 13, color: AppColors.grey)),
                                           const SizedBox(width: 8),
                                           _roleBadge(a.role),
                                         ],
                                       ),
                                       const SizedBox(height: 2),
                                       Text('Approved ${formatShortDate(a.reviewedAt ?? a.submittedAt)}',
-                                          style: const TextStyle(fontSize: 13, color: AppColors.textGrey)),
+                                          style: const TextStyle(fontSize: 13, color: AppColors.grey)),
                                     ],
                                   ),
                                 ),

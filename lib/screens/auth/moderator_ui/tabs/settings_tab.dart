@@ -145,7 +145,7 @@ class _SettingsTabState extends State<SettingsTab> {
       children: [
         Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(border: Border.all(color: AppColors.borderGrey), borderRadius: BorderRadius.circular(16)),
+          decoration: BoxDecoration(border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)), borderRadius: BorderRadius.circular(16)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -155,8 +155,8 @@ class _SettingsTabState extends State<SettingsTab> {
                   Container(
                     width: 60,
                     height: 60,
-                    decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.textDark, width: 1.3)),
-                    child: const Icon(Icons.person_outline, size: 34, color: AppColors.textDark),
+                    decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.dark, width: 1.3)),
+                    child: const Icon(Icons.person_outline, size: 34, color: AppColors.dark),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -166,7 +166,7 @@ class _SettingsTabState extends State<SettingsTab> {
                         Text(mod?.name ?? 'No account', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
                         const SizedBox(height: 2),
                         Text(mod?.email ?? 'Ask an admin to add you as a moderator',
-                            style: const TextStyle(fontSize: 13, color: AppColors.textGrey)),
+                            style: const TextStyle(fontSize: 13, color: AppColors.grey)),
                         const SizedBox(height: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
@@ -187,22 +187,22 @@ class _SettingsTabState extends State<SettingsTab> {
                   style: OutlinedButton.styleFrom(
                     shape: const StadiumBorder(),
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    side: const BorderSide(color: AppColors.borderGrey),
+                    side: BorderSide(color: AppColors.grey.withValues(alpha: 0.3)),
                   ),
-                  child: const Text('Edit Profile', style: TextStyle(color: AppColors.textDark, fontWeight: FontWeight.w600)),
+                  child: const Text('Edit Profile', style: TextStyle(color: AppColors.dark, fontWeight: FontWeight.w600)),
                 ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 20),
-        const Text('YOUR PERMISSION', style: TextStyle(fontSize: 11, color: AppColors.textGrey, fontWeight: FontWeight.w600)),
+        const Text('YOUR PERMISSION', style: TextStyle(fontSize: 11, color: AppColors.grey, fontWeight: FontWeight.w600)),
         const SizedBox(height: 10),
         _permissionRow('Approve accounts', perms.canApprove),
         _permissionRow('Reject accounts', perms.canReject),
         _permissionRow('Escalate to admin', perms.canEscalate),
         const SizedBox(height: 20),
-        const Text('NOTIFICATIONS', style: TextStyle(fontSize: 11, color: AppColors.textGrey, fontWeight: FontWeight.w600)),
+        const Text('NOTIFICATIONS', style: TextStyle(fontSize: 11, color: AppColors.grey, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         Row(
           children: [
@@ -212,7 +212,7 @@ class _SettingsTabState extends State<SettingsTab> {
                 children: [
                   const Text('New pending approvals', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 2),
-                  Text('when accounts are submitted', style: TextStyle(fontSize: 12, color: AppColors.textGrey)),
+                  Text('when accounts are submitted', style: TextStyle(fontSize: 12, color: AppColors.grey)),
                 ],
               ),
             ),
@@ -220,18 +220,18 @@ class _SettingsTabState extends State<SettingsTab> {
               value: _newSubmitted,
               onChanged: (v) => setState(() => _newSubmitted = v),
               activeTrackColor: AppColors.blue,
-              activeThumbColor: AppColors.white,
+              activeThumbColor: AppColors.background,
             ),
           ],
         ),
         const SizedBox(height: 12),
         const Divider(),
         const SizedBox(height: 8),
-        const Text('SECURITY', style: TextStyle(fontSize: 11, color: AppColors.textGrey, fontWeight: FontWeight.w600)),
+        const Text('SECURITY', style: TextStyle(fontSize: 11, color: AppColors.grey, fontWeight: FontWeight.w600)),
         ListTile(
           contentPadding: EdgeInsets.zero,
           title: const Text('Change Password', style: TextStyle(fontSize: 15)),
-          trailing: const Icon(Icons.chevron_right, color: AppColors.textGrey),
+          trailing: const Icon(Icons.chevron_right, color: AppColors.grey),
           onTap: mod == null ? null : _changePassword,
         ),
       ],
@@ -248,10 +248,10 @@ class _SettingsTabState extends State<SettingsTab> {
             width: 22,
             height: 22,
             decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-            child: Icon(granted ? Icons.check : Icons.close, size: 14, color: AppColors.white),
+            child: Icon(granted ? Icons.check : Icons.close, size: 14, color: AppColors.background),
           ),
           const SizedBox(width: 12),
-          Text(label, style: const TextStyle(fontSize: 15, color: AppColors.textDark)),
+          Text(label, style: const TextStyle(fontSize: 15, color: AppColors.dark)),
         ],
       ),
     );

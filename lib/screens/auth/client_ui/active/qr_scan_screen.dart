@@ -37,7 +37,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.white,
+        foregroundColor: AppColors.background,
         title: const Text('Scan QR Code'),
       ),
       body: Stack(
@@ -51,7 +51,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
                 child: Text(
                   'Camera unavailable. Please allow camera access in your device Settings and try again.',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.white),
+                  style: const TextStyle(color: AppColors.background),
                 ),
               ),
             ),
@@ -61,7 +61,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
               width: 240,
               height: 240,
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.white, width: 2),
+                border: Border.all(color: AppColors.background, width: 2),
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
@@ -73,7 +73,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
             child: Text(
               "Point your camera at the mechanic's QR code",
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.white, fontSize: 13),
+              style: TextStyle(color: AppColors.background, fontSize: 13),
             ),
           ),
         ],

@@ -92,7 +92,7 @@ class _JobPhotoPreviewState extends State<JobPhotoPreview> {
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stack) => Container(
                       color: AppColors.background,
-                      child: const Icon(Icons.broken_image_outlined, color: AppColors.textGrey),
+                      child: const Icon(Icons.broken_image_outlined, color: AppColors.grey),
                     ),
                   ),
                   if (widget.photoPaths.length > 1)

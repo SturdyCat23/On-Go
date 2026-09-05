@@ -23,6 +23,9 @@ class _ClientJobsScreenState extends State<ClientJobsScreen> {
   void initState() {
     super.initState();
     _store.addListener(_onChange);
+    // Catches up on any job whose deadline passed while the client wasn't
+    // looking, so this screen opens showing the truth.
+    _store.expireOverdueJobs();
   }
 
   @override
@@ -209,7 +212,7 @@ class _JobTabBar extends StatelessWidget {
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: selected ? AppColors.white : AppColors.textDark)),
+                        color: selected ? AppColors.background : AppColors.dark)),
               ),
             ),
           );
@@ -261,13 +264,13 @@ Widget _locationBlock(String location) {
     children: [
       Row(
         children: [
-          const Icon(Icons.location_on_outlined, size: 14, color: AppColors.textGrey),
+          const Icon(Icons.location_on_outlined, size: 14, color: AppColors.grey),
           const SizedBox(width: 4),
-          const Text('Location', style: TextStyle(fontSize: 11, color: AppColors.textGrey)),
+          const Text('Location', style: TextStyle(fontSize: 11, color: AppColors.grey)),
         ],
       ),
       const SizedBox(height: 2),
-      Text(location, style: const TextStyle(fontSize: 13, color: AppColors.textDark)),
+      Text(location, style: const TextStyle(fontSize: 13, color: AppColors.dark)),
     ],
   );
 }
@@ -319,8 +322,8 @@ class _JobActionButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
           disabledBackgroundColor: color,
-          foregroundColor: AppColors.white,
-          disabledForegroundColor: AppColors.white,
+          foregroundColor: AppColors.background,
+          disabledForegroundColor: AppColors.background,
           shape: const StadiumBorder(),
           padding: EdgeInsets.zero,
           textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
@@ -349,7 +352,7 @@ Widget _countBadge(int count) {
     child: Text(
       '$count',
       textAlign: TextAlign.center,
-      style: const TextStyle(fontSize: 10, color: AppColors.white, fontWeight: FontWeight.w700),
+      style: const TextStyle(fontSize: 10, color: AppColors.background, fontWeight: FontWeight.w700),
     ),
   );
 }
@@ -375,7 +378,7 @@ class _UploadedJobList extends StatelessWidget {
           child: Text(
             'Nothing uploaded yet — problems you submit from Need Help will show up here while they\'re awaiting quotes.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textGrey),
+            style: TextStyle(color: AppColors.grey),
           ),
         ),
       );
@@ -383,7 +386,10 @@ class _UploadedJobList extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       children: requests
-          .map((r) => _UploadedJobCard(request: r, store: store, onQuotes: () => onQuotes(r), onCancel: () => onCancel(r)))
+          .map((r) => Padding(
+                padding: const EdgeInsets.only(bottom: jobCardSpacing),
+                child: _UploadedJobCard(request: r, store: store, onQuotes: () => onQuotes(r), onCancel: () => onCancel(r)),
+              ))
           .toList(),
     );
   }
@@ -405,7 +411,7 @@ class _UploadedJobCard extends StatelessWidget {
     final unseen = store.unseenQuoteCountForRequest(request.id);
 
     return AppCard(
-      padding: const EdgeInsets.all(14),
+      padding: jobCardPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -422,10 +428,36 @@ class _UploadedJobCard extends StatelessWidget {
               ),
             ],
           ),
+          if (request.expiredAt != null) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.timer_off_outlined, size: 14, color: AppColors.primary),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      '${request.expiredByMechanic ?? 'The mechanic'} didn\'t complete this job within the allowed time. '
+                      'Your request is open to mechanics again.',
+                      style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           Text(problem.issue, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
           const SizedBox(height: 2),
-          Text(problem.description, style: const TextStyle(fontSize: 13, color: AppColors.textGrey)),
+          Text(problem.description, style: const TextStyle(fontSize: 13, color: AppColors.grey)),
           if (request.photoPaths.isNotEmpty) ...[
             const SizedBox(height: 10),
             JobPhotoPreview(photoPaths: request.photoPaths),
@@ -434,8 +466,12 @@ class _UploadedJobCard extends StatelessWidget {
           _locationBlock(request.location),
           const SizedBox(height: 4),
           Text(
-            quoteCount == 0 ? 'Waiting for quotes...' : '$quoteCount quote${quoteCount == 1 ? '' : 's'} received',
-            style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
+            // Emergencies skip quoting entirely — a mechanic claims them
+            // directly — so they never sit "waiting for quotes".
+            request.isEmergency
+                ? 'Waiting for a mechanic to accept this emergency.'
+                : (quoteCount == 0 ? 'Waiting for quotes...' : '$quoteCount quote${quoteCount == 1 ? '' : 's'} received'),
+            style: const TextStyle(fontSize: 12, color: AppColors.grey),
           ),
           const SizedBox(height: 14),
           Row(
@@ -481,14 +517,19 @@ class _PendingJobList extends StatelessWidget {
           child: Text(
             'No pending jobs — accepted Normal or Urgent requests will show up here before your mechanic starts heading over.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textGrey),
+            style: TextStyle(color: AppColors.grey),
           ),
         ),
       );
     }
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      children: requests.map((r) => _PendingJobCard(request: r, store: store, onOpen: () => onOpen(r), onCancel: () => onCancel(r))).toList(),
+      children: requests
+          .map((r) => Padding(
+                padding: const EdgeInsets.only(bottom: jobCardSpacing),
+                child: _PendingJobCard(request: r, store: store, onOpen: () => onOpen(r), onCancel: () => onCancel(r)),
+              ))
+          .toList(),
     );
   }
 }
@@ -510,7 +551,7 @@ class _PendingJobCard extends StatelessWidget {
       onTap: onOpen,
       borderRadius: BorderRadius.circular(16),
       child: AppCard(
-        padding: const EdgeInsets.all(14),
+        padding: jobCardPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -549,7 +590,7 @@ class _PendingJobCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(problem.issue, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-            Text(problem.description, style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+            Text(problem.description, style: const TextStyle(fontSize: 12, color: AppColors.grey)),
             if (request.photoPaths.isNotEmpty) ...[
               const SizedBox(height: 10),
               JobPhotoPreview(photoPaths: request.photoPaths),
@@ -562,7 +603,7 @@ class _PendingJobCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Text('Payment', style: TextStyle(fontSize: 11, color: AppColors.textGrey)),
+                    const Text('Payment', style: TextStyle(fontSize: 11, color: AppColors.grey)),
                     const SizedBox(height: 2),
                     Text(_paymentDisplay(request, quote), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.green)),
                   ],
@@ -598,11 +639,16 @@ class _ActiveJobList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (requests.isEmpty) {
-      return const Center(child: Text('No active jobs right now.', style: TextStyle(color: AppColors.textGrey)));
+      return const Center(child: Text('No active jobs right now.', style: TextStyle(color: AppColors.grey)));
     }
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      children: requests.map((r) => _ActiveJobCard(request: r, store: store, onOpen: () => onOpen(r))).toList(),
+      children: requests
+          .map((r) => Padding(
+                padding: const EdgeInsets.only(bottom: jobCardSpacing),
+                child: _ActiveJobCard(request: r, store: store, onOpen: () => onOpen(r)),
+              ))
+          .toList(),
     );
   }
 }
@@ -632,7 +678,7 @@ class _ActiveJobCard extends StatelessWidget {
       onTap: onOpen,
       borderRadius: BorderRadius.circular(16),
       child: AppCard(
-        padding: const EdgeInsets.all(14),
+        padding: jobCardPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -669,7 +715,7 @@ class _ActiveJobCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(problem.issue, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-            Text(problem.description, style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+            Text(problem.description, style: const TextStyle(fontSize: 12, color: AppColors.grey)),
             if (request.photoPaths.isNotEmpty) ...[
               const SizedBox(height: 10),
               JobPhotoPreview(photoPaths: request.photoPaths),
@@ -682,9 +728,13 @@ class _ActiveJobCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Text('Payment', style: TextStyle(fontSize: 11, color: AppColors.textGrey)),
+                    const Text('Payment', style: TextStyle(fontSize: 11, color: AppColors.grey)),
                     const SizedBox(height: 2),
-                    Text(quote?.price ?? '₱200', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.green)),
+                    // Same rule the Mechanic UI shows: an Emergency job has no
+                    // price until the mechanic sets the agreed one, so it reads
+                    // "To be agreed" rather than a stand-in amount.
+                    Text(_paymentDisplay(request, quote),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.green)),
                   ],
                 ),
               ],

@@ -19,10 +19,12 @@ class NeedHelpScreen extends StatefulWidget {
   State<NeedHelpScreen> createState() => _NeedHelpScreenState();
 }
 
+/// What picking an urgency costs. The completion promise beside it isn't
+/// stored here — it comes from [completionWindowLabel], the same windows the
+/// job's deadline runs on.
 class _UrgencyInfo {
-  final String durationLabel;
   final int surcharge;
-  const _UrgencyInfo(this.durationLabel, this.surcharge);
+  const _UrgencyInfo(this.surcharge);
 }
 
 class _NeedHelpScreenState extends State<NeedHelpScreen> {
@@ -46,7 +48,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
   static const List<Map<String, dynamic>> _issues = [
     {'icon': Icons.car_repair, 'label': 'Engine Problem', 'color': Color(0xFFFF9800)},
     {'icon': Icons.album_outlined, 'label': 'Brake Issue', 'color': AppColors.primary},
-    {'icon': Icons.tire_repair, 'label': 'Flat Tire', 'color': AppColors.textDark},
+    {'icon': Icons.tire_repair, 'label': 'Flat Tire', 'color': AppColors.dark},
     {'icon': Icons.battery_alert_outlined, 'label': 'Battery Dead', 'color': AppColors.green},
     {'icon': Icons.settings_input_component_outlined, 'label': 'Chain Problem', 'color': AppColors.blue},
     {'icon': Icons.electrical_services_outlined, 'label': 'Electrical Issue', 'color': AppColors.yellow},
@@ -57,9 +59,9 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
   static const _pricingCardText = Color(0xFF00297E);
 
   static const Map<String, _UrgencyInfo> _urgencyInfo = {
-    'Normal': _UrgencyInfo('Completed within 10 days', 0),
-    'Urgent': _UrgencyInfo('Completed within 5 days', 50),
-    'Emergency': _UrgencyInfo('As fast as possible — today', 100),
+    'Normal': _UrgencyInfo(0),
+    'Urgent': _UrgencyInfo(50),
+    'Emergency': _UrgencyInfo(100),
   };
 
   @override
@@ -190,7 +192,6 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
       urgency: _urgency,
       photoPaths: _photos.map((f) => f.path).toList(),
       createdAt: DateTime.now(),
-      durationLabel: info.durationLabel,
       surcharge: info.surcharge,
       clientLat: _capturedLat,
       clientLng: _capturedLng,
@@ -235,12 +236,12 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
           const Text(
             'Need Help?',
             style: TextStyle(
-                fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.textDark),
+                fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.dark),
           ),
           const SizedBox(height: 4),
           const Text(
             'Describe your motorcycle problem and get matched with nearby mechanics',
-            style: TextStyle(fontSize: 13, color: AppColors.textGrey),
+            style: TextStyle(fontSize: 13, color: AppColors.grey),
           ),
           const SizedBox(height: 20),
           const Text('Common Issues',
@@ -264,9 +265,9 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
                 }),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: selected ? color.withValues(alpha: 0.08) : AppColors.white,
+                    color: selected ? color.withValues(alpha: 0.08) : AppColors.background,
                     border: Border.all(
-                      color: selected ? color : AppColors.borderGrey,
+                      color: selected ? color : AppColors.grey,
                     ),
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -346,7 +347,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
                               color: AppColors.primary,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.close, size: 14, color: AppColors.white),
+                            child: const Icon(Icons.close, size: 14, color: AppColors.background),
                           ),
                         ),
                       ),
@@ -449,10 +450,11 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.schedule, size: 16, color: AppColors.textDark),
+                    const Icon(Icons.schedule, size: 16, color: AppColors.dark),
                     const SizedBox(width: 6),
                     Expanded(
-                      child: Text(info.durationLabel, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                      child: Text(completionWindowLabel(_urgency),
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                     ),
                   ],
                 ),
@@ -465,7 +467,8 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
                     Expanded(
                       child: Text(
                         info.surcharge > 0
-                            ? 'Additional charge applies: +₱${info.surcharge} for faster service'
+                            ? 'Additional charge applies: +₱${info.surcharge} for faster service, '
+                                'added to your total when you pay'
                             : 'No additional charge for standard service',
                         style: TextStyle(
                           fontSize: 12,
@@ -511,7 +514,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
                 ? const SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
                   )
                 : const Icon(Icons.cloud_upload_outlined, size: 18),
             label: Text(_uploading ? 'Uploading…' : 'Upload'),

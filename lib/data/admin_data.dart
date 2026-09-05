@@ -79,11 +79,15 @@ class AuditEntry {
   });
 }
 
+/// One month's ONGO platform revenue. [revenue] and [transactions] are
+/// mutable because live platform fees (see
+/// [AdminStore.recordPlatformRevenue]) accumulate into the month they were
+/// collected in rather than replacing the entry.
 class MonthlyIncome {
   final String month;
   final int year;
-  final double revenue;
-  final int transactions;
+  double revenue;
+  int transactions;
 
   MonthlyIncome({
     required this.month,
@@ -93,16 +97,31 @@ class MonthlyIncome {
   });
 }
 
+/// The name recorded as the actor on Admin-side audit entries. Placeholder
+/// until Admin accounts are real — there is no Admin profile to read a name
+/// from yet.
+const String adminActorName = 'Admin';
+
 /// Singleton in-memory store backing the Admin shell.
+///
+/// Starts completely empty: moderators, the audit log and the income ledger
+/// all fill up from real activity only — moderators from Add Mod, revenue
+/// from client payments that actually went through
+/// ([recordCompletedPayment]). Nothing here is seeded or sampled.
 class AdminStore extends ChangeNotifier {
-  AdminStore._internal() {
-    _seed();
-  }
+  AdminStore._internal();
   static final AdminStore instance = AdminStore._internal();
 
   final List<ModeratorAccount> _moderators = [];
   final List<AuditEntry> _auditLog = [];
   final List<MonthlyIncome> _income = [];
+
+  /// Running total of the priority fees (Urgent +₱50 / Emergency +₱100)
+  /// collected from clients at checkout, and how many payments carried one.
+  /// Already included in [_income]; kept separately only so the Admin UI can
+  /// call out how much of the revenue came from priority fees.
+  double _priorityFeeRevenue = 0;
+  int _priorityFeeCount = 0;
 
   List<ModeratorAccount> get moderators => List.unmodifiable(_moderators);
   List<AuditEntry> get auditLog => List.unmodifiable(_auditLog);
@@ -110,9 +129,72 @@ class AdminStore extends ChangeNotifier {
 
   int get activeModCount =>
       _moderators.where((m) => m.status == ModStatus.active).length;
-  double get ytdRevenue => _income.fold(0, (sum, m) => sum + m.revenue);
-  int get ytdTransactions =>
-      _income.fold(0, (sum, m) => sum + m.transactions);
+
+  /// Platform revenue booked so far this calendar year — the sum of the
+  /// priority fees on every payment that actually completed since January.
+  double get ytdRevenue => revenueForYear(DateTime.now().year);
+
+  /// Successful payments so far this calendar year, fee-bearing or not.
+  int get ytdTransactions => transactionsForYear(DateTime.now().year);
+
+  double revenueForYear(int year) =>
+      _income.where((m) => m.year == year).fold(0, (sum, m) => sum + m.revenue);
+
+  int transactionsForYear(int year) =>
+      _income.where((m) => m.year == year).fold(0, (sum, m) => sum + m.transactions);
+
+  double get priorityFeeRevenue => _priorityFeeRevenue;
+  int get priorityFeeCount => _priorityFeeCount;
+
+  static const List<String> _monthLabels = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  /// Books ONE successful client payment into the month [at] falls in,
+  /// creating that month's row if this is the first payment in it. The
+  /// payment always counts as a transaction; [platformFee] (0 for Normal
+  /// jobs) is what it adds to revenue.
+  ///
+  /// This is the ONLY way anything enters the Admin revenue figures — it is
+  /// called by [QuoteNotificationStore.clientConfirmPayment] once a client
+  /// payment actually succeeds, never when a job is merely created or priced.
+  /// The fee is the client-side priority charge only; a mechanic's payout
+  /// never passes through here.
+  void recordCompletedPayment({required double platformFee, DateTime? at}) {
+    final fee = platformFee > 0 ? platformFee : 0.0;
+    final when = at ?? DateTime.now();
+    final month = _monthLabels[when.month - 1];
+
+    final existing = _income.where((m) => m.month == month && m.year == when.year);
+    if (existing.isNotEmpty) {
+      existing.first.revenue += fee;
+      existing.first.transactions++;
+    } else {
+      _income.insert(
+        _insertIndexFor(when),
+        MonthlyIncome(month: month, year: when.year, revenue: fee, transactions: 1),
+      );
+    }
+
+    if (fee > 0) {
+      _priorityFeeRevenue += fee;
+      _priorityFeeCount++;
+    }
+    notifyListeners();
+  }
+
+  /// Keeps [_income] in chronological order so the revenue charts read left
+  /// to right no matter which month a payment lands in.
+  int _insertIndexFor(DateTime when) {
+    for (var i = 0; i < _income.length; i++) {
+      final entry = _income[i];
+      final entryMonth = _monthLabels.indexOf(entry.month) + 1;
+      if (entry.year > when.year || (entry.year == when.year && entryMonth > when.month)) {
+        return i;
+      }
+    }
+    return _income.length;
+  }
 
   void addModerator({
     required String name,
@@ -136,7 +218,7 @@ class AdminStore extends ChangeNotifier {
         moderatorName: name,
         action: AuditAction.added,
         role: role,
-        actorName: 'Admin Prime',
+        actorName: adminActorName,
         date: DateTime.now(),
       ),
     );
@@ -152,7 +234,7 @@ class AdminStore extends ChangeNotifier {
         moderatorName: mod.name,
         action: AuditAction.removed,
         role: mod.role,
-        actorName: 'Admin Prime',
+        actorName: adminActorName,
         date: DateTime.now(),
         reason: reason,
       ),
@@ -205,16 +287,4 @@ class AdminStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _seed() {
-    // Moderators & audit log start empty — every entry comes from Add Mod / Remove from here on.
-    _income.addAll([
-      MonthlyIncome(month: 'Jan', year: 2026, revenue: 42800, transactions: 1248),
-      MonthlyIncome(month: 'Feb', year: 2026, revenue: 51200, transactions: 1480),
-      MonthlyIncome(month: 'Mar', year: 2026, revenue: 47600, transactions: 1356),
-      MonthlyIncome(month: 'Apr', year: 2026, revenue: 63400, transactions: 1712),
-      MonthlyIncome(month: 'May', year: 2026, revenue: 58900, transactions: 1590),
-      MonthlyIncome(month: 'Jun', year: 2026, revenue: 71600, transactions: 1904),
-      MonthlyIncome(month: 'Jul', year: 2026, revenue: 38400, transactions: 940),
-    ]);
-  }
 }

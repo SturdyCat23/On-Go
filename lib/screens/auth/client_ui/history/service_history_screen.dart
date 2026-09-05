@@ -55,7 +55,7 @@ class _ServiceHistoryScreenState extends State<ServiceHistoryScreen> {
               child: Text(
                 'Completed jobs will show up here once you\'ve paid a mechanic.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textGrey, fontSize: 13),
+                style: TextStyle(color: AppColors.grey, fontSize: 13),
               ),
             ),
           )
@@ -104,7 +104,7 @@ class _HistoryCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.borderGrey),
+          border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -116,9 +116,9 @@ class _HistoryCard extends StatelessWidget {
                 children: [
                   Text(mechanicName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                   const SizedBox(height: 2),
-                  Text(location, style: const TextStyle(fontSize: 13, color: AppColors.textDark)),
+                  Text(location, style: const TextStyle(fontSize: 13, color: AppColors.dark)),
                   const SizedBox(height: 2),
-                  Text(date, style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+                  Text(date, style: const TextStyle(fontSize: 12, color: AppColors.grey)),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

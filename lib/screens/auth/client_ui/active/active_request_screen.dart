@@ -4,6 +4,7 @@ import '../../../../theme/app_theme.dart';
 import '../../../../widgets/chat_icon_button.dart';
 import '../../../../widgets/common_widgets.dart';
 import '../../../../data/quote_store.dart';
+import '../../../../data/review_store.dart';
 import '../../../shared/job_chat_screen.dart';
 import '../profile/mechanic_profile_view_screen.dart';
 import 'qr_scan_screen.dart';
@@ -18,20 +19,33 @@ class ActiveRequestScreen extends StatefulWidget {
 
 class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
   final _store = QuoteNotificationStore.instance;
+  final _reviews = ReviewStore.instance;
 
   @override
   void initState() {
     super.initState();
     _store.addListener(_onChange);
+    // Keeps the mechanic's rating on this screen live — a review submitted
+    // from here (or anywhere else) moves the average immediately.
+    _reviews.addListener(_onChange);
   }
 
   @override
   void dispose() {
     _store.removeListener(_onChange);
+    _reviews.removeListener(_onChange);
     super.dispose();
   }
 
   void _onChange() => setState(() {});
+
+  /// The mechanic's CURRENT rating, read from ReviewStore — the same average
+  /// their profile shows — not the snapshot frozen into the quote when it was
+  /// sent. Shows '—' until they have a review, exactly as the profile does.
+  String _ratingDisplay(String mechanicName) {
+    if (_reviews.reviewsFor(mechanicName).isEmpty) return '—';
+    return _reviews.averageRatingFor(mechanicName).toStringAsFixed(1);
+  }
 
   void _showSnack(String msg) {
     if (!mounted) return;
@@ -79,7 +93,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
               children: [
                 const Text(
                   'Paste the code the mechanic shared with you. It can\'t be typed or edited manually.',
-                  style: TextStyle(fontSize: 12, color: AppColors.textGrey),
+                  style: TextStyle(fontSize: 12, color: AppColors.grey),
                 ),
                 const SizedBox(height: 10),
                 TextField(
@@ -133,15 +147,18 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
 
     // The amount embedded in the scanned/pasted code is never trusted for
     // display or charging. effectivePaymentAmount is the single source of
-    // truth: for Normal/Urgent it's the fixed quote price; for Emergency
-    // it's whatever the mechanic most recently set.
+    // truth for the mechanic's half: for Normal/Urgent it's the fixed quote
+    // price; for Emergency it's whatever the mechanic most recently set. The
+    // priority fee on top is ONGO's and is charged here, at checkout only.
     final currentRequest = _store.requestFor(request.id);
     final currentQuote = _store.acceptedQuoteFor(request.id);
-    final currentAmount = currentRequest == null ? null : effectivePaymentAmount(currentRequest, currentQuote);
-    if (currentAmount == null) {
+    final mechanicAmount = currentRequest == null ? null : effectivePaymentAmount(currentRequest, currentQuote);
+    if (currentRequest == null || mechanicAmount == null) {
       _showSnack('A payment amount isn\'t available for this job yet.');
       return;
     }
+    final platformFee = currentRequest.platformFee;
+    final totalAmount = clientTotalPaymentAmount(currentRequest, currentQuote)!;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -151,10 +168,21 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Pay ${payload.mechanicName}', style: const TextStyle(fontSize: 14, color: AppColors.textGrey)),
+            Text('Pay ${payload.mechanicName}', style: const TextStyle(fontSize: 14, color: AppColors.grey)),
             const SizedBox(height: 8),
-            Text('₱${currentAmount.toStringAsFixed(0)}',
+            Text('₱${totalAmount.toStringAsFixed(0)}',
                 style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppColors.primary)),
+            if (platformFee > 0) ...[
+              const SizedBox(height: 12),
+              _PaymentBreakdownRow(
+                  label: 'Mechanic (${payload.mechanicName})', value: '₱${mechanicAmount.toStringAsFixed(0)}'),
+              const SizedBox(height: 4),
+              _PaymentBreakdownRow(
+                  label: '${currentRequest.urgency} priority fee', value: '₱${platformFee.toStringAsFixed(0)}'),
+              const SizedBox(height: 6),
+              const Text('The priority fee is an ONGO service charge and is not paid to the mechanic.',
+                  style: TextStyle(fontSize: 11, color: AppColors.grey)),
+            ],
           ],
         ),
         actions: [
@@ -184,17 +212,17 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
     final quote = request == null ? null : _store.acceptedQuoteFor(request.id);
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.white,
+        foregroundColor: AppColors.background,
         title: const Text('Job Progress'),
       ),
       body: (request == null || quote == null)
           ? const Center(
               child: Padding(
                 padding: EdgeInsets.all(20),
-                child: Text('This job is no longer active.', style: TextStyle(color: AppColors.textGrey)),
+                child: Text('This job is no longer active.', style: TextStyle(color: AppColors.grey)),
               ),
             )
           : _buildBody(request, quote),
@@ -226,11 +254,11 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                     const SizedBox(height: 8),
                     Text(
                       request.arrived ? 'Mechanic has arrived' : (request.enRoute ? 'Mechanic is on the way' : 'Mechanic is preparing'),
-                      style: const TextStyle(color: AppColors.textDark, fontSize: 14, fontWeight: FontWeight.w600),
+                      style: const TextStyle(color: AppColors.dark, fontSize: 14, fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 2),
                     Text(request.durationLabel,
-                        style: TextStyle(color: AppColors.textDark.withValues(alpha: 0.7), fontSize: 12)),
+                        style: TextStyle(color: AppColors.dark.withValues(alpha: 0.7), fontSize: 12)),
                   ],
                 ),
               ),
@@ -247,7 +275,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                           const CircleAvatar(
                             radius: 24,
                             backgroundColor: AppColors.background,
-                            child: Icon(Icons.person, color: AppColors.textGrey),
+                            child: Icon(Icons.person, color: AppColors.grey),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -256,7 +284,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                               children: [
                                 Text(quote.mechanicName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
                                 const SizedBox(height: 2),
-                                Text(request.urgency, style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+                                Text(request.urgency, style: const TextStyle(fontSize: 12, color: AppColors.grey)),
                               ],
                             ),
                           ),
@@ -280,14 +308,14 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                                 children: [
                                   _InfoColumn(label: 'ETA', value: quote.eta),
                                   const _VerticalDivider(),
-                                  _InfoColumn(label: 'Rating', value: quote.rating.toStringAsFixed(1)),
+                                  _InfoColumn(label: 'Rating', value: _ratingDisplay(quote.mechanicName)),
                                 ],
                               )
                             : Row(
                                 children: [
                                   _InfoColumn(label: 'ETA', value: quote.eta),
                                   const _VerticalDivider(),
-                                  _InfoColumn(label: 'Rating', value: quote.rating.toStringAsFixed(1)),
+                                  _InfoColumn(label: 'Rating', value: _ratingDisplay(quote.mechanicName)),
                                   const _VerticalDivider(),
                                   _InfoColumn(label: 'Quote', value: quote.price, valueColor: AppColors.green),
                                 ],
@@ -336,9 +364,20 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                         const Icon(Icons.check_circle, color: AppColors.green),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: Text(
-                              'Payment complete — ₱${(effectivePaymentAmount(request, quote) ?? 0).toStringAsFixed(0)} sent to ${quote.mechanicName}.',
-                              style: const TextStyle(color: AppColors.green, fontWeight: FontWeight.w600, fontSize: 13)),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                  'Payment complete — ₱${(effectivePaymentAmount(request, quote) ?? 0).toStringAsFixed(0)} sent to ${quote.mechanicName}.',
+                                  style: const TextStyle(color: AppColors.green, fontWeight: FontWeight.w600, fontSize: 13)),
+                              if (request.platformFeeCharged != null) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                    'Plus a ₱${request.platformFeeCharged!.toStringAsFixed(0)} ${request.urgency} priority fee — ONGO service charge.',
+                                    style: const TextStyle(color: AppColors.grey, fontSize: 11)),
+                              ],
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -362,7 +401,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                       child: const Text(
                         'Waiting for the mechanic to set a payment amount. Once they share a code, you can pay here.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: AppColors.textGrey, fontSize: 12),
+                        style: TextStyle(color: AppColors.grey, fontSize: 12),
                       ),
                     )
                   else
@@ -370,7 +409,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                       onPressed: () => _sendPayment(request, quote),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.white,
+                        foregroundColor: AppColors.background,
                         minimumSize: const Size(double.infinity, 46),
                         shape: const StadiumBorder(),
                       ),
@@ -404,11 +443,11 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                 ] else ...[
                   ElevatedButton.icon(
                     onPressed: () {},
-                    icon: const Icon(Icons.my_location, size: 18, color: AppColors.white),
+                    icon: const Icon(Icons.my_location, size: 18, color: AppColors.background),
                     label: const Text('Track Mechanic Location'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.green,
-                      foregroundColor: AppColors.white,
+                      foregroundColor: AppColors.background,
                       minimumSize: const Size(double.infinity, 46),
                       shape: const StadiumBorder(),
                     ),
@@ -418,7 +457,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                 Center(
                   child: Column(
                     children: [
-                      const Text('Need help?', style: TextStyle(fontSize: 12, color: AppColors.textGrey)),
+                      const Text('Need help?', style: TextStyle(fontSize: 12, color: AppColors.grey)),
                       TextButton(
                         onPressed: () {},
                         style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
@@ -433,6 +472,33 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// One "label ............ ₱amount" line in the checkout breakdown, so the
+/// client can see exactly which part of the total is the mechanic's and
+/// which part is ONGO's priority fee.
+class _PaymentBreakdownRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _PaymentBreakdownRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12, color: AppColors.grey)),
+        ),
+        const SizedBox(width: 8),
+        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.dark)),
+      ],
     );
   }
 }
@@ -464,7 +530,7 @@ class _VerticalDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(width: 1, height: 28, color: AppColors.borderGrey);
+    return Container(width: 1, height: 28, color: AppColors.grey.withValues(alpha: 0.3));
   }
 }
 
@@ -480,9 +546,9 @@ class _InfoColumn extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textGrey)),
+          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.grey)),
           const SizedBox(height: 2),
-          Text(value, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: valueColor ?? AppColors.textDark)),
+          Text(value, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: valueColor ?? AppColors.dark)),
         ],
       ),
     );
@@ -504,7 +570,7 @@ class _StatusStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = done ? AppColors.green : AppColors.borderGrey;
+    final color = done ? AppColors.green : AppColors.grey;
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -522,7 +588,7 @@ class _StatusStep extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 16),
               child: Text(title,
                   style: TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w600, color: done ? AppColors.textDark : AppColors.textGrey)),
+                      fontSize: 13, fontWeight: FontWeight.w600, color: done ? AppColors.dark : AppColors.grey)),
             ),
           ),
         ],

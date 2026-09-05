@@ -107,7 +107,7 @@ class _SignInScreenState extends State<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: AuthBottomCard(
           children: [
@@ -125,7 +125,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   _obscurePassword
                       ? Icons.visibility_off_outlined
                       : Icons.visibility_outlined,
-                  color: AppColors.textGrey,
+                  color: AppColors.grey,
                   size: 20,
                 ),
                 onPressed: () =>
@@ -143,7 +143,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
                 child: const Text(
                   'Forgot Password?',
-                  style: TextStyle(color: AppColors.white, fontSize: 13),
+                  style: TextStyle(color: AppColors.background, fontSize: 13),
                 ),
               ),
             ),
@@ -178,7 +178,7 @@ class _SignInScreenState extends State<SignInScreen> {
               children: [
                 const Text(
                   "Don't have account? ",
-                  style: TextStyle(fontSize: 13, color: AppColors.white),
+                  style: TextStyle(fontSize: 13, color: AppColors.background),
                 ),
                 GestureDetector(
                   onTap: () => Navigator.push(
@@ -189,7 +189,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     'Sign Up',
                     style: TextStyle(
                       fontSize: 13,
-                      color: AppColors.white,
+                      color: AppColors.background,
                       fontWeight: FontWeight.w700,
                     ),
                   ),

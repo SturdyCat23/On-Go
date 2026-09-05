@@ -87,10 +87,10 @@ class ModeratorActivity {
 /// registration files a request here via [submitRequest], and
 /// MechanicAccountStore reads that request's [AccountRequest.status] live
 /// to decide whether job actions are unlocked.
+///
+/// Starts empty — every request in here is one a real registration filed.
 class ModerationStore extends ChangeNotifier {
-  ModerationStore._internal() {
-    _seed();
-  }
+  ModerationStore._internal();
   static final ModerationStore instance = ModerationStore._internal();
 
   final List<AccountRequest> _requests = [];
@@ -210,49 +210,4 @@ class ModerationStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _seed() {
-    _requests.addAll([
-      AccountRequest(
-        id: 'req_001',
-        name: 'Pedro Santos',
-        email: 'pedrosantos@gmail.com',
-        userNumber: 'User - 00001',
-        role: AccountRole.mechanic,
-        submittedAt: DateTime(2026, 7, 6, 16, 45),
-        documents: const ['drivers_license.jpg', 'nbi_clearance.pdf', 'proof_of_address.jpg'],
-      ),
-      AccountRequest(
-        id: 'req_002',
-        name: 'Pedro Santos',
-        email: 'pedrosantos@gmail.com',
-        userNumber: 'User - 00001',
-        role: AccountRole.business,
-        submittedAt: DateTime(2026, 7, 6, 16, 45),
-        documents: const ['business_permit.pdf', 'dti_registration.pdf'],
-      ),
-      AccountRequest(
-        id: 'req_003',
-        name: 'Juan Dela Cruz',
-        email: 'juandelacruz@gmail.com',
-        userNumber: 'User - 00002',
-        role: AccountRole.business,
-        submittedAt: DateTime(2026, 7, 7, 12, 0),
-        documents: const ['business_permit.pdf', 'valid_id.jpg'],
-        status: ApprovalStatus.rejected,
-        reason: 'Suspicious activity',
-        reviewedAt: DateTime(2026, 7, 7, 12, 30),
-      ),
-      AccountRequest(
-        id: 'req_004',
-        name: 'Pedro Santos',
-        email: 'pedrosantos@gmail.com',
-        userNumber: 'User - 00001',
-        role: AccountRole.mechanic,
-        submittedAt: DateTime(2026, 7, 7, 12, 0),
-        documents: const ['drivers_license.jpg', 'nbi_clearance.pdf', 'proof_of_address.jpg'],
-        status: ApprovalStatus.approved,
-        reviewedAt: DateTime(2026, 7, 7, 12, 15),
-      ),
-    ]);
-  }
 }

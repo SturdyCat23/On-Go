@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../../../data/mechanic_account_store.dart';
 import '../../../../data/moderator_data.dart';
 import '../../../../data/quote_store.dart';
+import '../../../../data/review_store.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/chat_icon_button.dart';
 import '../../../../widgets/common_widgets.dart';
@@ -20,6 +23,7 @@ class JobsScreen extends StatefulWidget {
 class _JobsScreenState extends State<JobsScreen> {
   int _tabIndex = 0;
   bool? _wasApproved;
+  Timer? _ticker;
 
   String get _mechanicName => QuoteNotificationStore.currentMechanicName;
 
@@ -28,12 +32,28 @@ class _JobsScreenState extends State<JobsScreen> {
     super.initState();
     MechanicAccountStore.instance.addListener(_onAccountChange);
     _wasApproved = MechanicAccountStore.instance.canPerformJobActions;
+    // Drives the Accepted tab's live countdown and hands back any job that
+    // ran past its completion deadline. Both read that deadline off the
+    // request itself, so the clock is unaffected by this timer starting,
+    // stopping or restarting.
+    _ticker = Timer.periodic(const Duration(seconds: 1), _onTick);
   }
 
   @override
   void dispose() {
+    _ticker?.cancel();
     MechanicAccountStore.instance.removeListener(_onAccountChange);
     super.dispose();
+  }
+
+  void _onTick(Timer _) {
+    final store = QuoteNotificationStore.instance;
+    // Notifies (and so rebuilds) by itself only when something actually
+    // expired; the setState below is just for the ticking numbers.
+    store.expireOverdueJobs();
+    if (!mounted) return;
+    final counting = store.matchedJobsFor(_mechanicName).any((r) => r.timeRemaining() != null);
+    if (counting) setState(() {});
   }
 
   void _onAccountChange() {
@@ -72,8 +92,7 @@ class _JobsScreenState extends State<JobsScreen> {
         mechanicName: _mechanicName,
         price: '₱${input.total.toStringAsFixed(0)}',
         eta: input.estimatedTime,
-        // Todo: pull this mechanic's real rating from their profile.
-        rating: 4.8,
+        rating: ReviewStore.instance.averageRatingFor(_mechanicName),
       );
     } on StateError catch (e) {
       if (!mounted) return;
@@ -135,7 +154,7 @@ class _JobsScreenState extends State<JobsScreen> {
       // Todo: pull a real emergency callout rate from the mechanic's profile.
       price: '₱200',
       eta: '15 mins',
-      rating: 4.8,
+      rating: ReviewStore.instance.averageRatingFor(_mechanicName),
     );
 
     if (!mounted) return;
@@ -225,7 +244,7 @@ class _JobsScreenState extends State<JobsScreen> {
             _JobTabBar(
               currentIndex: _tabIndex,
               onChanged: (i) => setState(() => _tabIndex = i),
-              counts: [available.length, accepted.length, emergency.length],
+              counts: [available.length, emergency.length, accepted.length],
             ),
             Expanded(
               child: IndexedStack(
@@ -236,6 +255,12 @@ class _JobsScreenState extends State<JobsScreen> {
                     canAct: canAct,
                     onSendQuote: _sendQuote,
                   ),
+                  _EmergencyTab(
+                    requests: emergency,
+                    onAccept: _acceptEmergency,
+                    blocked: hasActiveEmergency,
+                    canAct: canAct,
+                  ),
                   _AcceptedTab(
                     requests: accepted,
                     store: store,
@@ -243,12 +268,6 @@ class _JobsScreenState extends State<JobsScreen> {
                     onCancel: (r) {
                       _cancelAccepted(r);
                     },
-                  ),
-                  _EmergencyTab(
-                    requests: emergency,
-                    onAccept: _acceptEmergency,
-                    blocked: hasActiveEmergency,
-                    canAct: canAct,
                   ),
                 ],
               ),
@@ -384,7 +403,7 @@ class _JobTabBar extends StatelessWidget {
 
   const _JobTabBar({required this.currentIndex, required this.onChanged, required this.counts});
 
-  static const _labels = ['Available', 'Accepted', 'Emergency'];
+  static const _labels = ['Available', 'Emergency', 'Accepted'];
 
   @override
   Widget build(BuildContext context) {
@@ -408,7 +427,7 @@ class _JobTabBar extends StatelessWidget {
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: selected ? AppColors.white : AppColors.textDark)),
+                        color: selected ? AppColors.background : AppColors.dark)),
               ),
             ),
           );
@@ -461,13 +480,13 @@ class _LocationBlock extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.location_on_outlined, size: 14, color: AppColors.textGrey),
+            const Icon(Icons.location_on_outlined, size: 14, color: AppColors.grey),
             const SizedBox(width: 4),
-            const Text('Location', style: TextStyle(fontSize: 11, color: AppColors.textGrey)),
+            const Text('Location', style: TextStyle(fontSize: 11, color: AppColors.grey)),
           ],
         ),
         const SizedBox(height: 2),
-        Text(location, style: const TextStyle(fontSize: 13, color: AppColors.textDark)),
+        Text(location, style: const TextStyle(fontSize: 13, color: AppColors.dark)),
       ],
     );
   }
@@ -483,10 +502,10 @@ class _DeadlineRow extends StatelessWidget {
       padding: const EdgeInsets.only(top: 8),
       child: Row(
         children: [
-          const Icon(Icons.schedule, size: 13, color: AppColors.textGrey),
+          const Icon(Icons.schedule, size: 13, color: AppColors.grey),
           const SizedBox(width: 4),
           Expanded(
-            child: Text(request.durationLabel, style: const TextStyle(fontSize: 11, color: AppColors.textGrey)),
+            child: Text(request.durationLabel, style: const TextStyle(fontSize: 11, color: AppColors.grey)),
           ),
         ],
       ),
@@ -522,16 +541,19 @@ class _AvailableTab extends StatelessWidget {
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 40),
             child: Center(
-              child: Text('No available jobs right now', style: TextStyle(color: AppColors.textGrey)),
+              child: Text('No available jobs right now', style: TextStyle(color: AppColors.grey)),
             ),
           ),
         ...requests.map((request) {
           final alreadyQuoted = QuoteNotificationStore.instance.mechanicHasQuoted(request.id, mechanicName);
-          return _JobCard(
-            request: request,
-            actionLabel: alreadyQuoted ? 'Quote Sent' : 'Send Quote',
-            actionEnabled: canAct && !alreadyQuoted,
-            onAction: () => onSendQuote(request),
+          return Padding(
+            padding: const EdgeInsets.only(bottom: jobCardSpacing),
+            child: _JobCard(
+              request: request,
+              actionLabel: alreadyQuoted ? 'Quote Sent' : 'Send Quote',
+              actionEnabled: canAct && !alreadyQuoted,
+              onAction: () => onSendQuote(request),
+            ),
           );
         }),
       ],
@@ -558,7 +580,7 @@ class _JobCard extends StatelessWidget {
     final urgencyColor = _urgencyColor(request.urgency);
 
     return AppCard(
-      padding: const EdgeInsets.all(14),
+      padding: jobCardPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -570,7 +592,7 @@ class _JobCard extends StatelessWidget {
                   children: [
                     Text(request.clientName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                     Text(_timeAgo(request.createdAt),
-                        style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+                        style: const TextStyle(fontSize: 12, color: AppColors.grey)),
                   ],
                 ),
               ),
@@ -585,7 +607,7 @@ class _JobCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(problem.issue, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
           const SizedBox(height: 2),
-          Text(problem.description, style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+          Text(problem.description, style: const TextStyle(fontSize: 12, color: AppColors.grey)),
                     if (request.photoPaths.isNotEmpty) ...[
             const SizedBox(height: 10),
             JobPhotoPreview(photoPaths: request.photoPaths),
@@ -654,14 +676,17 @@ class _EmergencyTab extends StatelessWidget {
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 40),
             child: Center(
-              child: Text('No emergency jobs right now', style: TextStyle(color: AppColors.textGrey)),
+              child: Text('No emergency jobs right now', style: TextStyle(color: AppColors.grey)),
             ),
           ),
-        ...requests.map((request) => _JobCard(
-              request: request,
-              actionLabel: 'Accept',
-              actionEnabled: canAct && !blocked,
-              onAction: () => onAccept(request),
+        ...requests.map((request) => Padding(
+              padding: const EdgeInsets.only(bottom: jobCardSpacing),
+              child: _JobCard(
+                request: request,
+                actionLabel: 'Accept',
+                actionEnabled: canAct && !blocked,
+                onAction: () => onAccept(request),
+              ),
             )),
       ],
     );
@@ -672,7 +697,19 @@ class _EmergencyTab extends StatelessWidget {
 // Accepted tab
 // ---------------------------------------------------------------------
 
-class _AcceptedTab extends StatelessWidget {
+/// Sort options for the Accepted list. [urgency] is the default — the order
+/// dispatch actually cares about (Emergency → Urgent → Normal).
+enum _AcceptedSort { urgency, dateAccepted, timeRemaining }
+
+extension on _AcceptedSort {
+  String get label => switch (this) {
+        _AcceptedSort.urgency => 'Urgency Level',
+        _AcceptedSort.dateAccepted => 'Date Accepted',
+        _AcceptedSort.timeRemaining => 'Time Remaining',
+      };
+}
+
+class _AcceptedTab extends StatefulWidget {
   final List<HelpRequest> requests;
   final QuoteNotificationStore store;
   final void Function(HelpRequest) onOpen;
@@ -681,20 +718,132 @@ class _AcceptedTab extends StatelessWidget {
   const _AcceptedTab({required this.requests, required this.store, required this.onOpen, required this.onCancel});
 
   @override
-  Widget build(BuildContext context) {
-    if (requests.isEmpty) {
-      return const Center(child: Text('No active jobs', style: TextStyle(color: AppColors.textGrey)));
+  State<_AcceptedTab> createState() => _AcceptedTabState();
+}
+
+class _AcceptedTabState extends State<_AcceptedTab> {
+  _AcceptedSort _sort = _AcceptedSort.urgency;
+  bool _sortOpen = false;
+
+  static DateTime _acceptedAt(HelpRequest r) => r.matchedAt ?? r.createdAt;
+
+  List<HelpRequest> get _sorted {
+    final list = [...widget.requests];
+    switch (_sort) {
+      case _AcceptedSort.urgency:
+        list.sort((a, b) {
+          final byUrgency = urgencyPriority(a.urgency).compareTo(urgencyPriority(b.urgency));
+          return byUrgency != 0 ? byUrgency : _acceptedAt(b).compareTo(_acceptedAt(a));
+        });
+      case _AcceptedSort.dateAccepted:
+        list.sort((a, b) => _acceptedAt(b).compareTo(_acceptedAt(a)));
+      case _AcceptedSort.timeRemaining:
+        list.sort((a, b) {
+          final left = a.timeRemaining();
+          final right = b.timeRemaining();
+          // Jobs already under way have no clock left to run, so they sit
+          // below the ones still waiting to be started.
+          if (left == null && right == null) return _acceptedAt(b).compareTo(_acceptedAt(a));
+          if (left == null) return 1;
+          if (right == null) return -1;
+          return left.compareTo(right);
+        });
     }
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      children: requests
-          .map((r) => _ActiveJobCard(
-                request: r,
-                quote: store.acceptedQuoteFor(r.id),
-                onOpen: () => onOpen(r),
-                onCancel: () => onCancel(r),
-              ))
-          .toList(),
+    return list;
+  }
+
+  Widget _sortPill(_AcceptedSort value) {
+    final selected = _sort == value;
+    return GestureDetector(
+      onTap: () => setState(() {
+        _sort = value;
+        _sortOpen = false;
+      }),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary : AppColors.background,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(value.label,
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.background : AppColors.dark)),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.requests.isEmpty) {
+      return const Center(child: Text('No active jobs', style: TextStyle(color: AppColors.grey)));
+    }
+
+    return Stack(
+      children: [
+        ListView(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text('Sorted by ${_sort.label}',
+                      style: const TextStyle(fontSize: 12, color: AppColors.grey, fontWeight: FontWeight.w600)),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.filter_list),
+                  tooltip: 'Sort accepted jobs',
+                  onPressed: () => setState(() => _sortOpen = !_sortOpen),
+                ),
+              ],
+            ),
+            ..._sorted.map((r) => Padding(
+                  padding: const EdgeInsets.only(bottom: jobCardSpacing),
+                  child: _ActiveJobCard(
+                    request: r,
+                    quote: widget.store.acceptedQuoteFor(r.id),
+                    onOpen: () => widget.onOpen(r),
+                    onCancel: () => widget.onCancel(r),
+                  ),
+                )),
+          ],
+        ),
+        if (_sortOpen) ...[
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () => setState(() => _sortOpen = false),
+              child: Container(color: Colors.transparent),
+            ),
+          ),
+          Positioned(
+            top: 46,
+            right: 16,
+            width: 170,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 12, offset: const Offset(0, 4))],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 8),
+                    child: Text('Sort by', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                  ),
+                  _sortPill(_AcceptedSort.urgency),
+                  _sortPill(_AcceptedSort.dateAccepted),
+                  _sortPill(_AcceptedSort.timeRemaining),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -726,7 +875,7 @@ class _ActiveJobCard extends StatelessWidget {
       onTap: onOpen,
       borderRadius: BorderRadius.circular(16),
       child: AppCard(
-        padding: const EdgeInsets.all(14),
+        padding: jobCardPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -766,7 +915,7 @@ class _ActiveJobCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(problem.issue, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-            Text(problem.description, style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+            Text(problem.description, style: const TextStyle(fontSize: 12, color: AppColors.grey)),
             const SizedBox(height: 12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -775,7 +924,7 @@ class _ActiveJobCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Text('Payment', style: TextStyle(fontSize: 11, color: AppColors.textGrey)),
+                    const Text('Payment', style: TextStyle(fontSize: 11, color: AppColors.grey)),
                     const SizedBox(height: 2),
                     Text(_paymentDisplay(request, quote),
                         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.green)),
@@ -783,7 +932,9 @@ class _ActiveJobCard extends StatelessWidget {
                 ),
               ],
             ),
-            _DeadlineRow(request: request),
+            // No "Completed within …" line here: once the job is accepted the
+            // live countdown below is the only deadline that matters.
+            _TimeRemainingRow(request: request),
             const SizedBox(height: 14),
             showCancel
                 ? Row(
@@ -793,7 +944,7 @@ class _ActiveJobCard extends StatelessWidget {
                           onPressed: onOpen,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: statusColor,
-                            foregroundColor: AppColors.white,
+                            foregroundColor: AppColors.background,
                             shape: const StadiumBorder(),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
@@ -806,7 +957,7 @@ class _ActiveJobCard extends StatelessWidget {
                           onPressed: onCancel,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
-                            foregroundColor: AppColors.white,
+                            foregroundColor: AppColors.background,
                             shape: const StadiumBorder(),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
@@ -821,7 +972,7 @@ class _ActiveJobCard extends StatelessWidget {
                       onPressed: onOpen,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: statusColor,
-                        foregroundColor: AppColors.white,
+                        foregroundColor: AppColors.background,
                         shape: const StadiumBorder(),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
@@ -830,6 +981,43 @@ class _ActiveJobCard extends StatelessWidget {
                   ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Live "time left to finish this job" line. The value comes from the
+/// request's own completion deadline ([HelpRequest.timeRemaining]) — accept
+/// time plus the urgency's window — so it keeps counting down across
+/// rebuilds, navigation and app reopens instead of restarting, and is never a
+/// stored or hard-coded figure. Renders nothing once the mechanic has reached
+/// Work in Progress — at that point [HelpRequest.timeRemaining] stops, which
+/// stops the expiry too rather than just hiding it.
+class _TimeRemainingRow extends StatelessWidget {
+  final HelpRequest request;
+
+  const _TimeRemainingRow({required this.request});
+
+  @override
+  Widget build(BuildContext context) {
+    final remaining = request.timeRemaining();
+    if (remaining == null) return const SizedBox.shrink();
+
+    // Runs hot in the final hour, so a job about to be handed back reads as
+    // urgent rather than as just another grey line.
+    final color = remaining <= const Duration(hours: 1) ? AppColors.primary : AppColors.grey;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        children: [
+          Icon(Icons.timer_outlined, size: 13, color: color),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text('Time Remaining: ${formatTimeRemaining(remaining)}',
+                style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600)),
+          ),
+        ],
       ),
     );
   }

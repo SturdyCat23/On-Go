@@ -72,8 +72,8 @@ class _ModsTabState extends State<ModsTab> {
                     children: [
                       CircleAvatar(
                         radius: 20,
-                        backgroundColor: AppColors.borderGrey.withValues(alpha: 0.5),
-                        child: Text(mod.initials, style: const TextStyle(color: AppColors.textDark, fontWeight: FontWeight.w700)),
+                        backgroundColor: AppColors.grey.withValues(alpha: 0.25),
+                        child: Text(mod.initials, style: const TextStyle(color: AppColors.dark, fontWeight: FontWeight.w700)),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -81,7 +81,7 @@ class _ModsTabState extends State<ModsTab> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(mod.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                            Text('Edit permissions', style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+                            Text('Edit permissions', style: const TextStyle(fontSize: 12, color: AppColors.grey)),
                           ],
                         ),
                       ),
@@ -94,14 +94,14 @@ class _ModsTabState extends State<ModsTab> {
                     value: canApprove,
                     onChanged: (v) => setSheetState(() => canApprove = v),
                   ),
-                  Divider(height: 1, color: AppColors.borderGrey.withValues(alpha: 0.6)),
+                  Divider(height: 1, color: AppColors.grey.withValues(alpha: 0.3)),
                   _permissionRow(
                     title: 'Can reject accounts',
                     subtitle: 'Decline with reasons',
                     value: canReject,
                     onChanged: (v) => setSheetState(() => canReject = v),
                   ),
-                  Divider(height: 1, color: AppColors.borderGrey.withValues(alpha: 0.6)),
+                  Divider(height: 1, color: AppColors.grey.withValues(alpha: 0.3)),
                   _permissionRow(
                     title: 'Can escalate to admin',
                     subtitle: 'Flag for admin review',
@@ -124,7 +124,7 @@ class _ModsTabState extends State<ModsTab> {
                         );
                         Navigator.pop(sheetCtx);
                       },
-                      child: const Text('SAVE PERMISSIONS', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+                      child: const Text('SAVE PERMISSIONS', style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
                     ),
                   ),
                 ],
@@ -152,7 +152,7 @@ class _ModsTabState extends State<ModsTab> {
               children: [
                 Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
-                Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.textGrey)),
+                Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.grey)),
               ],
             ),
           ),
@@ -160,7 +160,7 @@ class _ModsTabState extends State<ModsTab> {
             onTap: () => onChanged(!value),
             child: Icon(
               value ? Icons.check_circle : Icons.circle_outlined,
-              color: value ? AppColors.primary : AppColors.borderGrey,
+              color: value ? AppColors.primary : AppColors.grey,
               size: 24,
             ),
           ),
@@ -170,7 +170,7 @@ class _ModsTabState extends State<ModsTab> {
   }
 
   Widget _permLabel(IconData icon, String label, bool granted, Color color) {
-    final c = granted ? color : AppColors.borderGrey;
+    final c = granted ? color : AppColors.grey;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -185,8 +185,8 @@ class _ModsTabState extends State<ModsTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textGrey)),
-        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textDark)),
+        Text(label, style: const TextStyle(fontSize: 10, color: AppColors.grey)),
+        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.dark)),
       ],
     );
   }
@@ -197,15 +197,15 @@ class _ModsTabState extends State<ModsTab> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('${mods.length} moderators', style: const TextStyle(color: AppColors.textGrey, fontSize: 13)),
+        Text('${mods.length} moderators', style: const TextStyle(color: AppColors.grey, fontSize: 13)),
         const SizedBox(height: 12),
         ...mods.map((m) => Container(
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: AppColors.background,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.borderGrey.withValues(alpha: 0.6))),
+                  border: Border.all(color: AppColors.grey.withValues(alpha: 0.3))),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -214,8 +214,8 @@ class _ModsTabState extends State<ModsTab> {
                     children: [
                       CircleAvatar(
                           radius: 24,
-                          backgroundColor: AppColors.borderGrey.withValues(alpha: 0.5),
-                          child: Text(m.initials, style: const TextStyle(color: AppColors.textDark, fontWeight: FontWeight.w700))),
+                          backgroundColor: AppColors.grey.withValues(alpha: 0.25),
+                          child: Text(m.initials, style: const TextStyle(color: AppColors.dark, fontWeight: FontWeight.w700))),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -228,20 +228,20 @@ class _ModsTabState extends State<ModsTab> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: (m.status == ModStatus.active ? AppColors.green : AppColors.textGrey).withValues(alpha: 0.15),
+                                    color: (m.status == ModStatus.active ? AppColors.green : AppColors.grey).withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Text(m.status == ModStatus.active ? 'active' : 'inactive',
                                       style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,
-                                          color: m.status == ModStatus.active ? AppColors.green : AppColors.textGrey)),
+                                          color: m.status == ModStatus.active ? AppColors.green : AppColors.grey)),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 2),
-                            Text(m.email, style: const TextStyle(fontSize: 13, color: AppColors.textGrey)),
-                            Text(m.role, style: const TextStyle(fontSize: 13, color: AppColors.textGrey)),
+                            Text(m.email, style: const TextStyle(fontSize: 13, color: AppColors.grey)),
+                            Text(m.role, style: const TextStyle(fontSize: 13, color: AppColors.grey)),
                             const SizedBox(height: 8),
                             Wrap(
                               spacing: 12,

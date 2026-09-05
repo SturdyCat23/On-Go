@@ -132,7 +132,7 @@ class _MechanicStep1AccountState extends State<MechanicStep1Account> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
           Container(
@@ -143,12 +143,12 @@ class _MechanicStep1AccountState extends State<MechanicStep1Account> {
               children: [
                 Text('On Go Registration',
                     style: TextStyle(
-                        color: AppColors.white,
+                        color: AppColors.background,
                         fontSize: 20,
                         fontWeight: FontWeight.w700)),
                 SizedBox(height: 4),
                 Text('Complete all steps to provide services',
-                    style: TextStyle(color: AppColors.white, fontSize: 12)),
+                    style: TextStyle(color: AppColors.background, fontSize: 12)),
               ],
             ),
           ),
@@ -168,7 +168,7 @@ class _MechanicStep1AccountState extends State<MechanicStep1Account> {
                       style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textDark)),
+                          color: AppColors.dark)),
                   const SizedBox(height: 16),
 
                   _field(
@@ -221,7 +221,7 @@ class _MechanicStep1AccountState extends State<MechanicStep1Account> {
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
                           size: 20,
-                          color: AppColors.textGrey,
+                          color: AppColors.grey,
                         ),
                         onPressed: () =>
                             setState(() => _obscurePass = !_obscurePass),
@@ -250,7 +250,7 @@ class _MechanicStep1AccountState extends State<MechanicStep1Account> {
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
                           size: 20,
-                          color: AppColors.textGrey,
+                          color: AppColors.grey,
                         ),
                         onPressed: () => setState(
                             () => _obscureConfirm = !_obscureConfirm),

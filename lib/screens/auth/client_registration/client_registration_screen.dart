@@ -207,7 +207,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
     final bool hasPhoto = _profilePhoto != null || _socialPhotoUrl != null;
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.background,
       body: Stack(
         children: [
           Column(
@@ -222,7 +222,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                     Text(
                       'Client Registration',
                       style: TextStyle(
-                        color: AppColors.white,
+                        color: AppColors.background,
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
                       ),
@@ -230,7 +230,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                     SizedBox(height: 4),
                     Text(
                       'Create your account to book services',
-                      style: TextStyle(color: AppColors.white, fontSize: 12),
+                      style: TextStyle(color: AppColors.background, fontSize: 12),
                     ),
                   ],
                 ),
@@ -316,7 +316,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                       const Text(
                         'Upload a clear photo of yourself.',
                         style:
-                            TextStyle(fontSize: 11, color: AppColors.textGrey),
+                            TextStyle(fontSize: 11, color: AppColors.grey),
                       ),
                       const SizedBox(height: 10),
 
@@ -344,11 +344,11 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                                         errorBuilder: (_, _, _) => Container(
                                           width: 140,
                                           height: 140,
-                                          color: const Color(0xFFF0F0F0),
+                                          color: AppColors.background,
                                           child: const Icon(
                                             Icons.person_outline,
                                             size: 52,
-                                            color: AppColors.textGrey,
+                                            color: AppColors.grey,
                                           ),
                                         ),
                                       ),
@@ -466,7 +466,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                                   ? Icons.visibility_off_outlined
                                   : Icons.visibility_outlined,
                               size: 20,
-                              color: AppColors.textGrey,
+                              color: AppColors.grey,
                             ),
                             onPressed: () =>
                                 setState(() => _obscurePass = !_obscurePass),
@@ -486,7 +486,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                                   ? Icons.visibility_off_outlined
                                   : Icons.visibility_outlined,
                               size: 20,
-                              color: AppColors.textGrey,
+                              color: AppColors.grey,
                             ),
                             onPressed: () =>
                                 setState(() => _obscureConfirm = !_obscureConfirm),
@@ -499,19 +499,19 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF5F5F5),
+                            color: AppColors.background,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.borderGrey),
+                            border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)),
                           ),
                           child: const Row(
                             children: [
                               Icon(Icons.lock_outline,
-                                  size: 16, color: AppColors.textGrey),
+                                  size: 16, color: AppColors.grey),
                               SizedBox(width: 8),
                               Text(
                                 'Password is managed by Google',
                                 style: TextStyle(
-                                    fontSize: 12, color: AppColors.textGrey),
+                                    fontSize: 12, color: AppColors.grey),
                               ),
                             ],
                           ),
@@ -527,7 +527,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                           onPressed: _submit,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
-                            foregroundColor: AppColors.white,
+                            foregroundColor: AppColors.background,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8)),

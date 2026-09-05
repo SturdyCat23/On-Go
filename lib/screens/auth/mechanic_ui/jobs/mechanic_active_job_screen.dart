@@ -113,7 +113,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
           children: [
             const Text(
               'Emergency jobs have no fixed quote — enter the price you and the client agreed on.',
-              style: TextStyle(fontSize: 12, color: AppColors.textGrey),
+              style: TextStyle(fontSize: 12, color: AppColors.grey),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -149,17 +149,17 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.white,
+        foregroundColor: AppColors.background,
         title: const Text('Active Job'),
       ),
       body: Builder(
         builder: (context) {
           final request = _store.requestFor(widget.requestId);
           if (request == null) {
-            return const Center(child: Text('This job is no longer active.', style: TextStyle(color: AppColors.textGrey)));
+            return const Center(child: Text('This job is no longer active.', style: TextStyle(color: AppColors.grey)));
           }
           final quote = _store.acceptedQuoteFor(widget.requestId);
 
@@ -189,7 +189,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                             request.arrived
                                 ? "You've arrived"
                                 : (request.navigating ? 'Heading to client' : 'Ready to head out'),
-                            style: const TextStyle(color: AppColors.textDark, fontSize: 14, fontWeight: FontWeight.w600),
+                            style: const TextStyle(color: AppColors.dark, fontSize: 14, fontWeight: FontWeight.w600),
                           ),
                           if (_trackingError != null) ...[
                             const SizedBox(height: 4),
@@ -197,7 +197,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                               padding: const EdgeInsets.symmetric(horizontal: 24),
                               child: Text(_trackingError!,
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(color: AppColors.textDark.withValues(alpha: 0.7), fontSize: 11)),
+                                  style: TextStyle(color: AppColors.dark.withValues(alpha: 0.7), fontSize: 11)),
                             ),
                           ],
                         ],
@@ -216,7 +216,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                                 const CircleAvatar(
                                   radius: 24,
                                   backgroundColor: AppColors.background,
-                                  child: Icon(Icons.person, color: AppColors.textGrey),
+                                  child: Icon(Icons.person, color: AppColors.grey),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -224,7 +224,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(request.clientName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-                                      Text(request.urgency, style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+                                      Text(request.urgency, style: const TextStyle(fontSize: 12, color: AppColors.grey)),
                                     ],
                                   ),
                                 ),
@@ -342,7 +342,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                 child: const Text(
                   'Emergency jobs have no set price. Agree on a price with the client, then set it here to generate a payment code.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12, color: AppColors.textGrey),
+                  style: TextStyle(fontSize: 12, color: AppColors.grey),
                 ),
               ),
               const SizedBox(height: 12),
@@ -350,7 +350,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                 onPressed: () => _setEmergencyPaymentAmount(request),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.white,
+                  foregroundColor: AppColors.background,
                   minimumSize: const Size(double.infinity, 46),
                   shape: const StadiumBorder(),
                 ),
@@ -382,12 +382,12 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(border: Border.all(color: AppColors.borderGrey), borderRadius: BorderRadius.circular(16)),
+              decoration: BoxDecoration(border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)), borderRadius: BorderRadius.circular(16)),
               child: QrImageView(data: qrData, size: 200),
             ),
             const SizedBox(height: 10),
             Text('Have the client scan this to pay ₱${amount.toStringAsFixed(0)}',
-                style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+                style: const TextStyle(fontSize: 12, color: AppColors.grey)),
             const SizedBox(height: 12),
             Container(
               width: double.infinity,
@@ -396,7 +396,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
               child: SelectableText(
                 qrData,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 11, color: AppColors.textGrey, fontFamily: 'monospace'),
+                style: const TextStyle(fontSize: 11, color: AppColors.grey, fontFamily: 'monospace'),
               ),
             ),
             const SizedBox(height: 8),
@@ -422,7 +422,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
             const Text(
               'If the client disagrees with this price, tap Edit Amount to agree on a new one.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 11, color: AppColors.textGrey),
+              style: TextStyle(fontSize: 11, color: AppColors.grey),
             ),
           ],
         );
@@ -448,12 +448,12 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(border: Border.all(color: AppColors.borderGrey), borderRadius: BorderRadius.circular(16)),
+            decoration: BoxDecoration(border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)), borderRadius: BorderRadius.circular(16)),
             child: QrImageView(data: qrData, size: 200),
           ),
           const SizedBox(height: 10),
           Text('Have the client scan this to pay ${quote?.price ?? ''}',
-              style: const TextStyle(fontSize: 12, color: AppColors.textGrey)),
+              style: const TextStyle(fontSize: 12, color: AppColors.grey)),
           const SizedBox(height: 12),
           Container(
             width: double.infinity,
@@ -462,7 +462,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
             child: SelectableText(
               qrData,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 11, color: AppColors.textGrey, fontFamily: 'monospace'),
+              style: const TextStyle(fontSize: 11, color: AppColors.grey, fontFamily: 'monospace'),
             ),
           ),
           const SizedBox(height: 8),
@@ -485,7 +485,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
           onPressed: () => _store.mechanicCompleteService(request.id),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.white,
+            foregroundColor: AppColors.background,
             minimumSize: const Size(double.infinity, 46),
             shape: const StadiumBorder(),
           ),
@@ -501,7 +501,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
           onPressed: () => _store.mechanicStartWork(request.id),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.green,
-            foregroundColor: AppColors.white,
+            foregroundColor: AppColors.background,
             minimumSize: const Size(double.infinity, 46),
             shape: const StadiumBorder(),
           ),
@@ -517,8 +517,8 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
           child: OutlinedButton(
             onPressed: () => _confirmArrivalManually(request),
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.textDark,
-              side: const BorderSide(color: AppColors.borderGrey),
+              foregroundColor: AppColors.dark,
+              side: BorderSide(color: AppColors.grey.withValues(alpha: 0.3)),
               minimumSize: const Size(double.infinity, 46),
               shape: const StadiumBorder(),
             ),
@@ -533,7 +533,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
         child: const Text(
           'Tracking your location — En Route and Arrived will be detected automatically as you travel.',
           textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.textGrey, fontSize: 12),
+          style: TextStyle(color: AppColors.grey, fontSize: 12),
         ),
       );
     }
@@ -542,11 +542,11 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
       width: double.infinity,
       child: ElevatedButton.icon(
         onPressed: () => _beginNavigating(request),
-        icon: const Icon(Icons.navigation_outlined, size: 18, color: AppColors.white),
+        icon: const Icon(Icons.navigation_outlined, size: 18, color: AppColors.background),
         label: const Text('Navigate'),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.green,
-          foregroundColor: AppColors.white,
+          foregroundColor: AppColors.background,
           minimumSize: const Size(double.infinity, 46),
           shape: const StadiumBorder(),
         ),
@@ -582,7 +582,7 @@ class _VerticalDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(width: 1, height: 28, color: AppColors.borderGrey);
+    return Container(width: 1, height: 28, color: AppColors.grey.withValues(alpha: 0.3));
   }
 }
 
@@ -598,9 +598,9 @@ class _InfoColumn extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textGrey)),
+          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.grey)),
           const SizedBox(height: 2),
-          Text(value, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: valueColor ?? AppColors.textDark)),
+          Text(value, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: valueColor ?? AppColors.dark)),
         ],
       ),
     );
@@ -622,7 +622,7 @@ class _StatusStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = done ? AppColors.green : AppColors.borderGrey;
+    final color = done ? AppColors.green : AppColors.grey;
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -640,7 +640,7 @@ class _StatusStep extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 16),
               child: Text(title,
                   style: TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w600, color: done ? AppColors.textDark : AppColors.textGrey)),
+                      fontSize: 13, fontWeight: FontWeight.w600, color: done ? AppColors.dark : AppColors.grey)),
             ),
           ),
         ],

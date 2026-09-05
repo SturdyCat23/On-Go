@@ -138,7 +138,7 @@ class _MechanicStep4DocumentsState extends State<MechanicStep4Documents> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
           _buildHeader(),
@@ -159,7 +159,7 @@ class _MechanicStep4DocumentsState extends State<MechanicStep4Documents> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textDark,
+                      color: AppColors.dark,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -249,12 +249,12 @@ class _MechanicStep4DocumentsState extends State<MechanicStep4Documents> {
         children: const [
           Text('On Go Registration',
               style: TextStyle(
-                  color: AppColors.white,
+                  color: AppColors.background,
                   fontSize: 20,
                   fontWeight: FontWeight.w700)),
           SizedBox(height: 4),
           Text('Complete all steps to provide services',
-              style: TextStyle(color: AppColors.white, fontSize: 12)),
+              style: TextStyle(color: AppColors.background, fontSize: 12)),
         ],
       ),
     );
@@ -340,9 +340,9 @@ class _DocumentUploadTile extends StatelessWidget {
             padding: const EdgeInsets.symmetric(
                 horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: AppColors.inputFill,
+              color: AppColors.background,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.borderGrey),
+              border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
@@ -364,7 +364,7 @@ class _DocumentUploadTile extends StatelessWidget {
                         Text(
                           _formatFileSize(file!.size),
                           style: const TextStyle(
-                              fontSize: 11, color: AppColors.textGrey),
+                              fontSize: 11, color: AppColors.grey),
                         ),
                     ],
                   ),
@@ -440,9 +440,9 @@ class _MultiDocumentUploadTile extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: AppColors.inputFill,
+                  color: AppColors.background,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.borderGrey),
+                  border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
@@ -466,7 +466,7 @@ class _MultiDocumentUploadTile extends StatelessWidget {
                               _formatFileSize(f.size),
                               style: const TextStyle(
                                   fontSize: 11,
-                                  color: AppColors.textGrey),
+                                  color: AppColors.grey),
                             ),
                         ],
                       ),

@@ -61,7 +61,7 @@ class _HistoryTabState extends State<HistoryTab> {
         ),
         Expanded(
           child: items.isEmpty
-              ? const Center(child: Text('No records', style: TextStyle(color: AppColors.textGrey)))
+              ? const Center(child: Text('No records', style: TextStyle(color: AppColors.grey)))
               : ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: items.map((r) => _HistoryCard(request: r)).toList(),
@@ -78,10 +78,10 @@ class _HistoryTabState extends State<HistoryTab> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.borderGrey.withValues(alpha: 0.35),
+          color: selected ? AppColors.primary : AppColors.grey.withValues(alpha: 0.35),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.white : AppColors.textDark)),
+        child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.background : AppColors.dark)),
       ),
     );
   }
@@ -99,7 +99,7 @@ class _HistoryCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(border: Border.all(color: AppColors.borderGrey), borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)), borderRadius: BorderRadius.circular(16)),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -127,7 +127,7 @@ class _HistoryCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    Text(request.userNumber, style: const TextStyle(fontSize: 13, color: AppColors.textGrey)),
+                    Text(request.userNumber, style: const TextStyle(fontSize: 13, color: AppColors.grey)),
                     const SizedBox(width: 8),
                     _RoleBadgeStatic(role: request.role),
                   ],

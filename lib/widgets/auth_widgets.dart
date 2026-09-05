@@ -17,7 +17,7 @@ class OnGoHeader extends StatelessWidget {
           const Text(
             'On Go',
             style: TextStyle(
-              color: AppColors.white,
+              color: AppColors.background,
               fontSize: 28,
               fontWeight: FontWeight.w800,
               letterSpacing: 1,
@@ -27,7 +27,7 @@ class OnGoHeader extends StatelessWidget {
           Text(
             subtitle,
             style: const TextStyle(
-              color: AppColors.white,
+              color: AppColors.background,
               fontSize: 13,
             ),
           ),
@@ -70,7 +70,7 @@ class OnGoTextField extends StatelessWidget {
           style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: AppColors.textDark,
+            color: AppColors.dark,
           ),
         ),
         const SizedBox(height: 6),
@@ -139,7 +139,7 @@ class RegistrationStepper extends StatelessWidget {
                 return Expanded(
                   child: Container(
                     height: 3,
-                    color: active ? AppColors.green : AppColors.borderGrey,
+                    color: active ? AppColors.green : AppColors.grey,
                   ),
                 );
               }
@@ -159,18 +159,18 @@ class RegistrationStepper extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: (done || current || step <= highestCompletedStep)
                       ? AppColors.green
-                      : AppColors.borderGrey,
+                      : AppColors.grey,
                 ),
                 child: Center(
                   child: done || (step <= highestCompletedStep && !current)
                       ? const Icon(Icons.check,
-                          color: AppColors.white, size: 14)
+                          color: AppColors.background, size: 14)
                       : Text(
                           '$step',
                           style: TextStyle(
                             color: current
-                                ? AppColors.white
-                                : AppColors.textGrey,
+                                ? AppColors.background
+                                : AppColors.grey,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -206,7 +206,7 @@ class RegistrationStepper extends StatelessWidget {
                     fontSize: 9,
                     color: (done || current)
                         ? AppColors.green
-                        : AppColors.textGrey,
+                        : AppColors.grey,
                     fontWeight:
                         current ? FontWeight.w600 : FontWeight.normal,
                   ),
@@ -317,12 +317,12 @@ class AuthTextField extends StatelessWidget {
       controller: controller,
       obscureText: obscure,
       keyboardType: keyboardType,
-      style: const TextStyle(color: AppColors.textDark),
+      style: const TextStyle(color: AppColors.dark),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: AppColors.textGrey),
+        hintStyle: const TextStyle(color: AppColors.grey),
         filled: true,
-        fillColor: AppColors.white,
+        fillColor: AppColors.background,
         suffixIcon: suffixIcon,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -346,7 +346,7 @@ class AuthWhiteButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.white,
+        backgroundColor: AppColors.background,
         foregroundColor: AppColors.primary,
         minimumSize: const Size(double.infinity, 50),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -373,7 +373,7 @@ class AuthRoleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.white,
+      color: AppColors.background,
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         onTap: onTap,

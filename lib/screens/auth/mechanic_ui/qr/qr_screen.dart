@@ -84,7 +84,7 @@ class _QrScreenState extends State<QrScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.textDark, width: 2),
+              border: Border.all(color: AppColors.dark, width: 2),
               borderRadius: BorderRadius.circular(16),
             ),
             child: QrImageView(data: qrData, size: 200),

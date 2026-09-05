@@ -88,9 +88,9 @@ class _AuditTabState extends State<AuditTab> {
                       margin: const EdgeInsets.only(bottom: 10),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                          color: AppColors.white,
+                          color: AppColors.background,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.borderGrey.withValues(alpha: 0.6))),
+                          border: Border.all(color: AppColors.grey.withValues(alpha: 0.3))),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -121,13 +121,13 @@ class _AuditTabState extends State<AuditTab> {
                                   ],
                                 ),
                                 const SizedBox(height: 2),
-                                Text('${e.role} · by ${e.actorName}', style: const TextStyle(fontSize: 13, color: AppColors.textGrey)),
+                                Text('${e.role} · by ${e.actorName}', style: const TextStyle(fontSize: 13, color: AppColors.grey)),
                                 if (e.reason != null) ...[
                                   const SizedBox(height: 2),
                                   Text(e.reason!, style: const TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w600)),
                                 ],
                                 const SizedBox(height: 4),
-                                Text(formatDateTime(e.date), style: const TextStyle(fontSize: 11, color: AppColors.textGrey)),
+                                Text(formatDateTime(e.date), style: const TextStyle(fontSize: 11, color: AppColors.grey)),
                               ],
                             ),
                           ),
@@ -148,11 +148,11 @@ class _AuditTabState extends State<AuditTab> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.white,
+          color: selected ? AppColors.primary : AppColors.background,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: selected ? AppColors.primary : AppColors.borderGrey),
+          border: Border.all(color: selected ? AppColors.primary : AppColors.grey),
         ),
-        child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.white : AppColors.textDark)),
+        child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.background : AppColors.dark)),
       ),
     );
   }
