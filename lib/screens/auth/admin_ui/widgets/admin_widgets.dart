@@ -32,6 +32,7 @@ class AdminStatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppCard(
       padding: const EdgeInsets.all(12),
+      color: AppColors.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -73,27 +74,60 @@ class AdminChartTooltip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.14), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: TextStyle(fontSize: 11, color: AppColors.textdark, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 2),
-          Text('Revenue : ₱${value.toStringAsFixed(0)}',
-              style: TextStyle(fontSize: 12, color: AppColors.info, fontWeight: FontWeight.w700)),
-        ],
-      ),
+    // Solid callout in the chart's own accent color with a pointer tail, the
+    // way the chart reference annotates a highlighted value.
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.info,
+            borderRadius: AppRadii.borderXs,
+            boxShadow: AppShadows.raised,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 10,
+                  color: AppColors.textlight.withValues(alpha: 0.85),
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.6,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text('Revenue : ₱${value.toStringAsFixed(0)}',
+                  style: TextStyle(fontSize: 12, color: AppColors.textlight, fontWeight: FontWeight.w700)),
+            ],
+          ),
+        ),
+        CustomPaint(size: const Size(12, 6), painter: _CalloutTail(color: AppColors.info)),
+      ],
     );
   }
+}
+
+/// The little downward point under [AdminChartTooltip].
+class _CalloutTail extends CustomPainter {
+  final Color color;
+  const _CalloutTail({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width, 0)
+      ..lineTo(size.width / 2, size.height)
+      ..close();
+    canvas.drawPath(path, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_CalloutTail old) => old.color != color;
 }
 
 /// Left-hand "₱Xk" axis labels shared by the revenue line & bar charts.

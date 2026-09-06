@@ -138,7 +138,7 @@ class _MechanicStep4DocumentsState extends State<MechanicStep4Documents> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
           _buildHeader(),
@@ -331,8 +331,7 @@ class _DocumentUploadTile extends StatelessWidget {
               side: BorderSide(
                   color: showError ? AppColors.error : AppColors.info),
               minimumSize: const Size(double.infinity, 48),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
+              shape: const StadiumBorder(),
             ),
           )
         else
@@ -426,8 +425,7 @@ class _MultiDocumentUploadTile extends StatelessWidget {
             foregroundColor: AppColors.info,
             side: BorderSide(color: AppColors.info),
             minimumSize: const Size(double.infinity, 48),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8)),
+            shape: const StadiumBorder(),
           ),
         ),
         if (files.isNotEmpty) ...[

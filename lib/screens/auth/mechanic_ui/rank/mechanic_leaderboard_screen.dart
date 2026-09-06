@@ -158,7 +158,7 @@ class _MechanicLeaderboardScreenState extends State<MechanicLeaderboardScreen> {
                 decoration: BoxDecoration(
                   color: isYou ? AppColors.primary.withValues(alpha: 0.06) : null,
                   border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: [
@@ -211,7 +211,7 @@ class _MechanicLeaderboardScreenState extends State<MechanicLeaderboardScreen> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
                 boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 12, offset: const Offset(0, 4))],
               ),

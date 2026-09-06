@@ -302,7 +302,16 @@ class _DemoModeBanner extends StatelessWidget {
         children: [
           Icon(Icons.science_outlined, size: 14, color: AppColors.info),
           SizedBox(width: 6),
-          Text('DEMO MODE — for testing only', style: TextStyle(fontSize: 11, color: AppColors.info, fontWeight: FontWeight.w700)),
+          // Flexible so the banner shortens rather than overflowing on a
+          // narrow screen or at a large system text scale.
+          Flexible(
+            child: Text(
+              'DEMO MODE — for testing only',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 11, color: AppColors.info, fontWeight: FontWeight.w700),
+            ),
+          ),
         ],
       ),
     );
@@ -825,7 +834,7 @@ class _AcceptedTabState extends State<_AcceptedTab> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: AppColors.background,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
                 boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 12, offset: const Offset(0, 4))],
               ),

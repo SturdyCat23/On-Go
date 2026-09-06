@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../data/moderator_data.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/app_widgets.dart';
+import '../../../widgets/on_go_bottom_nav.dart';
 import '../sign_in_screen.dart';
 import 'notifications/admin_notifications_screen.dart';
 import 'settings/admin_settings_screen.dart';
@@ -53,17 +54,15 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       ),
       drawer: const _AdminDrawer(),
       body: IndexedStack(index: _index, children: _tabs),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: OnGoBottomNav(
         currentIndex: _index,
         onTap: (i) => setState(() => _index = i),
-        type: BottomNavigationBarType.fixed,
-        showUnselectedLabels: true,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.monitor_heart_outlined), label: 'Overview'),
-          BottomNavigationBarItem(icon: Icon(Icons.shield_outlined), label: 'Mods'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_add_alt), label: 'Add Mod'),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Audit'),
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Income'),
+          OnGoNavItem(icon: Icons.monitor_heart_outlined, label: 'Overview'),
+          OnGoNavItem(icon: Icons.shield_outlined, label: 'Mods'),
+          OnGoNavItem(icon: Icons.person_add_alt, label: 'Add Mod'),
+          OnGoNavItem(icon: Icons.history, label: 'Audit'),
+          OnGoNavItem(icon: Icons.bar_chart, label: 'Income'),
         ],
       ),
     );
@@ -84,6 +83,9 @@ class _AdminDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.horizontal(right: Radius.circular(AppRadii.xl)),
+      ),
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -97,16 +99,26 @@ class _AdminDrawer extends StatelessWidget {
               ),
             ),
             ListTile(
-              leading: Icon(Icons.settings_outlined, color: AppColors.primary),
-              title: const Text('Settings'),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+              horizontalTitleGap: 12,
+              minLeadingWidth: 20,
+              visualDensity: VisualDensity.compact,
+              shape: RoundedRectangleBorder(borderRadius: AppRadii.borderMd),
+              leading: Icon(Icons.settings_outlined, size: 20, color: AppColors.textdark),
+              title: Text('Settings', style: TextStyle(color: AppColors.textdark, fontWeight: FontWeight.w500, fontSize: 14)),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminSettingsScreen()));
               },
             ),
             ListTile(
-              leading: Icon(Icons.logout, color: AppColors.primary),
-              title: const Text('Log Out'),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+              horizontalTitleGap: 12,
+              minLeadingWidth: 20,
+              visualDensity: VisualDensity.compact,
+              shape: RoundedRectangleBorder(borderRadius: AppRadii.borderMd),
+              leading: Icon(Icons.logout, size: 20, color: AppColors.error),
+              title: Text('Log Out', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w500, fontSize: 14)),
               onTap: () => _logout(context),
             ),
           ],

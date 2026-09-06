@@ -4,6 +4,7 @@ import '../../../data/moderator_data.dart';
 import '../../../data/session_store.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/app_widgets.dart';
+import '../../../widgets/on_go_bottom_nav.dart';
 import '../sign_in_screen.dart';
 import 'tabs/queue_tab.dart';
 import 'tabs/history_tab.dart';
@@ -52,16 +53,14 @@ class _ModeratorHomeScreenState extends State<ModeratorHomeScreen> {
       ),
       drawer: _ModeratorDrawer(onOpenSettings: _openSettings),
       body: IndexedStack(index: _index, children: _tabs),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: OnGoBottomNav(
         currentIndex: _index,
         onTap: (i) => setState(() => _index = i),
-        type: BottomNavigationBarType.fixed,
-        showUnselectedLabels: true,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.watch_later_outlined), label: 'Queue'),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
-          BottomNavigationBarItem(icon: Icon(Icons.people_outline), label: 'Accounts'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: 'Setting'),
+          OnGoNavItem(icon: Icons.watch_later_outlined, label: 'Queue'),
+          OnGoNavItem(icon: Icons.history, label: 'History'),
+          OnGoNavItem(icon: Icons.people_outline, label: 'Accounts'),
+          OnGoNavItem(icon: Icons.settings_outlined, label: 'Setting'),
         ],
       ),
     );
@@ -181,6 +180,9 @@ class _ModeratorDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.horizontal(right: Radius.circular(AppRadii.xl)),
+      ),
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -194,18 +196,33 @@ class _ModeratorDrawer extends StatelessWidget {
               ),
             ),
             ListTile(
-              leading: Icon(Icons.swap_horiz, color: AppColors.primary),
-              title: const Text('Switch Account'),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+              horizontalTitleGap: 12,
+              minLeadingWidth: 20,
+              visualDensity: VisualDensity.compact,
+              shape: RoundedRectangleBorder(borderRadius: AppRadii.borderMd),
+              leading: Icon(Icons.swap_horiz, size: 20, color: AppColors.textdark),
+              title: Text('Switch Account', style: TextStyle(color: AppColors.textdark, fontWeight: FontWeight.w500, fontSize: 14)),
               onTap: () => _showSwitchAccount(context),
             ),
             ListTile(
-              leading: Icon(Icons.settings_outlined, color: AppColors.primary),
-              title: const Text('Settings'),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+              horizontalTitleGap: 12,
+              minLeadingWidth: 20,
+              visualDensity: VisualDensity.compact,
+              shape: RoundedRectangleBorder(borderRadius: AppRadii.borderMd),
+              leading: Icon(Icons.settings_outlined, size: 20, color: AppColors.textdark),
+              title: Text('Settings', style: TextStyle(color: AppColors.textdark, fontWeight: FontWeight.w500, fontSize: 14)),
               onTap: onOpenSettings,
             ),
             ListTile(
-              leading: Icon(Icons.logout, color: AppColors.primary),
-              title: const Text('Log Out'),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+              horizontalTitleGap: 12,
+              minLeadingWidth: 20,
+              visualDensity: VisualDensity.compact,
+              shape: RoundedRectangleBorder(borderRadius: AppRadii.borderMd),
+              leading: Icon(Icons.logout, size: 20, color: AppColors.error),
+              title: Text('Log Out', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w500, fontSize: 14)),
               onTap: () => _logout(context),
             ),
           ],

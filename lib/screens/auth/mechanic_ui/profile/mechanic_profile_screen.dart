@@ -83,7 +83,7 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
           width: double.infinity,
           decoration: BoxDecoration(
             color: AppColors.background,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Center(
             child: Column(
@@ -152,7 +152,7 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
                                   color: (approvalNote == 'Account Rejected' ? AppColors.primary : AppColors.warning).withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(approvalNote,
                                     style: TextStyle(
@@ -311,7 +311,7 @@ class _StatBox extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           children: [

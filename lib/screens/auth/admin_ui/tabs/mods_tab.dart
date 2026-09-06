@@ -229,7 +229,7 @@ class _ModsTabState extends State<ModsTab> {
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
                                     color: (m.status == ModStatus.active ? AppColors.success : AppColors.textdark.withValues(alpha: 0.55)).withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(10),
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(m.status == ModStatus.active ? 'active' : 'inactive',
                                       style: TextStyle(

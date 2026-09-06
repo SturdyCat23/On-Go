@@ -112,7 +112,7 @@ class _MechanicProfileInfoScreenState extends State<MechanicProfileInfoScreen> {
                   bottom: -4,
                   child: InkWell(
                     onTap: _changePhoto,
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(16),
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(

@@ -242,7 +242,7 @@ class _MechanicStep3IdDetailsState extends State<MechanicStep3IdDetails> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
           const _RegHeader(),

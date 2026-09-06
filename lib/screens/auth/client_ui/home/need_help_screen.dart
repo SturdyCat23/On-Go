@@ -263,7 +263,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
               final selected = _selectedIssue == issue['label'];
               final color = issue['color'] as Color;
               return InkWell(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
                 onTap: () => setState(() {
                   _selectedIssue = issue['label'] as String;
                   _problemCtrl.text = '${issue['label']}: ';
@@ -274,7 +274,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
                     border: Border.all(
                       color: selected ? color : AppColors.textdark.withValues(alpha: 0.2),
                     ),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -447,7 +447,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: urgencyColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(color: urgencyColor.withValues(alpha: 0.4)),
             ),
             child: Column(

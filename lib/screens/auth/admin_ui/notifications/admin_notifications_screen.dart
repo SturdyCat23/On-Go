@@ -60,7 +60,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
           width: double.infinity,
           decoration: BoxDecoration(
             color: AppColors.background,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Center(
             child: Icon(Icons.insert_drive_file_outlined, size: 48, color: AppColors.textdark.withValues(alpha: 0.55)),
@@ -123,7 +123,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
                           border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: ListTile(
                           contentPadding: EdgeInsets.zero,
@@ -262,7 +262,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                                   ),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                                    decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
+                                    decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
                                     child: Text(entry.action.label, style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w700)),
                                   ),
                                 ],

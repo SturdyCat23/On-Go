@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../data/app_session.dart';
 import '../../../data/quote_store.dart';
 import '../../../widgets/app_widgets.dart';
+import '../../../widgets/on_go_bottom_nav.dart';
 import 'jobs/jobs_screen.dart';
 import 'notifications/mechanic_notifications_screen.dart';
 import 'earning/earning_screen.dart';
@@ -59,17 +60,15 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
       ),
       drawer: const MechanicMenuDrawer(),
       body: IndexedStack(index: _currentIndex, children: tabs),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: OnGoBottomNav(
         currentIndex: _currentIndex,
         onTap: _goToTab,
-        type: BottomNavigationBarType.fixed,
-        showUnselectedLabels: true,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.work_outline), activeIcon: Icon(Icons.work), label: 'Jobs'),
-          BottomNavigationBarItem(icon: Icon(Icons.payments_outlined), activeIcon: Icon(Icons.payments), label: 'Earning'),
-          BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner), label: 'QR'),
-          BottomNavigationBarItem(icon: Icon(Icons.emoji_events_outlined), activeIcon: Icon(Icons.emoji_events), label: 'Rank'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
+          OnGoNavItem(icon: Icons.work_outline, activeIcon: Icons.work, label: 'Jobs'),
+          OnGoNavItem(icon: Icons.payments_outlined, activeIcon: Icons.payments, label: 'Earning'),
+          OnGoNavItem(icon: Icons.qr_code_scanner, label: 'QR'),
+          OnGoNavItem(icon: Icons.emoji_events_outlined, activeIcon: Icons.emoji_events, label: 'Rank'),
+          OnGoNavItem(icon: Icons.person_outline, activeIcon: Icons.person, label: 'Profile'),
         ],
       ),
     );

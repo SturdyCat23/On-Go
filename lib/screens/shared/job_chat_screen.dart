@@ -207,7 +207,7 @@ class _JobChatScreenState extends State<JobChatScreen> {
                                           ),
                                         ),
                                         child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(12),
                                           child: Image.file(File(msg.imagePath!), width: 180, fit: BoxFit.cover),
                                         ),
                                       )

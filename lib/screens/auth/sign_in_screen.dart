@@ -143,7 +143,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
                 child: Text(
                   'Forgot Password?',
-                  style: TextStyle(color: AppColors.textlight, fontSize: 13),
+                  style: TextStyle(color: AppColors.textdark, fontSize: 13),
                 ),
               ),
             ),
@@ -173,12 +173,17 @@ class _SignInScreenState extends State<SignInScreen> {
               onPressed: _continueAsAdminDemo,
             ),
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            // Wrap, not Row: at a large system text scale the prompt and the
+            // link no longer fit side by side, and the link drops to its own
+            // line instead of overflowing. Identical to a centred Row when it
+            // does fit.
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
                   "Don't have account? ",
-                  style: TextStyle(fontSize: 13, color: AppColors.textlight),
+                  style: TextStyle(fontSize: 13, color: AppColors.textdark),
                 ),
                 GestureDetector(
                   onTap: () => Navigator.push(
@@ -189,7 +194,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     'Sign Up',
                     style: TextStyle(
                       fontSize: 13,
-                      color: AppColors.textlight,
+                      color: AppColors.textdark,
                       fontWeight: FontWeight.w700,
                     ),
                   ),

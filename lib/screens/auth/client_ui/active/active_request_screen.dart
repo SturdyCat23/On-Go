@@ -302,7 +302,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                       const SizedBox(height: 12),
                       Container(
                         padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(10)),
+                        decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
                         child: request.isEmergency
                             ? Row(
                                 children: [

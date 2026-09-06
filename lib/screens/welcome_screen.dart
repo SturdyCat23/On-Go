@@ -65,14 +65,14 @@ class WelcomeScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 30,
                 fontWeight: FontWeight.w800,
-                color: AppColors.textlight,
+                color: AppColors.textdark,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'Please select how you want to register',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: AppColors.textlight),
+              style: TextStyle(fontSize: 13, color: AppColors.textdark),
             ),
             const SizedBox(height: 24),
             AuthRoleButton(

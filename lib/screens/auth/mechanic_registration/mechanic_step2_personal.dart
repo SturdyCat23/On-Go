@@ -193,7 +193,7 @@ class _MechanicStep2PersonalState extends State<MechanicStep2Personal> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
           const _RegHeader(),

@@ -175,7 +175,7 @@ class _MechanicStep5VerificationState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
           _buildHeader(),
@@ -271,8 +271,7 @@ class _MechanicStep5VerificationState
                                     ? AppColors.error
                                     : AppColors.info),
                             minimumSize: const Size(0, 56),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8)),
+                            shape: const StadiumBorder(),
                           ),
                         ),
                       ),
@@ -291,8 +290,7 @@ class _MechanicStep5VerificationState
                                     ? AppColors.error
                                     : AppColors.info),
                             minimumSize: const Size(0, 56),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8)),
+                            shape: const StadiumBorder(),
                           ),
                         ),
                       ),
@@ -423,8 +421,7 @@ class _MechanicStep5VerificationState
                       backgroundColor: _livenessPass
                           ? AppColors.success
                           : AppColors.primary,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
+                      shape: const StadiumBorder(),
                     ),
                   ),
                   const SizedBox(height: 32),

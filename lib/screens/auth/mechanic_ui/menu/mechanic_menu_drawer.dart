@@ -51,6 +51,9 @@ class _MechanicMenuDrawerState extends State<MechanicMenuDrawer> {
     final photo = _store.photoPath;
 
     return Drawer(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.horizontal(right: Radius.circular(AppRadii.xl)),
+      ),
       child: Column(
         children: [
           Container(
@@ -80,7 +83,7 @@ class _MechanicMenuDrawerState extends State<MechanicMenuDrawer> {
           ),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
               children: [
                 _DrawerItem(
                   icon: Icons.person_outline,
@@ -104,6 +107,7 @@ class _MechanicMenuDrawerState extends State<MechanicMenuDrawer> {
                 _DrawerItem(
                   icon: Icons.logout,
                   label: 'Sign Out',
+                  destructive: true,
                   onTap: () {
                     // Deliberately NOT calling _store.clear() — signing out
                     // preserves the registered account so the mechanic can
@@ -127,18 +131,29 @@ class _DrawerItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final bool destructive;
 
   const _DrawerItem({
     required this.icon,
     required this.label,
     required this.onTap,
+    this.destructive = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Destructive rows read in the error color, the way the reference
+    // treats its log-out entry.
+    final color = destructive ? AppColors.error : AppColors.textdark;
+
     return ListTile(
-      leading: Icon(icon, color: AppColors.textdark),
-      title: Text(label, style: TextStyle(color: AppColors.textdark, fontWeight: FontWeight.w500, fontSize: 14)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+      horizontalTitleGap: 12,
+      minLeadingWidth: 20,
+      visualDensity: VisualDensity.compact,
+      shape: RoundedRectangleBorder(borderRadius: AppRadii.borderMd),
+      leading: Icon(icon, size: 20, color: color),
+      title: Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w500, fontSize: 14)),
       onTap: onTap,
     );
   }

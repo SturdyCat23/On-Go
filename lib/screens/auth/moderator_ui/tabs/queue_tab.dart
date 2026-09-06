@@ -169,7 +169,7 @@ class _QueueCard extends StatelessWidget {
           width: double.infinity,
           decoration: BoxDecoration(
             color: AppColors.background,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Center(
             child: Icon(Icons.insert_drive_file_outlined, size: 48, color: AppColors.textdark.withValues(alpha: 0.55)),
@@ -307,7 +307,7 @@ class _RoleBadge extends StatelessWidget {
     final color = role == AccountRole.mechanic ? AppColors.primary : AppColors.info;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
       child: Text(role.label, style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600)),
     );
   }
@@ -320,7 +320,7 @@ class _EscalatedBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(color: AppColors.warning.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(6)),
+      decoration: BoxDecoration(color: AppColors.warning.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(8)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -271,7 +271,7 @@ class AuthBottomCard extends StatelessWidget {
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: AppColors.primarydark,
+            color: AppColors.background,
             border: Border.all(color: AppColors.primary, width: 4),
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(32),
@@ -310,7 +310,7 @@ class AuthTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final border = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(12),
       borderSide: BorderSide.none,
     );
 
@@ -350,7 +350,7 @@ class AuthWhiteButton extends StatelessWidget {
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textlight,
         minimumSize: const Size(double.infinity, 50),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: const StadiumBorder(),
         textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
       ),
       child: Text(label),
@@ -375,10 +375,10 @@ class AuthRoleButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: AppColors.primary,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
           child: Row(

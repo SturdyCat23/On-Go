@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../data/app_session.dart';
 import '../../../data/review_store.dart';
 import '../../../widgets/app_widgets.dart';
+import '../../../widgets/on_go_bottom_nav.dart';
 import 'home/need_help_screen.dart';
 import 'jobs/client_jobs_screen.dart';
 import 'history/service_history_screen.dart';
@@ -43,16 +44,14 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       ),
       drawer: const ClientMenuDrawer(),
       body: IndexedStack(index: _currentIndex, children: tabs),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: OnGoBottomNav(
         currentIndex: _currentIndex,
         onTap: _goToTab,
-        type: BottomNavigationBarType.fixed,
-        showUnselectedLabels: true,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.work_outline), activeIcon: Icon(Icons.work), label: 'Jobs'),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
-          BottomNavigationBarItem(icon: Icon(Icons.emoji_events_outlined), activeIcon: Icon(Icons.emoji_events), label: 'Rank'),
+          OnGoNavItem(icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Home'),
+          OnGoNavItem(icon: Icons.work_outline, activeIcon: Icons.work, label: 'Jobs'),
+          OnGoNavItem(icon: Icons.history, label: 'History'),
+          OnGoNavItem(icon: Icons.emoji_events_outlined, activeIcon: Icons.emoji_events, label: 'Rank'),
         ],
       ),
     );

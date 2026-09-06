@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
+
 /// Internal padding shared by every job card on the Client and Mechanic Jobs
 /// screens — uploaded, pending, available, emergency and active alike — so no
 /// card's content sits tighter against its edges than another's. One value,
@@ -23,9 +25,9 @@ class AppCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: elevation ?? 2,
+      elevation: elevation ?? AppElevation.raised,
       color: color ?? Theme.of(context).cardColor,
-      shape: RoundedRectangleBorder(borderRadius: borderRadius ?? BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: borderRadius ?? AppRadii.borderLg),
       margin: EdgeInsets.zero,
       child: Padding(padding: padding, child: child),
     );

@@ -132,7 +132,7 @@ class _MechanicStep1AccountState extends State<MechanicStep1Account> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
           Container(

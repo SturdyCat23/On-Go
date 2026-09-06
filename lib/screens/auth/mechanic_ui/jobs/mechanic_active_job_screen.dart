@@ -242,7 +242,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                             const SizedBox(height: 12),
                             Container(
                               padding: const EdgeInsets.symmetric(vertical: 10),
-                              decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(10)),
+                              decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
                               child: request.isEmergency
                                   ? Row(
                                       children: [
@@ -372,7 +372,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(color: AppColors.warning.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(color: AppColors.warning.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
               child: Text('Waiting for Client Payment',
                   textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.warning)),
             ),
@@ -392,7 +392,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
               child: SelectableText(
                 qrData,
                 textAlign: TextAlign.center,
@@ -441,7 +441,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(color: AppColors.warning.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(color: AppColors.warning.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
             child: Text('Waiting for Client Payment',
                 textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.warning)),
           ),
@@ -458,7 +458,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
             child: SelectableText(
               qrData,
               textAlign: TextAlign.center,

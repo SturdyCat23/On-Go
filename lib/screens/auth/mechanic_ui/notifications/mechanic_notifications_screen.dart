@@ -58,7 +58,7 @@ class MechanicNotificationsScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
                   boxShadow: [
                     BoxShadow(

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import 'app_palette.dart';
+import 'design_tokens.dart';
 import 'theme_controller.dart';
 
 export 'app_palette.dart';
+export 'design_tokens.dart';
 export 'theme_controller.dart';
 
 class AppColors {
@@ -89,14 +91,14 @@ class AppTheme {
           type: BottomNavigationBarType.fixed,
           elevation: 8,
         ),
+        // Buttons are pills — the primary-action shape in the design reference.
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: c.primary,
             foregroundColor: c.textlight,
             minimumSize: const Size(double.infinity, 48),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            shape: AppRadii.pill,
+            elevation: AppElevation.flat,
             textStyle: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -104,22 +106,37 @@ class AppTheme {
             ),
           ),
         ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(shape: AppRadii.pill),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(shape: AppRadii.pill),
+        ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: c.background,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: c.textmedium.withValues(alpha: 0.3)),
+            borderRadius: AppRadii.borderMd,
+            borderSide: BorderSide(color: c.textmedium.withValues(alpha: 0.3), width: AppBorders.thin),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: c.textmedium.withValues(alpha: 0.3)),
+            borderRadius: AppRadii.borderMd,
+            borderSide: BorderSide(color: c.textmedium.withValues(alpha: 0.3), width: AppBorders.thin),
           ),
+          // A focused field steps up to the 2px regular border weight.
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: c.textdark, width: 1.5),
+            borderRadius: AppRadii.borderMd,
+            borderSide: BorderSide(color: c.textdark, width: AppBorders.regular),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: AppRadii.borderMd,
+            borderSide: BorderSide(color: c.error, width: AppBorders.thin),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: AppRadii.borderMd,
+            borderSide: BorderSide(color: c.error, width: AppBorders.regular),
           ),
           hintStyle: TextStyle(
             color: c.textmedium,
@@ -134,18 +151,57 @@ class AppTheme {
           bodySmall: TextStyle(fontSize: 12, color: c.textmedium),
         ),
         cardTheme: CardThemeData(
-          elevation: 2,
+          elevation: AppElevation.raised,
           color: c.background,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12)),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: AppRadii.borderLg),
           margin: EdgeInsets.zero,
         ),
         floatingActionButtonTheme: FloatingActionButtonThemeData(
           backgroundColor: c.primary,
           foregroundColor: c.textlight,
         ),
-        dividerTheme: DividerThemeData(color: c.textmedium.withValues(alpha: 0.3), thickness: 1),
+        dividerTheme: DividerThemeData(
+          color: c.textmedium.withValues(alpha: 0.3),
+          thickness: AppBorders.thin,
+        ),
+        dialogTheme: DialogThemeData(
+          shape: RoundedRectangleBorder(borderRadius: AppRadii.borderXl),
+          elevation: AppElevation.modal,
+        ),
+        bottomSheetTheme: BottomSheetThemeData(
+          shape: RoundedRectangleBorder(borderRadius: AppRadii.sheetTop),
+          elevation: AppElevation.modal,
+        ),
+        snackBarTheme: SnackBarThemeData(
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: AppRadii.borderMd),
+          elevation: AppElevation.popover,
+        ),
+        // Badges and filter chips read as pills.
+        chipTheme: const ChipThemeData(shape: AppRadii.pill),
+        tabBarTheme: TabBarThemeData(
+          indicatorSize: TabBarIndicatorSize.tab,
+          indicator: UnderlineTabIndicator(
+            borderSide: BorderSide(color: c.primary, width: AppBorders.regular),
+          ),
+          labelColor: c.textdark,
+          unselectedLabelColor: c.textmedium,
+          dividerColor: c.textmedium.withValues(alpha: 0.2),
+        ),
+        checkboxTheme: CheckboxThemeData(
+          shape: RoundedRectangleBorder(borderRadius: AppRadii.borderXs),
+        ),
+        // Rounded caps on every progress bar, as in the reference.
+        progressIndicatorTheme: ProgressIndicatorThemeData(
+          borderRadius: AppRadii.borderXs,
+        ),
+        tooltipTheme: TooltipThemeData(
+          decoration: BoxDecoration(
+            color: c.textdark,
+            borderRadius: AppRadii.borderSm,
+          ),
+          textStyle: TextStyle(color: c.surface, fontSize: 12),
+        ),
       );
   }
 }

@@ -79,7 +79,7 @@ class _JobPhotoPreviewState extends State<JobPhotoPreview> {
       child: SizedBox(
         width: double.infinity,
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: widget.maxHeight),
             child: AspectRatio(

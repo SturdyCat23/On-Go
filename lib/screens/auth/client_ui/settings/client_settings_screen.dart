@@ -136,7 +136,7 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: const StadiumBorder(),
                 ),
                 child: Text('Update Password', style: TextStyle(color: AppColors.textmedium, fontWeight: FontWeight.w700)),
               ),

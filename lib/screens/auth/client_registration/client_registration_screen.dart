@@ -250,7 +250,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                               horizontal: 14, vertical: 12),
                           decoration: BoxDecoration(
                             color: AppColors.success.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
                           ),
                           child: Row(
@@ -383,11 +383,10 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                                   textAlign: TextAlign.center),
                               onPressed: _pickGallery,
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.info,
-                                side: BorderSide(color: AppColors.info),
+                                foregroundColor: AppColors.primary,
+                                side: BorderSide(color: AppColors.primary),
                                 minimumSize: const Size(0, 56),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8)),
+                                shape: const StadiumBorder(),
                               ),
                             ),
                           ),
@@ -400,11 +399,10 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                                   textAlign: TextAlign.center),
                               onPressed: _takeSelfie,
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.info,
-                                side: BorderSide(color: AppColors.info),
+                                foregroundColor: AppColors.primary,
+                                side: BorderSide(color: AppColors.primary),
                                 minimumSize: const Size(0, 56),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8)),
+                                shape: const StadiumBorder(),
                               ),
                             ),
                           ),
@@ -529,8 +527,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                             backgroundColor: AppColors.primary,
                             foregroundColor: AppColors.textlight,
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8)),
+                            shape: const StadiumBorder(),
                           ),
                           child: const Text(
                             'Sign Up',

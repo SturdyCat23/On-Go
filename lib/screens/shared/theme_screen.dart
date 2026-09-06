@@ -153,7 +153,7 @@ class _PalettePreview extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: palette.background,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.textmedium.withValues(alpha: 0.3)),
       ),
       child: Column(
@@ -188,7 +188,7 @@ class _Swatch extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
       ),
     );
   }
