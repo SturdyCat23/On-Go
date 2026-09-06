@@ -286,7 +286,7 @@ class _StatBox extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
@@ -310,13 +310,13 @@ class _CertificationRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Icon(Icons.check_circle, color: AppColors.success, size: 18),
+        Icon(Icons.check_circle, color: AppColors.success, size: 18),
         const SizedBox(width: 8),
         Expanded(child: Text(label, style: const TextStyle(fontSize: 13))),
         TextButton(
           onPressed: onView,
           style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
-          child: const Text('View', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600)),
+          child: Text('View', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600)),
         ),
       ],
     );
@@ -380,6 +380,7 @@ class _ReviewCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
+        color: AppColors.surface,
         border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
         borderRadius: BorderRadius.circular(10),
       ),
@@ -410,7 +411,7 @@ class _ReviewCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text(comment, style: const TextStyle(fontSize: 12, color: AppColors.textdark)),
+          Text(comment, style: TextStyle(fontSize: 12, color: AppColors.textdark)),
           const SizedBox(height: 8),
           InkWell(
             onTap: onToggleLike,

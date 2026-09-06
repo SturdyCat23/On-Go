@@ -100,7 +100,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(color: AppColors.warning.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
-                      child: const Text('escalated', style: TextStyle(fontSize: 11, color: AppColors.warning, fontWeight: FontWeight.w700)),
+                      child: Text('escalated', style: TextStyle(fontSize: 11, color: AppColors.warning, fontWeight: FontWeight.w700)),
                     ),
                   ],
                 ),
@@ -153,13 +153,13 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                         style: OutlinedButton.styleFrom(
                           shape: const StadiumBorder(),
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          side: const BorderSide(color: AppColors.primary),
+                          side: BorderSide(color: AppColors.primary),
                         ),
                         onPressed: () {
                           _store.reject(request.id, reasonController.text, actorName: 'Admin');
                           Navigator.pop(sheetCtx);
                         },
-                        child: const Text('Reject', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700)),
+                        child: Text('Reject', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700)),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -174,7 +174,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                           _store.approve(request.id, actorName: 'Admin');
                           Navigator.pop(sheetCtx);
                         },
-                        child: const Text('Approve', style: TextStyle(color: AppColors.textmedium, fontWeight: FontWeight.w700)),
+                        child: Text('Approve', style: TextStyle(color: AppColors.textmedium, fontWeight: FontWeight.w700)),
                       ),
                     ),
                   ],
@@ -292,7 +292,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 10),
                           ),
                           onPressed: () => _reviewEscalation(request),
-                          child: const Text('Review', style: TextStyle(color: AppColors.textmedium, fontWeight: FontWeight.w700)),
+                          child: Text('Review', style: TextStyle(color: AppColors.textmedium, fontWeight: FontWeight.w700)),
                         ),
                       ),
                     ] else if (alreadyResolved) ...[

@@ -136,7 +136,7 @@ class _AddModTabState extends State<AddModTab> {
                 shape: const StadiumBorder(),
               ),
               onPressed: _submit,
-              child: const Text('ADD MODERATOR', style: TextStyle(color: AppColors.textlight, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+              child: Text('ADD MODERATOR', style: TextStyle(color: AppColors.textlight, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
             ),
           ),
         ],

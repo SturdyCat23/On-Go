@@ -109,7 +109,7 @@ class _JobChatScreenState extends State<JobChatScreen> {
           children: [
             if (msg.text != null)
               ListTile(
-                leading: const Icon(Icons.copy, color: AppColors.primary),
+                leading: Icon(Icons.copy, color: AppColors.primary),
                 title: const Text('Copy'),
                 onTap: () {
                   Clipboard.setData(ClipboardData(text: msg.text!));
@@ -120,7 +120,7 @@ class _JobChatScreenState extends State<JobChatScreen> {
                 },
               ),
             ListTile(
-              leading: const Icon(Icons.reply, color: AppColors.primary),
+              leading: Icon(Icons.reply, color: AppColors.primary),
               title: const Text('Reply'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -189,7 +189,7 @@ class _JobChatScreenState extends State<JobChatScreen> {
                                     decoration: BoxDecoration(
                                       color: AppColors.background,
                                       borderRadius: BorderRadius.circular(8),
-                                      border: const Border(left: BorderSide(color: AppColors.primary, width: 3)),
+                                      border: Border(left: BorderSide(color: AppColors.primary, width: 3)),
                                     ),
                                     child: Text(
                                       repliedTo.text ?? (repliedTo.imagePath != null ? 'Photo' : ''),
@@ -211,7 +211,7 @@ class _JobChatScreenState extends State<JobChatScreen> {
                                           child: Image.file(File(msg.imagePath!), width: 180, fit: BoxFit.cover),
                                         ),
                                       )
-                                    : Text(msg.text ?? '', style: const TextStyle(fontSize: 13, color: AppColors.textdark)),
+                                    : Text(msg.text ?? '', style: TextStyle(fontSize: 13, color: AppColors.textdark)),
                               ],
                             ),
                           ),
@@ -233,7 +233,7 @@ class _JobChatScreenState extends State<JobChatScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Replying to ${_senderLabel(_replyingTo!)}',
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary)),
                         Text(
                           _replyingTo!.text ?? (_replyingTo!.imagePath != null ? 'Photo' : ''),
                           maxLines: 1,
@@ -276,7 +276,7 @@ class _JobChatScreenState extends State<JobChatScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.send, color: AppColors.primary),
+                    icon: Icon(Icons.send, color: AppColors.primary),
                     onPressed: _send,
                   ),
                 ],

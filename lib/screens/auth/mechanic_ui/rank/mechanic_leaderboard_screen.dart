@@ -78,11 +78,11 @@ class _MechanicLeaderboardScreenState extends State<MechanicLeaderboardScreen> {
   Widget _trailingFor(_Leader leader) {
     switch (_filter) {
       case _RankFilter.rank:
-        return Text(leader.tier, style: const TextStyle(fontSize: 14, color: AppColors.textdark));
+        return Text(leader.tier, style: TextStyle(fontSize: 14, color: AppColors.textdark));
       case _RankFilter.ratings:
         return RatingStars(rating: leader.rating);
       case _RankFilter.reviews:
-        return Text(_reviewLabel(leader.reviewCount), style: const TextStyle(fontSize: 14, color: AppColors.textdark));
+        return Text(_reviewLabel(leader.reviewCount), style: TextStyle(fontSize: 14, color: AppColors.textdark));
     }
   }
 
@@ -182,7 +182,7 @@ class _MechanicLeaderboardScreenState extends State<MechanicLeaderboardScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                               decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(4)),
-                              child: const Text('You', style: TextStyle(fontSize: 10, color: AppColors.textlight, fontWeight: FontWeight.w700)),
+                              child: Text('You', style: TextStyle(fontSize: 10, color: AppColors.textlight, fontWeight: FontWeight.w700)),
                             ),
                           ],
                         ],

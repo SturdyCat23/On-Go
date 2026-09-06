@@ -3,6 +3,7 @@ import '../../../../data/admin_data.dart';
 import '../../../../data/session_store.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/password_strength.dart';
+import '../../../shared/theme_screen.dart';
 
 class SettingsTab extends StatefulWidget {
   const SettingsTab({super.key});
@@ -95,7 +96,7 @@ class _SettingsTabState extends State<SettingsTab> {
               ),
               if (errorText != null) ...[
                 const SizedBox(height: 8),
-                Text(errorText!, style: const TextStyle(color: AppColors.primary, fontSize: 12)),
+                Text(errorText!, style: TextStyle(color: AppColors.primary, fontSize: 12)),
               ],
             ],
           ),
@@ -145,7 +146,11 @@ class _SettingsTabState extends State<SettingsTab> {
       children: [
         Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)), borderRadius: BorderRadius.circular(16)),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -156,7 +161,7 @@ class _SettingsTabState extends State<SettingsTab> {
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.textdark, width: 1.3)),
-                    child: const Icon(Icons.person_outline, size: 34, color: AppColors.textdark),
+                    child: Icon(Icons.person_outline, size: 34, color: AppColors.textdark),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -172,7 +177,7 @@ class _SettingsTabState extends State<SettingsTab> {
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                           decoration: BoxDecoration(color: AppColors.success.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
                           child: Text(mod?.role ?? 'Moderator',
-                              style: const TextStyle(fontSize: 12, color: AppColors.success, fontWeight: FontWeight.w700)),
+                              style: TextStyle(fontSize: 12, color: AppColors.success, fontWeight: FontWeight.w700)),
                         ),
                       ],
                     ),
@@ -189,13 +194,16 @@ class _SettingsTabState extends State<SettingsTab> {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     side: BorderSide(color: AppColors.textdark.withValues(alpha: 0.2)),
                   ),
-                  child: const Text('Edit Profile', style: TextStyle(color: AppColors.textdark, fontWeight: FontWeight.w600)),
+                  child: Text('Edit Profile', style: TextStyle(color: AppColors.textdark, fontWeight: FontWeight.w600)),
                 ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 20),
+        Text('APPEARANCE', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w600)),
+        const ThemesSettingsTile(),
+        const SizedBox(height: 12),
         Text('YOUR PERMISSION', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w600)),
         const SizedBox(height: 10),
         _permissionRow('Approve accounts', perms.canApprove),
@@ -251,7 +259,7 @@ class _SettingsTabState extends State<SettingsTab> {
             child: Icon(granted ? Icons.check : Icons.close, size: 14, color: AppColors.textlight),
           ),
           const SizedBox(width: 12),
-          Text(label, style: const TextStyle(fontSize: 15, color: AppColors.textdark)),
+          Text(label, style: TextStyle(fontSize: 15, color: AppColors.textdark)),
         ],
       ),
     );

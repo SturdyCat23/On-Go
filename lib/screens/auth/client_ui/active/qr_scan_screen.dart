@@ -51,7 +51,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
                 child: Text(
                   'Camera unavailable. Please allow camera access in your device Settings and try again.',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textmedium),
+                  style: TextStyle(color: AppColors.textmedium),
                 ),
               ),
             ),
@@ -66,7 +66,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
               ),
             ),
           ),
-          const Positioned(
+          Positioned(
             bottom: 40,
             left: 0,
             right: 0,

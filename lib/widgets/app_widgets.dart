@@ -34,7 +34,7 @@ class OnGoAppBar extends StatelessWidget implements PreferredSizeWidget {
       centerTitle: false,
       leading: showMenuButton
           ? IconButton(
-              icon: const Icon(Icons.menu, color: AppColors.textlight),
+              icon: Icon(Icons.menu, color: AppColors.textlight),
               onPressed: () => Scaffold.of(context).openDrawer(),
             )
           : const SizedBox(width: 48),
@@ -46,11 +46,11 @@ class OnGoAppBar extends StatelessWidget implements PreferredSizeWidget {
           children: [
             Text(
               'On Go',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppColors.surface),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppColors.textlight),
             ),
             Text(
               subtitle,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.surface.withValues(alpha: 0.95)),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textlight),
             ),
           ],
         ),
@@ -87,15 +87,17 @@ class OnGoAppBar extends StatelessWidget implements PreferredSizeWidget {
 class NotificationBell extends StatelessWidget {
   final int count;
   final VoidCallback? onTap;
-  final Color badgeColor;
-  final Color iconColor;
+  // Null means "use the active theme's color", resolved at build time so a
+  // theme change repaints the bell.
+  final Color? badgeColor;
+  final Color? iconColor;
 
   const NotificationBell({
     super.key,
     required this.count,
     this.onTap,
-    this.badgeColor = AppColors.primary,
-    this.iconColor = AppColors.surface,
+    this.badgeColor,
+    this.iconColor,
   });
 
   @override
@@ -104,7 +106,7 @@ class NotificationBell extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         IconButton(
-          icon: Icon(Icons.notifications_none, color: iconColor),
+          icon: Icon(Icons.notifications_none, color: iconColor ?? AppColors.textlight),
           onPressed: onTap,
         ),
         if (count > 0)
@@ -115,7 +117,7 @@ class NotificationBell extends StatelessWidget {
               padding: const EdgeInsets.all(4),
               constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
               decoration: BoxDecoration(
-                color: badgeColor,
+                color: badgeColor ?? AppColors.primary,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(color: AppColors.textdark.withValues(alpha: 0.12), blurRadius: 2, offset: Offset(0, 1)),
@@ -124,7 +126,7 @@ class NotificationBell extends StatelessWidget {
               child: Text(
                 '$count',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   color: AppColors.surface,
@@ -237,7 +239,7 @@ class RatingSummaryBars extends StatelessWidget {
                           backgroundColor:
                               AppColors.textdark.withValues(alpha: 0.2),
                           valueColor:
-                              const AlwaysStoppedAnimation(AppColors.warning),
+                              AlwaysStoppedAnimation(AppColors.warning),
                         ),
                       ),
                     ),

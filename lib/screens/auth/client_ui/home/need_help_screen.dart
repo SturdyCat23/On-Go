@@ -45,7 +45,8 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
   double? _capturedLat;
   double? _capturedLng;
 
-  static const List<Map<String, dynamic>> _issues = [
+  // A getter, not a const: the colors come from the active theme.
+  static List<Map<String, dynamic>> get _issues => [
     {'icon': Icons.car_repair, 'label': 'Engine Problem', 'color': AppColors.warning},
     {'icon': Icons.album_outlined, 'label': 'Brake Issue', 'color': AppColors.error},
     {'icon': Icons.tire_repair, 'label': 'Flat Tire', 'color': AppColors.success},
@@ -55,7 +56,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
   ];
 
   // Sampled directly from the design reference: light-blue card, deep navy text.
-  static const _pricingCardBg = AppColors.surface;
+  static Color get _pricingCardBg => AppColors.surface;
 
   static const Map<String, _UrgencyInfo> _urgencyInfo = {
     'Normal': _UrgencyInfo(0),
@@ -84,12 +85,12 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
         child: Wrap(
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_camera_outlined, color: AppColors.primary),
+              leading: Icon(Icons.photo_camera_outlined, color: AppColors.primary),
               title: const Text('Take Photo'),
               onTap: () => Navigator.pop(ctx, ImageSource.camera),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_outlined, color: AppColors.primary),
+              leading: Icon(Icons.photo_library_outlined, color: AppColors.primary),
               title: const Text('Choose from Gallery'),
               onTap: () => Navigator.pop(ctx, ImageSource.gallery),
             ),
@@ -237,7 +238,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Need Help?',
             style: TextStyle(
                 fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.textdark),
@@ -310,10 +311,10 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
               onPressed: _addPhotos,
-              icon: const Icon(Icons.photo_camera_outlined, size: 18, color: AppColors.primary),
+              icon: Icon(Icons.photo_camera_outlined, size: 18, color: AppColors.primary),
               label: Text(
                 _photos.isEmpty ? 'Add Photos' : 'Add Photos (${_photos.length})',
-                style: const TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w600),
+                style: TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w600),
               ),
               style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
             ),
@@ -347,11 +348,11 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
                           onTap: () => _removePhoto(index),
                           child: Container(
                             padding: const EdgeInsets.all(2),
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               color: AppColors.primary,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.close, size: 14, color: AppColors.textmedium),
+                            child: Icon(Icons.close, size: 14, color: AppColors.textmedium),
                           ),
                         ),
                       ),
@@ -386,16 +387,16 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
             child: TextButton.icon(
               onPressed: _fetchingLocation ? null : _useCurrentLocation,
               icon: _fetchingLocation
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 14,
                       height: 14,
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: AppColors.primary),
                     )
-                  : const Icon(Icons.my_location, size: 16, color: AppColors.primary),
+                  : Icon(Icons.my_location, size: 16, color: AppColors.primary),
               label: Text(
                 _fetchingLocation ? 'Getting location…' : 'Use Current Location',
-                style: const TextStyle(
+                style: TextStyle(
                     color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600),
               ),
               style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
@@ -405,10 +406,10 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
             const SizedBox(height: 4),
             Row(
               children: [
-                const Icon(Icons.gps_fixed, size: 12, color: AppColors.success),
+                Icon(Icons.gps_fixed, size: 12, color: AppColors.success),
                 const SizedBox(width: 4),
                 Text('Precise location captured — mechanic arrival will be detected automatically',
-                    style: const TextStyle(fontSize: 11, color: AppColors.success)),
+                    style: TextStyle(fontSize: 11, color: AppColors.success)),
               ],
             ),
           ],
@@ -489,7 +490,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
           AppCard(
             padding: const EdgeInsets.all(14),
             color: _pricingCardBg,
-            child: const Row(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(Icons.attach_money, color: AppColors.info),
@@ -515,7 +516,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
           ElevatedButton.icon(
             onPressed: _uploading ? null : _uploadRequest,
             icon: _uploading
-                ? const SizedBox(
+                ? SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.surface),

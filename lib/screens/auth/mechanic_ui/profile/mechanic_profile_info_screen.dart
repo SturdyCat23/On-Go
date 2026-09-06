@@ -46,12 +46,12 @@ class _MechanicProfileInfoScreenState extends State<MechanicProfileInfoScreen> {
         child: Wrap(
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_camera_outlined, color: AppColors.primary),
+              leading: Icon(Icons.photo_camera_outlined, color: AppColors.primary),
               title: const Text('Take Photo'),
               onTap: () => Navigator.pop(ctx, ImageSource.camera),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_outlined, color: AppColors.primary),
+              leading: Icon(Icons.photo_library_outlined, color: AppColors.primary),
               title: const Text('Choose from Gallery'),
               onTap: () => Navigator.pop(ctx, ImageSource.gallery),
             ),
@@ -120,7 +120,7 @@ class _MechanicProfileInfoScreenState extends State<MechanicProfileInfoScreen> {
                         shape: BoxShape.circle,
                         border: Border.all(color: AppColors.surface, width: 2),
                       ),
-                      child: const Icon(Icons.camera_alt, color: AppColors.textlight, size: 16),
+                      child: Icon(Icons.camera_alt, color: AppColors.textlight, size: 16),
                     ),
                   ),
                 ),

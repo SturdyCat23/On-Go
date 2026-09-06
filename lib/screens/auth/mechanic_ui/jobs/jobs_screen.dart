@@ -126,7 +126,7 @@ class _JobsScreenState extends State<JobsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
             Icon(Icons.warning_amber_rounded, color: AppColors.primary),
             SizedBox(width: 8),
@@ -201,7 +201,7 @@ class _JobsScreenState extends State<JobsScreen> {
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Keep Job')),
             TextButton(
               onPressed: controller.text.trim().isEmpty ? null : () => Navigator.pop(ctx, controller.text.trim()),
-              child: const Text('Cancel Job', style: TextStyle(color: AppColors.primary)),
+              child: Text('Cancel Job', style: TextStyle(color: AppColors.primary)),
             ),
           ],
         ),
@@ -299,7 +299,7 @@ class _DemoModeBanner extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: const [
+        children: [
           Icon(Icons.science_outlined, size: 14, color: AppColors.info),
           SizedBox(width: 6),
           Text('DEMO MODE — for testing only', style: TextStyle(fontSize: 11, color: AppColors.info, fontWeight: FontWeight.w700)),
@@ -420,14 +420,14 @@ class _JobTabBar extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: selected ? AppColors.primary : AppColors.background,
+                  color: selected ? AppColors.primarydark : AppColors.surface,
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: Text('${_labels[i]} ${counts[i]}',
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: selected ? AppColors.surface : AppColors.textdark)),
+                        color: selected ? AppColors.textlight : AppColors.textmedium)),
               ),
             ),
           );
@@ -486,7 +486,7 @@ class _LocationBlock extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 2),
-        Text(location, style: const TextStyle(fontSize: 13, color: AppColors.textdark)),
+        Text(location, style: TextStyle(fontSize: 13, color: AppColors.textdark)),
       ],
     );
   }
@@ -581,6 +581,7 @@ class _JobCard extends StatelessWidget {
 
     return AppCard(
       padding: jobCardPadding,
+      color: AppColors.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -659,12 +660,12 @@ class _EmergencyTab extends StatelessWidget {
               children: [
                 TextSpan(
                     text: blocked ? 'You\'re on a job: ' : 'Heads up: ',
-                    style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.primary)),
+                    style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.primary)),
                 TextSpan(
                   text: blocked
                       ? 'Finish your current emergency job before accepting another one.'
                       : 'Emergencies are first come, first served — once accepted there\'s no backing out, you\'ll need to respond ASAP.',
-                  style: const TextStyle(color: AppColors.primary),
+                  style: TextStyle(color: AppColors.primary),
                 ),
               ],
             ),
@@ -765,7 +766,7 @@ class _AcceptedTabState extends State<_AcceptedTab> {
         padding: const EdgeInsets.symmetric(vertical: 10),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.background,
+          color: selected ? AppColors.primarydark : AppColors.background,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(value.label,
@@ -876,6 +877,7 @@ class _ActiveJobCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: AppCard(
         padding: jobCardPadding,
+        color: AppColors.surface,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -927,7 +929,7 @@ class _ActiveJobCard extends StatelessWidget {
                     Text('Payment', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
                     const SizedBox(height: 2),
                     Text(_paymentDisplay(request, quote),
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.success)),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.success)),
                   ],
                 ),
               ],

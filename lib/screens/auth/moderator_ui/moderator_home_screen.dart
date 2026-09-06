@@ -29,6 +29,13 @@ class _ModeratorHomeScreenState extends State<ModeratorHomeScreen> {
 
   void _openQueue() => setState(() => _index = 0);
 
+  /// The moderator's settings live in the Settings tab, so the drawer
+  /// entry switches to it rather than pushing a separate screen.
+  void _openSettings() {
+    Navigator.pop(context);
+    setState(() => _index = 3);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,7 +50,7 @@ class _ModeratorHomeScreenState extends State<ModeratorHomeScreen> {
           ),
         ),
       ),
-      drawer: const _ModeratorDrawer(),
+      drawer: _ModeratorDrawer(onOpenSettings: _openSettings),
       body: IndexedStack(index: _index, children: _tabs),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _index,
@@ -62,7 +69,9 @@ class _ModeratorHomeScreenState extends State<ModeratorHomeScreen> {
 }
 
 class _ModeratorDrawer extends StatelessWidget {
-  const _ModeratorDrawer();
+  final VoidCallback onOpenSettings;
+
+  const _ModeratorDrawer({required this.onOpenSettings});
 
   void _logout(BuildContext context) {
     Navigator.pushAndRemoveUntil(
@@ -140,11 +149,11 @@ class _ModeratorDrawer extends StatelessWidget {
                     return ListTile(
                       leading: CircleAvatar(
                         backgroundColor: AppColors.textdark.withValues(alpha: 0.2),
-                        child: Text(m.initials, style: const TextStyle(color: AppColors.textdark, fontWeight: FontWeight.w700, fontSize: 12)),
+                        child: Text(m.initials, style: TextStyle(color: AppColors.textdark, fontWeight: FontWeight.w700, fontSize: 12)),
                       ),
                       title: Text(m.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                       subtitle: Text(m.email, style: const TextStyle(fontSize: 12)),
-                      trailing: active ? const Icon(Icons.check_circle, color: AppColors.primary) : null,
+                      trailing: active ? Icon(Icons.check_circle, color: AppColors.primary) : null,
                       onTap: active
                           ? null
                           : () async {
@@ -179,18 +188,23 @@ class _ModeratorDrawer extends StatelessWidget {
             Container(
               color: AppColors.primary,
               padding: const EdgeInsets.all(20),
-              child: const Text(
+              child: Text(
                 'Moderator',
                 style: TextStyle(color: AppColors.textlight, fontSize: 18, fontWeight: FontWeight.w700),
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.swap_horiz, color: AppColors.primary),
+              leading: Icon(Icons.swap_horiz, color: AppColors.primary),
               title: const Text('Switch Account'),
               onTap: () => _showSwitchAccount(context),
             ),
             ListTile(
-              leading: const Icon(Icons.logout, color: AppColors.primary),
+              leading: Icon(Icons.settings_outlined, color: AppColors.primary),
+              title: const Text('Settings'),
+              onTap: onOpenSettings,
+            ),
+            ListTile(
+              leading: Icon(Icons.logout, color: AppColors.primary),
               title: const Text('Log Out'),
               onTap: () => _logout(context),
             ),

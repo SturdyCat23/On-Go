@@ -192,7 +192,7 @@ class _MechanicStep5VerificationState
                   ),
                   const SizedBox(height: 20),
 
-                  const Text(
+                  Text(
                     'Verification',
                     style: TextStyle(
                       fontSize: 16,
@@ -204,7 +204,7 @@ class _MechanicStep5VerificationState
 
                   // ── Profile Picture ─────────────────────────────────────
                   Row(
-                    children: const [
+                    children: [
                       Text('Profile Picture',
                           style: TextStyle(
                               fontSize: 13, fontWeight: FontWeight.w500)),
@@ -242,7 +242,7 @@ class _MechanicStep5VerificationState
                                 setState(() => _profilePhoto = null);
                                 _autosave();
                               },
-                              child: const CircleAvatar(
+                              child: CircleAvatar(
                                 radius: 12,
                                 backgroundColor: AppColors.error,
                                 child: Icon(Icons.close,
@@ -299,7 +299,7 @@ class _MechanicStep5VerificationState
                     ],
                   ),
                   if (_profilePhotoError)
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.only(top: 6),
                       child: Text('A profile picture is required',
                           style:
@@ -310,7 +310,7 @@ class _MechanicStep5VerificationState
 
                   // ── Face Verification ───────────────────────────────────
                   Row(
-                    children: const [
+                    children: [
                       Text('Face Verification',
                           style: TextStyle(
                               fontSize: 13, fontWeight: FontWeight.w500)),
@@ -385,7 +385,7 @@ class _MechanicStep5VerificationState
                           ),
                           if (_livenessPass) ...[
                             const SizedBox(height: 4),
-                            const Text(
+                            Text(
                               'Liveness confirmed — blink & smile challenges passed.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
@@ -473,7 +473,7 @@ class _MechanicStep5VerificationState
       width: double.infinity,
       color: AppColors.primary,
       padding: const EdgeInsets.fromLTRB(20, 48, 20, 16),
-      child: const Column(
+      child: Column(
         children: [
           Text('On Go Registration',
               style: TextStyle(

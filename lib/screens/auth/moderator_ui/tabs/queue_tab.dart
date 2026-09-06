@@ -96,7 +96,7 @@ class _OutlineAvatar extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.textdark, width: 1.3)),
-      child: const Icon(Icons.person_outline, size: 26, color: AppColors.textdark),
+      child: Icon(Icons.person_outline, size: 26, color: AppColors.textdark),
     );
   }
 }
@@ -245,7 +245,7 @@ class _QueueCard extends StatelessWidget {
                         const SizedBox(width: 6),
                         GestureDetector(
                           onTap: () => _showDocuments(context),
-                          child: const Text('view', style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w600)),
+                          child: Text('view', style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w600)),
                         ),
                       ],
                     ),
@@ -273,8 +273,8 @@ class _QueueCard extends StatelessWidget {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: onApprove,
-                  icon: const Icon(Icons.check_circle, size: 18, color: AppColors.textmedium),
-                  label: const Text('Approved', style: TextStyle(color: AppColors.textmedium, fontWeight: FontWeight.w700)),
+                  icon: Icon(Icons.check_circle, size: 18, color: AppColors.textmedium),
+                  label: Text('Approved', style: TextStyle(color: AppColors.textmedium, fontWeight: FontWeight.w700)),
                   style: ElevatedButton.styleFrom(
                     shape: const StadiumBorder(),
                     padding: const EdgeInsets.symmetric(vertical: 12),
@@ -321,7 +321,7 @@ class _EscalatedBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(color: AppColors.warning.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(6)),
-      child: const Row(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.flag, size: 11, color: AppColors.warning),

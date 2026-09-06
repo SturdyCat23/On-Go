@@ -114,7 +114,7 @@ class _MechanicStep1AccountState extends State<MechanicStep1Account> {
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(error,
-                style: const TextStyle(fontSize: 11, color: AppColors.error)),
+                style: TextStyle(fontSize: 11, color: AppColors.error)),
           ),
       ],
     );
@@ -139,7 +139,7 @@ class _MechanicStep1AccountState extends State<MechanicStep1Account> {
             width: double.infinity,
             color: AppColors.primary,
             padding: const EdgeInsets.fromLTRB(20, 48, 20, 16),
-            child: const Column(
+            child: Column(
               children: [
                 Text('On Go Registration',
                     style: TextStyle(
@@ -164,7 +164,7 @@ class _MechanicStep1AccountState extends State<MechanicStep1Account> {
                     onStepTapped: _onStepTapped,
                   ),
                   const SizedBox(height: 20),
-                  const Text('Create Your Account',
+                  Text('Create Your Account',
                       style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,

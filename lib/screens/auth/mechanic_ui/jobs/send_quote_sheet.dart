@@ -70,7 +70,7 @@ class _SendQuoteSheetState extends State<SendQuoteSheet> {
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           border: Border(top: BorderSide(color: AppColors.primary, width: 1.5)),
@@ -93,7 +93,7 @@ class _SendQuoteSheetState extends State<SendQuoteSheet> {
               children: [
                 const Text('Total', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
                 Text('₱${_total.toStringAsFixed(0)}',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primary)),
               ],
             ),
             const SizedBox(height: 14),
@@ -106,7 +106,7 @@ class _SendQuoteSheetState extends State<SendQuoteSheet> {
                     onPressed: () => Navigator.pop(context, null),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primary,
-                      side: const BorderSide(color: AppColors.primary),
+                      side: BorderSide(color: AppColors.primary),
                       minimumSize: const Size(double.infinity, 48),
                       shape: const StadiumBorder(),
                     ),

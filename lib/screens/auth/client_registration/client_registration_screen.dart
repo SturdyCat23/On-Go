@@ -218,7 +218,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                 color: AppColors.primary,
                 padding: const EdgeInsets.fromLTRB(20, 48, 20, 16),
                 child: Column(
-                  children: const [
+                  children: [
                     Text(
                       'Client Registration',
                       style: TextStyle(
@@ -265,7 +265,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
+                                    Text(
                                       'Connected via Google',
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
@@ -275,7 +275,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                                     ),
                                     Text(
                                       _emailCtrl.text,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 12,
                                           color: AppColors.success),
                                       overflow: TextOverflow.ellipsis,
@@ -297,7 +297,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
 
                       // ── Profile Picture ───────────────────────────────────────
                       Row(
-                        children: const [
+                        children: [
                           Text(
                             'Profile Picture',
                             style: TextStyle(
@@ -359,7 +359,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                                 right: -10,
                                 child: GestureDetector(
                                   onTap: _removePhoto,
-                                  child: const CircleAvatar(
+                                  child: CircleAvatar(
                                     radius: 12,
                                     backgroundColor: AppColors.error,
                                     child: Icon(Icons.close,
@@ -384,7 +384,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                               onPressed: _pickGallery,
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.info,
-                                side: const BorderSide(color: AppColors.info),
+                                side: BorderSide(color: AppColors.info),
                                 minimumSize: const Size(0, 56),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8)),
@@ -401,7 +401,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                               onPressed: _takeSelfie,
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.info,
-                                side: const BorderSide(color: AppColors.info),
+                                side: BorderSide(color: AppColors.info),
                                 minimumSize: const Size(0, 56),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8)),

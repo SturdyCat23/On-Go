@@ -98,7 +98,7 @@ class _OverviewTabState extends State<OverviewTab> {
                     CircleAvatar(
                         radius: 14,
                         backgroundColor: AppColors.textdark.withValues(alpha: 0.2),
-                        child: Text(m.initials, style: const TextStyle(fontSize: 10, color: AppColors.textdark, fontWeight: FontWeight.w700))),
+                        child: Text(m.initials, style: TextStyle(fontSize: 10, color: AppColors.textdark, fontWeight: FontWeight.w700))),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -112,7 +112,7 @@ class _OverviewTabState extends State<OverviewTab> {
                               value: maxActions == 0 ? 0 : m.actionsHandled / maxActions,
                               minHeight: 6,
                               backgroundColor: AppColors.textdark.withValues(alpha: 0.2),
-                              valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                              valueColor: AlwaysStoppedAnimation(AppColors.primary),
                             ),
                           ),
                         ],

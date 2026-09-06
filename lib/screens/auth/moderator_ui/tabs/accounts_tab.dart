@@ -59,6 +59,7 @@ class _AccountsTabState extends State<AccountsTab> {
                             margin: const EdgeInsets.only(bottom: 10),
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
+                              color: AppColors.surface,
                                 border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
                                 borderRadius: BorderRadius.circular(16)),
                             child: Row(
@@ -68,7 +69,7 @@ class _AccountsTabState extends State<AccountsTab> {
                                   width: 44,
                                   height: 44,
                                   decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.textdark, width: 1.3)),
-                                  child: const Icon(Icons.person_outline, size: 26, color: AppColors.textdark),
+                                  child: Icon(Icons.person_outline, size: 26, color: AppColors.textdark),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -83,7 +84,7 @@ class _AccountsTabState extends State<AccountsTab> {
                                             decoration: BoxDecoration(
                                                 color: AppColors.success.withValues(alpha: 0.12),
                                                 borderRadius: BorderRadius.circular(12)),
-                                            child: const Text('active', style: TextStyle(fontSize: 11, color: AppColors.success, fontWeight: FontWeight.w700)),
+                                            child: Text('active', style: TextStyle(fontSize: 11, color: AppColors.success, fontWeight: FontWeight.w700)),
                                           ),
                                         ],
                                       ),

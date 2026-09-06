@@ -104,7 +104,7 @@ class _JobPhotoPreviewState extends State<JobPhotoPreview> {
                         decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(12)),
                         child: Text(
                           '+${widget.photoPaths.length - 1}',
-                          style: const TextStyle(color: AppColors.textmedium, fontSize: 11, fontWeight: FontWeight.w700),
+                          style: TextStyle(color: AppColors.textmedium, fontSize: 11, fontWeight: FontWeight.w700),
                         ),
                       ),
                     ),

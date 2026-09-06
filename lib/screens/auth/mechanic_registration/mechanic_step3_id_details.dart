@@ -227,7 +227,7 @@ class _MechanicStep3IdDetailsState extends State<MechanicStep3IdDetails> {
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(error,
-                style: const TextStyle(fontSize: 11, color: AppColors.error)),
+                style: TextStyle(fontSize: 11, color: AppColors.error)),
           ),
       ],
     );
@@ -281,7 +281,7 @@ class _MechanicStep3IdDetailsState extends State<MechanicStep3IdDetails> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'ID details must match your personal information:',
                             style: TextStyle(
                                 fontSize: 12,
@@ -295,13 +295,13 @@ class _MechanicStep3IdDetailsState extends State<MechanicStep3IdDetails> {
                                   crossAxisAlignment:
                                       CrossAxisAlignment.start,
                                   children: [
-                                    const Text('• ',
+                                    Text('• ',
                                         style: TextStyle(
                                             fontSize: 11,
                                             color: AppColors.error)),
                                     Expanded(
                                       child: Text(e,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                               fontSize: 11,
                                               color: AppColors.error)),
                                     ),
@@ -361,7 +361,7 @@ class _MechanicStep3IdDetailsState extends State<MechanicStep3IdDetails> {
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(_idTypeError!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 11, color: AppColors.error)),
                         ),
                     ],
@@ -563,7 +563,7 @@ class _RegHeader extends StatelessWidget {
       width: double.infinity,
       color: AppColors.primary,
       padding: const EdgeInsets.fromLTRB(20, 48, 20, 16),
-      child: const Column(
+      child: Column(
         children: [
           Text('On Go Registration',
               style: TextStyle(

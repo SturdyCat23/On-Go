@@ -116,7 +116,7 @@ class _HistoryCard extends StatelessWidget {
                 children: [
                   Text(mechanicName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                   const SizedBox(height: 2),
-                  Text(location, style: const TextStyle(fontSize: 13, color: AppColors.textdark)),
+                  Text(location, style: TextStyle(fontSize: 13, color: AppColors.textdark)),
                   const SizedBox(height: 2),
                   Text(date, style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
                   const SizedBox(height: 8),
@@ -126,7 +126,7 @@ class _HistoryCard extends StatelessWidget {
                       color: AppColors.success.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Text('Completed',
+                    child: Text('Completed',
                         style: TextStyle(fontSize: 11, color: AppColors.success, fontWeight: FontWeight.w600)),
                   ),
                 ],
@@ -135,18 +135,18 @@ class _HistoryCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(price, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.success)),
+                Text(price, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.success)),
                 const SizedBox(height: 6),
                 if (rating != null)
                   Row(
                     children: [
-                      const Icon(Icons.star, size: 14, color: AppColors.warning),
+                      Icon(Icons.star, size: 14, color: AppColors.warning),
                       const SizedBox(width: 2),
                       Text('$rating', style: const TextStyle(fontSize: 13)),
                     ],
                   )
                 else
-                  const Text('Rate this service', style: TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600)),
+                  Text('Rate this service', style: TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600)),
               ],
             ),
           ],

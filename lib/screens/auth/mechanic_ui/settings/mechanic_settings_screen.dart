@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../data/mechanic_account_store.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/password_strength.dart';
+import '../../../shared/theme_screen.dart';
 
 class MechanicSettingsScreen extends StatefulWidget {
   const MechanicSettingsScreen({super.key});
@@ -72,6 +73,11 @@ class _MechanicSettingsScreenState extends State<MechanicSettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          Text('APPEARANCE', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w600)),
+          const ThemesSettingsTile(),
+          const SizedBox(height: 8),
+          const Divider(),
+          const SizedBox(height: 16),
           Text('SECURITY', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w600)),
           const SizedBox(height: 12),
           if (!hasLocalPassword) ...[
@@ -118,7 +124,7 @@ class _MechanicSettingsScreenState extends State<MechanicSettingsScreen> {
             ),
             if (_error != null) ...[
               const SizedBox(height: 10),
-              Text(_error!, style: const TextStyle(color: AppColors.primary, fontSize: 12)),
+              Text(_error!, style: TextStyle(color: AppColors.primary, fontSize: 12)),
             ],
             const SizedBox(height: 20),
             SizedBox(
@@ -130,7 +136,7 @@ class _MechanicSettingsScreenState extends State<MechanicSettingsScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                child: const Text('Update Password', style: TextStyle(color: AppColors.textmedium, fontWeight: FontWeight.w700)),
+                child: Text('Update Password', style: TextStyle(color: AppColors.textmedium, fontWeight: FontWeight.w700)),
               ),
             ),
           ],

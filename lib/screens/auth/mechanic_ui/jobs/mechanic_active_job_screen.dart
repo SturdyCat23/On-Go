@@ -183,13 +183,13 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.location_on_outlined, color: AppColors.primary, size: 40),
+                          Icon(Icons.location_on_outlined, color: AppColors.primary, size: 40),
                           const SizedBox(height: 8),
                           Text(
                             request.arrived
                                 ? "You've arrived"
                                 : (request.navigating ? 'Heading to client' : 'Ready to head out'),
-                            style: const TextStyle(color: AppColors.textdark, fontSize: 14, fontWeight: FontWeight.w600),
+                            style: TextStyle(color: AppColors.textdark, fontSize: 14, fontWeight: FontWeight.w600),
                           ),
                           if (_trackingError != null) ...[
                             const SizedBox(height: 4),
@@ -315,12 +315,12 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.check_circle, color: AppColors.success),
+            Icon(Icons.check_circle, color: AppColors.success),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 'Payment received — ₱${amount.toStringAsFixed(0)} · +${request.pointsAwarded ?? 0} points',
-                style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.w700, fontSize: 13),
+                style: TextStyle(color: AppColors.success, fontWeight: FontWeight.w700, fontSize: 13),
               ),
             ),
           ],
@@ -373,12 +373,12 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(color: AppColors.warning.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-              child: const Text('Waiting for Client Payment',
+              child: Text('Waiting for Client Payment',
                   textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.warning)),
             ),
             const SizedBox(height: 8),
             Text('Agreed price: ₱${amount.toStringAsFixed(0)}',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.success)),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.success)),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
@@ -442,7 +442,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: BoxDecoration(color: AppColors.warning.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-            child: const Text('Waiting for Client Payment',
+            child: Text('Waiting for Client Payment',
                 textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.warning)),
           ),
           const SizedBox(height: 16),
@@ -542,7 +542,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
       width: double.infinity,
       child: ElevatedButton.icon(
         onPressed: () => _beginNavigating(request),
-        icon: const Icon(Icons.navigation_outlined, size: 18, color: AppColors.textlight),
+        icon: Icon(Icons.navigation_outlined, size: 18, color: AppColors.textlight),
         label: const Text('Navigate'),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.success,

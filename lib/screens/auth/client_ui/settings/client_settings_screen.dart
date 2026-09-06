@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../data/client_account_store.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/password_strength.dart';
+import '../../../shared/theme_screen.dart';
 
 class ClientSettingsScreen extends StatefulWidget {
   const ClientSettingsScreen({super.key});
@@ -74,6 +75,11 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          Text('APPEARANCE', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w600)),
+          const ThemesSettingsTile(),
+          const SizedBox(height: 8),
+          const Divider(),
+          const SizedBox(height: 16),
           Text('SECURITY', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w600)),
           const SizedBox(height: 12),
           if (!hasLocalPassword) ...[
@@ -120,7 +126,7 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
             ),
             if (_error != null) ...[
               const SizedBox(height: 10),
-              Text(_error!, style: const TextStyle(color: AppColors.primary, fontSize: 12)),
+              Text(_error!, style: TextStyle(color: AppColors.primary, fontSize: 12)),
             ],
             const SizedBox(height: 20),
             SizedBox(
@@ -132,7 +138,7 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                child: const Text('Update Password', style: TextStyle(color: AppColors.textmedium, fontWeight: FontWeight.w700)),
+                child: Text('Update Password', style: TextStyle(color: AppColors.textmedium, fontWeight: FontWeight.w700)),
               ),
             ),
           ],

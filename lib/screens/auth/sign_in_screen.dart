@@ -141,7 +141,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   padding: EdgeInsets.zero,
                   minimumSize: const Size(0, 0),
                 ),
-                child: const Text(
+                child: Text(
                   'Forgot Password?',
                   style: TextStyle(color: AppColors.textlight, fontSize: 13),
                 ),
@@ -176,7 +176,7 @@ class _SignInScreenState extends State<SignInScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
+                Text(
                   "Don't have account? ",
                   style: TextStyle(fontSize: 13, color: AppColors.textlight),
                 ),
@@ -185,11 +185,11 @@ class _SignInScreenState extends State<SignInScreen> {
                     context,
                     MaterialPageRoute(builder: (_) => const WelcomeScreen()),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Sign Up',
                     style: TextStyle(
                       fontSize: 13,
-                      color: AppColors.background,
+                      color: AppColors.textlight,
                       fontWeight: FontWeight.w700,
                     ),
                   ),

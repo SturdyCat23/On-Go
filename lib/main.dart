@@ -2,19 +2,60 @@ import 'package:flutter/material.dart';
 import 'screens/auth/sign_in_screen.dart';
 import 'theme/app_theme.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Restore the saved theme before the first frame so the app never flashes
+  // the Default palette on startup.
+  await ThemeController.instance.load();
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   // This widget is the root of your application.
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final _themeController = ThemeController.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _themeController.addListener(_onThemeChanged);
+  }
+
+  @override
+  void dispose() {
+    _themeController.removeListener(_onThemeChanged);
+    super.dispose();
+  }
+
+  void _onThemeChanged() {
+    if (!mounted) return;
+    setState(() {});
+    // Screens read their colors from `AppColors`, a plain static lookup rather
+    // than an InheritedWidget dependency. Routes already on the Navigator
+    // stack cache their subtree, so rebuilding MaterialApp on its own would
+    // not repaint the screens sitting behind the Themes screen. Marking the
+    // whole tree dirty (what a hot reload does) repaints every open screen
+    // without disturbing navigation or screen state.
+    _rebuildEverything(context as Element);
+  }
+
+  void _rebuildEverything(Element element) {
+    element.markNeedsBuild();
+    element.visitChildren(_rebuildEverything);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      theme: AppTheme.theme,
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.themeFor(_themeController.selected),
       home: SignInScreen(),
     );
   }

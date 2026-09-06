@@ -60,13 +60,13 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
         child: Wrap(
           children: [
             ListTile(
-              leading: const Icon(Icons.qr_code_scanner, color: AppColors.primary),
+              leading: Icon(Icons.qr_code_scanner, color: AppColors.primary),
               title: const Text('Scan QR Code'),
               subtitle: const Text('Use your camera to scan the mechanic\'s code'),
               onTap: () => Navigator.pop(ctx, 'camera'),
             ),
             ListTile(
-              leading: const Icon(Icons.content_paste, color: AppColors.primary),
+              leading: Icon(Icons.content_paste, color: AppColors.primary),
               title: const Text('Paste Payment Code'),
               subtitle: const Text('Paste the code the mechanic sent you'),
               onTap: () => Navigator.pop(ctx, 'manual'),
@@ -171,7 +171,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
             Text('Pay ${payload.mechanicName}', style: TextStyle(fontSize: 14, color: AppColors.textdark.withValues(alpha: 0.55))),
             const SizedBox(height: 8),
             Text('₱${totalAmount.toStringAsFixed(0)}',
-                style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppColors.primary)),
             if (platformFee > 0) ...[
               const SizedBox(height: 12),
               _PaymentBreakdownRow(
@@ -250,11 +250,11 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.location_on_outlined, color: AppColors.primary, size: 40),
+                    Icon(Icons.location_on_outlined, color: AppColors.primary, size: 40),
                     const SizedBox(height: 8),
                     Text(
                       request.arrived ? 'Mechanic has arrived' : (request.enRoute ? 'Mechanic is on the way' : 'Mechanic is preparing'),
-                      style: const TextStyle(color: AppColors.textdark, fontSize: 14, fontWeight: FontWeight.w600),
+                      style: TextStyle(color: AppColors.textdark, fontSize: 14, fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 2),
                     Text(request.durationLabel,
@@ -361,7 +361,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.check_circle, color: AppColors.success),
+                        Icon(Icons.check_circle, color: AppColors.success),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(
@@ -369,7 +369,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                             children: [
                               Text(
                                   'Payment complete — ₱${(effectivePaymentAmount(request, quote) ?? 0).toStringAsFixed(0)} sent to ${quote.mechanicName}.',
-                                  style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.w600, fontSize: 13)),
+                                  style: TextStyle(color: AppColors.success, fontWeight: FontWeight.w600, fontSize: 13)),
                               if (request.platformFeeCharged != null) ...[
                                 const SizedBox(height: 2),
                                 Text(
@@ -429,21 +429,21 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.info_outline, size: 16, color: AppColors.primary),
+                            Icon(Icons.info_outline, size: 16, color: AppColors.primary),
                             const SizedBox(width: 6),
                             Text('${request.lastCancelledBy ?? 'The mechanic'} cancelled this job',
-                                style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 12)),
+                                style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 12)),
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Text(request.lastCancelReason!, style: const TextStyle(color: AppColors.primary, fontSize: 12)),
+                        Text(request.lastCancelReason!, style: TextStyle(color: AppColors.primary, fontSize: 12)),
                       ],
                     ),
                   ),
                 ] else ...[
                   ElevatedButton.icon(
                     onPressed: () {},
-                    icon: const Icon(Icons.my_location, size: 18, color: AppColors.textlight),
+                    icon: Icon(Icons.my_location, size: 18, color: AppColors.textlight),
                     label: const Text('Track Mechanic Location'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.success,
@@ -461,7 +461,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                       TextButton(
                         onPressed: () {},
                         style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
-                        child: const Text('Contact Support',
+                        child: Text('Contact Support',
                             style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w700)),
                       ),
                     ],
@@ -497,7 +497,7 @@ class _PaymentBreakdownRow extends StatelessWidget {
               style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
         ),
         const SizedBox(width: 8),
-        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textdark)),
+        Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textdark)),
       ],
     );
   }

@@ -135,7 +135,7 @@ class _HistoryCard extends StatelessWidget {
                 if (request.reason != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
-                    child: Text(request.reason!, style: const TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w600)),
+                    child: Text(request.reason!, style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w600)),
                   ),
                 const SizedBox(height: 4),
                 Text(formatDateTime(request.reviewedAt ?? request.submittedAt), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),

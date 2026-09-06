@@ -178,7 +178,7 @@ class _MechanicStep2PersonalState extends State<MechanicStep2Personal> {
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(error,
-                style: const TextStyle(fontSize: 11, color: AppColors.error)),
+                style: TextStyle(fontSize: 11, color: AppColors.error)),
           ),
       ],
     );
@@ -209,7 +209,7 @@ class _MechanicStep2PersonalState extends State<MechanicStep2Personal> {
                     onStepTapped: _onStepTapped,
                   ),
                   const SizedBox(height: 20),
-                  const Text('Personal Information',
+                  Text('Personal Information',
                       style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -399,7 +399,7 @@ class _RegHeader extends StatelessWidget {
       width: double.infinity,
       color: AppColors.primary,
       padding: const EdgeInsets.fromLTRB(20, 48, 20, 16),
-      child: const Column(
+      child: Column(
         children: [
           Text('On Go Registration',
               style: TextStyle(

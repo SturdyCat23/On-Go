@@ -205,14 +205,14 @@ class _JobTabBar extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: selected ? AppColors.primary : AppColors.background,
+                  color: selected ? AppColors.primarydark : AppColors.surface,
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: Text('${_labels[i]} ${counts[i]}',
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: selected ? AppColors.surface : AppColors.textdark)),
+                        color: selected ? AppColors.textlight : AppColors.textmedium)),
               ),
             ),
           );
@@ -270,7 +270,7 @@ Widget _locationBlock(String location) {
         ],
       ),
       const SizedBox(height: 2),
-      Text(location, style: const TextStyle(fontSize: 13, color: AppColors.textdark)),
+      Text(location, style: TextStyle(fontSize: 13, color: AppColors.textdark)),
     ],
   );
 }
@@ -348,11 +348,11 @@ Widget _countBadge(int count) {
   return Container(
     padding: const EdgeInsets.all(4),
     constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-    decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+    decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
     child: Text(
       '$count',
       textAlign: TextAlign.center,
-      style: const TextStyle(fontSize: 10, color: AppColors.textlight, fontWeight: FontWeight.w700),
+      style: TextStyle(fontSize: 10, color: AppColors.textlight, fontWeight: FontWeight.w700),
     ),
   );
 }
@@ -412,14 +412,15 @@ class _UploadedJobCard extends StatelessWidget {
 
     return AppCard(
       padding: jobCardPadding,
+      color: AppColors.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle)),
+              Container(width: 8, height: 8, decoration: BoxDecoration(color: AppColors.success, shape: BoxShape.circle)),
               const SizedBox(width: 6),
-              const Text('UPLOADED', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.success, letterSpacing: 0.5)),
+              Text('UPLOADED', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.success, letterSpacing: 0.5)),
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -441,13 +442,13 @@ class _UploadedJobCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.timer_off_outlined, size: 14, color: AppColors.primary),
+                  Icon(Icons.timer_off_outlined, size: 14, color: AppColors.primary),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       '${request.expiredByMechanic ?? 'The mechanic'} didn\'t complete this job within the allowed time. '
                       'Your request is open to mechanics again.',
-                      style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600),
+                      style: TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
@@ -552,14 +553,15 @@ class _PendingJobCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: AppCard(
         padding: jobCardPadding,
+        color: AppColors.surface,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle)),
+                Container(width: 8, height: 8, decoration: BoxDecoration(color: AppColors.success, shape: BoxShape.circle)),
                 const SizedBox(width: 6),
-                const Text('PENDING', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.success, letterSpacing: 0.5)),
+                Text('PENDING', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.success, letterSpacing: 0.5)),
               ],
             ),
             if (request.lastCancelReason != null) ...[
@@ -569,7 +571,7 @@ class _PendingJobCard extends StatelessWidget {
                 decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
                 child: Text(
                   '${request.lastCancelledBy ?? 'Mechanic'} cancelled: ${request.lastCancelReason}',
-                  style: const TextStyle(fontSize: 11, color: AppColors.primary),
+                  style: TextStyle(fontSize: 11, color: AppColors.primary),
                 ),
               ),
             ],
@@ -605,7 +607,7 @@ class _PendingJobCard extends StatelessWidget {
                   children: [
                     Text('Payment', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
                     const SizedBox(height: 2),
-                    Text(_paymentDisplay(request, quote), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.success)),
+                    Text(_paymentDisplay(request, quote), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.success)),
                   ],
                 ),
               ],
@@ -679,6 +681,7 @@ class _ActiveJobCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: AppCard(
         padding: jobCardPadding,
+        color: AppColors.surface,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -734,7 +737,7 @@ class _ActiveJobCard extends StatelessWidget {
                     // price until the mechanic sets the agreed one, so it reads
                     // "To be agreed" rather than a stand-in amount.
                     Text(_paymentDisplay(request, quote),
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.success)),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.success)),
                   ],
                 ),
               ],

@@ -65,7 +65,7 @@ class _MechanicMenuDrawerState extends State<MechanicMenuDrawer> {
                   backgroundImage: photo == null
                       ? null
                       : (_store.photoIsNetwork ? NetworkImage(photo) : FileImage(File(photo))) as ImageProvider?,
-                  child: photo == null ? const Icon(Icons.person_outline, color: AppColors.textlight, size: 32) : null,
+                  child: photo == null ? Icon(Icons.person_outline, color: AppColors.textlight, size: 32) : null,
                 ),
                 const SizedBox(width: 14),
                 Column(
@@ -138,7 +138,7 @@ class _DrawerItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: Icon(icon, color: AppColors.textdark),
-      title: Text(label, style: const TextStyle(color: AppColors.textdark, fontWeight: FontWeight.w500, fontSize: 14)),
+      title: Text(label, style: TextStyle(color: AppColors.textdark, fontWeight: FontWeight.w500, fontSize: 14)),
       onTap: onTap,
     );
   }

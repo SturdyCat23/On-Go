@@ -14,7 +14,7 @@ class OnGoHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 48, 20, 20),
       child: Column(
         children: [
-          const Text(
+          Text(
             'On Go',
             style: TextStyle(
               color: AppColors.textmedium,
@@ -26,7 +26,7 @@ class OnGoHeader extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             subtitle,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textmedium,
               fontSize: 13,
             ),
@@ -67,7 +67,7 @@ class OnGoTextField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
             color: AppColors.textdark,
@@ -163,7 +163,7 @@ class RegistrationStepper extends StatelessWidget {
                 ),
                 child: Center(
                   child: done || (step <= highestCompletedStep && !current)
-                      ? const Icon(Icons.check,
+                      ? Icon(Icons.check,
                           color: AppColors.textlight, size: 14)
                       : Text(
                           '$step',
@@ -270,8 +270,9 @@ class AuthBottomCard extends StatelessWidget {
         ),
         Container(
           width: double.infinity,
-          decoration: const BoxDecoration(
-            color: AppColors.primary,
+          decoration: BoxDecoration(
+            color: AppColors.primarydark,
+            border: Border.all(color: AppColors.primary, width: 4),
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(32),
               topRight: Radius.circular(32),
@@ -317,7 +318,7 @@ class AuthTextField extends StatelessWidget {
       controller: controller,
       obscureText: obscure,
       keyboardType: keyboardType,
-      style: const TextStyle(color: AppColors.textdark),
+      style: TextStyle(color: AppColors.textdark),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55)),
@@ -334,7 +335,7 @@ class AuthTextField extends StatelessWidget {
   }
 }
 
-/// Solid white button with red text.
+/// Solid primary button with light text.
 class AuthWhiteButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -346,8 +347,8 @@ class AuthWhiteButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.primary,
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.textlight,
         minimumSize: const Size(double.infinity, 50),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
@@ -357,7 +358,7 @@ class AuthWhiteButton extends StatelessWidget {
   }
 }
 
-/// White pill button with an icon circle.
+/// Primary pill button with a light icon and label.
 class AuthRoleButton extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -373,7 +374,7 @@ class AuthRoleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.background,
+      color: AppColors.primary,
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         onTap: onTap,
@@ -387,17 +388,17 @@ class AuthRoleButton extends StatelessWidget {
                 height: 36,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.primary, width: 1.5),
+                  border: Border.all(color: AppColors.textlight, width: 1.5),
                 ),
-                child: Icon(icon, color: AppColors.primary, size: 20),
+                child: Icon(icon, color: AppColors.textlight, size: 20),
               ),
               const SizedBox(width: 16),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
+                  color: AppColors.textlight,
                 ),
               ),
             ],

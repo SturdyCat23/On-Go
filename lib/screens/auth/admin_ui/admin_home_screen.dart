@@ -4,6 +4,7 @@ import '../../../theme/app_theme.dart';
 import '../../../widgets/app_widgets.dart';
 import '../sign_in_screen.dart';
 import 'notifications/admin_notifications_screen.dart';
+import 'settings/admin_settings_screen.dart';
 import 'tabs/overview_tab.dart';
 import 'tabs/mods_tab.dart';
 import 'tabs/add_mod_tab.dart';
@@ -90,13 +91,21 @@ class _AdminDrawer extends StatelessWidget {
             Container(
               color: AppColors.primary,
               padding: const EdgeInsets.all(20),
-              child: const Text(
+              child: Text(
                 'Admin',
                 style: TextStyle(color: AppColors.textlight, fontSize: 18, fontWeight: FontWeight.w700),
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.logout, color: AppColors.primary),
+              leading: Icon(Icons.settings_outlined, color: AppColors.primary),
+              title: const Text('Settings'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminSettingsScreen()));
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.logout, color: AppColors.primary),
               title: const Text('Log Out'),
               onTap: () => _logout(context),
             ),

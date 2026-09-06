@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../../../data/app_session.dart';
 import '../../../../data/mechanic_account_store.dart';
 import '../../../../data/moderator_data.dart';
@@ -104,53 +103,6 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
     );
   }
 
-  String _formatDate(DateTime d) => '${d.month.toString().padLeft(2, '0')}/${d.day.toString().padLeft(2, '0')}/${d.year}';
-
-  Future<void> _changePhoto() async {
-    if (!_account.canChangePhoto) {
-      final next = _account.nextPhotoChangeAt;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('You can change your photo again on ${next != null ? _formatDate(next) : 'a later date'}.'), duration: AppDurations.snackBar),
-      );
-      return;
-    }
-
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (ctx) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_camera_outlined, color: AppColors.primary),
-              title: const Text('Take Photo'),
-              onTap: () => Navigator.pop(ctx, ImageSource.camera),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined, color: AppColors.primary),
-              title: const Text('Choose from Gallery'),
-              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (source == null) return;
-
-    try {
-      final file = await ImagePicker().pickImage(source: source, maxWidth: 1200, imageQuality: 85);
-      if (file == null) return;
-      final ok = _account.changePhoto(file.path);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ok ? 'Profile photo updated' : 'You can only change your photo once every 30 days.'), duration: AppDurations.snackBar),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not update photo: $e'), duration: AppDurations.snackBar));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final myName = _account.name.isEmpty ? 'Mechanic' : _account.name;
@@ -165,6 +117,7 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
       children: [
         AppCard(
           padding: const EdgeInsets.all(16),
+          color: AppColors.surface,
           child: Column(
             children: [
               Row(
@@ -239,6 +192,7 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
         const SizedBox(height: 16),
         AppCard(
           padding: const EdgeInsets.all(16),
+          color: AppColors.surface,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -253,6 +207,7 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
         const SizedBox(height: 16),
         AppCard(
           padding: const EdgeInsets.all(16),
+          color: AppColors.surface,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -263,7 +218,7 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
                   if (reviews.isNotEmpty)
                     Row(
                       children: [
-                        const Icon(Icons.star, size: 14, color: AppColors.warning),
+                        Icon(Icons.star, size: 14, color: AppColors.warning),
                         const SizedBox(width: 2),
                         Text(average.toStringAsFixed(1), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                         Text(' (${reviews.length})', style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
@@ -360,9 +315,9 @@ class _StatBox extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.primary)),
+            Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.primary)),
             const SizedBox(height: 2),
-            Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textdark)),
+            Text(label, style: TextStyle(fontSize: 11, color: AppColors.textdark)),
           ],
         ),
       ),
@@ -379,13 +334,13 @@ class _CertificationRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Icon(Icons.check_circle, color: AppColors.success, size: 18),
+        Icon(Icons.check_circle, color: AppColors.success, size: 18),
         const SizedBox(width: 8),
         Expanded(child: Text(label, style: const TextStyle(fontSize: 13))),
         TextButton(
           onPressed: onView,
           style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
-          child: const Text('View', style: TextStyle(color: AppColors.info, fontSize: 12, fontWeight: FontWeight.w600)),
+          child: Text('View', style: TextStyle(color: AppColors.info, fontSize: 12, fontWeight: FontWeight.w600)),
         ),
       ],
     );
@@ -471,7 +426,7 @@ class _ReviewCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Text(comment, style: const TextStyle(fontSize: 12, color: AppColors.textdark)),
+        Text(comment, style: TextStyle(fontSize: 12, color: AppColors.textdark)),
         const SizedBox(height: 8),
         InkWell(
           onTap: onToggleLike,

@@ -154,7 +154,7 @@ class _MechanicStep4DocumentsState extends State<MechanicStep4Documents> {
                     onStepTapped: (step) => goToRegistrationStep(context, step),
                   ),
                   const SizedBox(height: 20),
-                  const Text(
+                  Text(
                     'Required Documents',
                     style: TextStyle(
                       fontSize: 16,
@@ -246,7 +246,7 @@ class _MechanicStep4DocumentsState extends State<MechanicStep4Documents> {
       color: AppColors.primary,
       padding: const EdgeInsets.fromLTRB(20, 48, 20, 16),
       child: Column(
-        children: const [
+        children: [
           Text('On Go Registration',
               style: TextStyle(
                   color: AppColors.textlight,
@@ -378,7 +378,7 @@ class _DocumentUploadTile extends StatelessWidget {
             ),
           ),
         if (showError)
-          const Padding(
+          Padding(
             padding: EdgeInsets.only(top: 4),
             child: Text(
               'This document is required',
@@ -424,7 +424,7 @@ class _MultiDocumentUploadTile extends StatelessWidget {
           onPressed: onPick,
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.info,
-            side: const BorderSide(color: AppColors.info),
+            side: BorderSide(color: AppColors.info),
             minimumSize: const Size(double.infinity, 48),
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8)),

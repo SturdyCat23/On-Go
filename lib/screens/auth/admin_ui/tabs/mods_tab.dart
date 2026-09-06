@@ -73,7 +73,7 @@ class _ModsTabState extends State<ModsTab> {
                       CircleAvatar(
                         radius: 20,
                         backgroundColor: AppColors.textdark.withValues(alpha: 0.12),
-                        child: Text(mod.initials, style: const TextStyle(color: AppColors.textdark, fontWeight: FontWeight.w700)),
+                        child: Text(mod.initials, style: TextStyle(color: AppColors.textdark, fontWeight: FontWeight.w700)),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -124,7 +124,7 @@ class _ModsTabState extends State<ModsTab> {
                         );
                         Navigator.pop(sheetCtx);
                       },
-                      child: const Text('SAVE PERMISSIONS', style: TextStyle(color: AppColors.textlight, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+                      child: Text('SAVE PERMISSIONS', style: TextStyle(color: AppColors.textlight, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
                     ),
                   ),
                 ],
@@ -186,7 +186,7 @@ class _ModsTabState extends State<ModsTab> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: TextStyle(fontSize: 10, color: AppColors.textdark.withValues(alpha: 0.55))),
-        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textdark)),
+        Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textdark)),
       ],
     );
   }
@@ -215,7 +215,7 @@ class _ModsTabState extends State<ModsTab> {
                       CircleAvatar(
                           radius: 24,
                           backgroundColor: AppColors.textdark.withValues(alpha: 0.12),
-                          child: Text(m.initials, style: const TextStyle(color: AppColors.textdark, fontWeight: FontWeight.w700))),
+                          child: Text(m.initials, style: TextStyle(color: AppColors.textdark, fontWeight: FontWeight.w700))),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -277,7 +277,7 @@ class _ModsTabState extends State<ModsTab> {
                               color: AppColors.info.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Text('Edit', style: TextStyle(color: AppColors.info, fontWeight: FontWeight.w700, fontSize: 13)),
+                            child: Text('Edit', style: TextStyle(color: AppColors.info, fontWeight: FontWeight.w700, fontSize: 13)),
                           ),
                         ),
                       ),
@@ -292,7 +292,7 @@ class _ModsTabState extends State<ModsTab> {
                               color: AppColors.primary.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Text('Remove', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 13)),
+                            child: Text('Remove', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 13)),
                           ),
                         ),
                       ),

@@ -86,10 +86,10 @@ class AdminChartTooltip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textdark, fontWeight: FontWeight.w600)),
+          Text(label, style: TextStyle(fontSize: 11, color: AppColors.textdark, fontWeight: FontWeight.w600)),
           const SizedBox(height: 2),
           Text('Revenue : ₱${value.toStringAsFixed(0)}',
-              style: const TextStyle(fontSize: 12, color: AppColors.info, fontWeight: FontWeight.w700)),
+              style: TextStyle(fontSize: 12, color: AppColors.info, fontWeight: FontWeight.w700)),
         ],
       ),
     );

@@ -14,22 +14,25 @@ class WelcomeScreen extends StatelessWidget {
       builder: (ctx) => SafeArea(
         child: Wrap(
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 20, 20, 4),
-              child: Text('Sign up as Client', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-            ),
             Padding(
-              padding: EdgeInsets.fromLTRB(20, 0, 20, 12),
-              child: Text('Choose how you\'d like to create your account',
-                  style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Sign up as Client', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                  const SizedBox(height: 6),
+                  Text('Choose how you\'d like to create your account',
+                      style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
+                ],
+              ),
             ),
             ListTile(
-              leading: const Icon(Icons.g_mobiledata_rounded, color: Color(0xFFEA4335), size: 32),
+              leading: Icon(Icons.g_mobiledata_rounded, color: AppColors.primary),
               title: const Text('Continue with Google'),
               onTap: () => Navigator.pop(ctx, 'google'),
             ),
             ListTile(
-              leading: const Icon(Icons.edit_note, color: AppColors.primary),
+              leading: Icon(Icons.edit_note, color: AppColors.primary),
               title: const Text('Fill up manually'),
               onTap: () => Navigator.pop(ctx, 'manual'),
             ),
@@ -56,17 +59,17 @@ class WelcomeScreen extends StatelessWidget {
       body: SafeArea(
         child: AuthBottomCard(
           children: [
-            const Text(
+            Text(
               'Welcome!',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 30,
                 fontWeight: FontWeight.w800,
-                color: AppColors.surface,
+                color: AppColors.textlight,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Please select how you want to register',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: AppColors.textlight),

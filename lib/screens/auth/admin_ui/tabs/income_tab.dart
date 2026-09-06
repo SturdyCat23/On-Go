@@ -95,10 +95,10 @@ class _IncomeTabState extends State<IncomeTab> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.bolt, size: 16, color: AppColors.success),
+                      Icon(Icons.bolt, size: 16, color: AppColors.success),
                       const SizedBox(width: 6),
                       Text('₱${_admin.priorityFeeRevenue.toStringAsFixed(0)} from priority fees',
-                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.success)),
+                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.success)),
                     ],
                   ),
                   const SizedBox(height: 4),

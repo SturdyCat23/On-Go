@@ -47,7 +47,7 @@ class _ChatIconButtonState extends State<ChatIconButton> {
             width: 36,
             height: 36,
             decoration: BoxDecoration(color: AppColors.info.withValues(alpha: 0.12), shape: BoxShape.circle),
-            child: const Icon(Icons.chat_bubble_outline, color: AppColors.info, size: 18),
+            child: Icon(Icons.chat_bubble_outline, color: AppColors.info, size: 18),
           ),
           if (unread > 0)
             Positioned(
@@ -56,11 +56,11 @@ class _ChatIconButtonState extends State<ChatIconButton> {
               child: Container(
                 padding: const EdgeInsets.all(3),
                 constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
                 child: Text(
                   unread > 9 ? '9+' : '$unread',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 9, color: AppColors.textlight, fontWeight: FontWeight.w700),
+                  style: TextStyle(fontSize: 9, color: AppColors.textlight, fontWeight: FontWeight.w700),
                 ),
               ),
             ),

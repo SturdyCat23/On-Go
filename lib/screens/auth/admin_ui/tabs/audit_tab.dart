@@ -124,7 +124,7 @@ class _AuditTabState extends State<AuditTab> {
                                 Text('${e.role} · by ${e.actorName}', style: TextStyle(fontSize: 13, color: AppColors.textdark.withValues(alpha: 0.55))),
                                 if (e.reason != null) ...[
                                   const SizedBox(height: 2),
-                                  Text(e.reason!, style: const TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w600)),
+                                  Text(e.reason!, style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w600)),
                                 ],
                                 const SizedBox(height: 4),
                                 Text(formatDateTime(e.date), style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
@@ -152,7 +152,7 @@ class _AuditTabState extends State<AuditTab> {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: selected ? AppColors.primary : AppColors.textdark.withValues(alpha: 0.2)),
         ),
-        child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.textlight : AppColors.textdark)),
+        child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.textlight : AppColors.textmedium)),
       ),
     );
   }

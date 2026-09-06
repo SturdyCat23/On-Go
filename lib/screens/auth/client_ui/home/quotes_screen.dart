@@ -196,7 +196,7 @@ class _RequestQuoteCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.star, size: 14, color: AppColors.warning),
+                            Icon(Icons.star, size: 14, color: AppColors.warning),
                             const SizedBox(width: 2),
                             Text(q.rating.toStringAsFixed(1), style: const TextStyle(fontSize: 13)),
                           ],
@@ -205,7 +205,7 @@ class _RequestQuoteCard extends StatelessWidget {
                       SizedBox(
                         width: 74,
                         child: q.accepted
-                            ? const Text('Accepted',
+                            ? Text('Accepted',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.success))
                             : ElevatedButton(
@@ -215,9 +215,9 @@ class _RequestQuoteCard extends StatelessWidget {
                                   shape: const StadiumBorder(),
                                   padding: EdgeInsets.zero,
                                   minimumSize: const Size(70, 32),
-                                  textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textmedium),
+                                  textStyle: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textmedium),
                                 ),
-                                child: const Text('Accept', style: TextStyle(color: AppColors.textlight)),
+                                child: Text('Accept', style: TextStyle(color: AppColors.textlight)),
                               ),
                       ),
                     ],

@@ -67,7 +67,7 @@ class _QrScreenState extends State<QrScreen> {
             left: 16,
             child: CircleAvatar(
               backgroundColor: Colors.black54,
-              child: IconButton(icon: const Icon(Icons.close, color: AppColors.textmedium), onPressed: _closeScanner),
+              child: IconButton(icon: Icon(Icons.close, color: AppColors.textmedium), onPressed: _closeScanner),
             ),
           ),
         ],
@@ -84,10 +84,10 @@ class _QrScreenState extends State<QrScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.textdark, width: 2),
+              border: Border.all(color: AppColors.primary, width: 2),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: QrImageView(data: qrData, size: 200),
+            child: QrImageView(data: qrData, size: 200, backgroundColor: AppColors.textlight),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
