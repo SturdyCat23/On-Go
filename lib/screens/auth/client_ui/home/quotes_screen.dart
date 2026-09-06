@@ -36,7 +36,7 @@ class _QuotesScreenState extends State<QuotesScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.background,
+        foregroundColor: AppColors.textmedium,
         title: const Text('Quotes'),
       ),
       body: AnimatedBuilder(
@@ -58,7 +58,7 @@ class _QuotesScreenState extends State<QuotesScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.hourglass_empty, size: 48, color: AppColors.grey),
+                  Icon(Icons.hourglass_empty, size: 48, color: AppColors.textdark.withValues(alpha: 0.55)),
                   const SizedBox(height: 12),
                   Text(
                     widget.requestId != null ? 'No quotes for this job yet' : 'No quotes yet',
@@ -70,7 +70,7 @@ class _QuotesScreenState extends State<QuotesScreen> {
                         ? 'This job has either already been matched or is still waiting on mechanics.'
                         : 'Upload a problem from the Need Help tab and mechanic quotes will show up here.',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 12, color: AppColors.grey),
+                    style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55)),
                   ),
                 ],
               ),
@@ -83,7 +83,7 @@ class _QuotesScreenState extends State<QuotesScreen> {
               const Text('Quotes', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
               const SizedBox(height: 4),
               Text('${pending.length} request${pending.length == 1 ? '' : 's'} awaiting your decision',
-                  style: const TextStyle(fontSize: 12, color: AppColors.grey)),
+                  style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
               const SizedBox(height: 16),
               ...pending.map((request) => Padding(
                     padding: const EdgeInsets.only(bottom: 16),
@@ -115,9 +115,9 @@ Color _urgencyColor(String urgency) {
     case 'Emergency':
       return AppColors.primary;
     case 'Urgent':
-      return AppColors.yellow;
+      return AppColors.warning;
     default:
-      return AppColors.green;
+      return AppColors.success;
   }
 }
 
@@ -152,34 +152,34 @@ class _RequestQuoteCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 2),
-          Text(problem.description, style: const TextStyle(fontSize: 12, color: AppColors.grey)),
+          Text(problem.description, style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
           const SizedBox(height: 12),
           if (quotes.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
                 request.isEmergency ? 'Waiting for a mechanic to accept this emergency.' : 'Waiting for mechanics to send quotes...',
-                style: const TextStyle(fontSize: 12, color: AppColors.grey),
+                style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55)),
               ),
             )
           else ...[
-            const Row(
+            Row(
               children: [
                 Expanded(
                     flex: 3,
                     child: Text('Mechanic',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grey))),
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textdark.withValues(alpha: 0.55)))),
                 Expanded(
                     flex: 2,
                     child:
-                        Text('Price', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grey))),
+                        Text('Price', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textdark.withValues(alpha: 0.55)))),
                 Expanded(
                     flex: 2,
-                    child: Text('ETA', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grey))),
+                    child: Text('ETA', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textdark.withValues(alpha: 0.55)))),
                 Expanded(
                     flex: 2,
                     child: Text('Rating',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.grey))),
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textdark.withValues(alpha: 0.55)))),
                 SizedBox(width: 74),
               ],
             ),
@@ -196,7 +196,7 @@ class _RequestQuoteCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.star, size: 14, color: AppColors.yellow),
+                            const Icon(Icons.star, size: 14, color: AppColors.warning),
                             const SizedBox(width: 2),
                             Text(q.rating.toStringAsFixed(1), style: const TextStyle(fontSize: 13)),
                           ],
@@ -207,7 +207,7 @@ class _RequestQuoteCard extends StatelessWidget {
                         child: q.accepted
                             ? const Text('Accepted',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.green))
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.success))
                             : ElevatedButton(
                                 onPressed: hasAccepted ? null : () => store.clientAcceptQuote(q.id),
                                 style: ElevatedButton.styleFrom(
@@ -215,9 +215,9 @@ class _RequestQuoteCard extends StatelessWidget {
                                   shape: const StadiumBorder(),
                                   padding: EdgeInsets.zero,
                                   minimumSize: const Size(70, 32),
-                                  textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
+                                  textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textmedium),
                                 ),
-                                child: const Text('Accept', style: TextStyle(color: Colors.white)),
+                                child: const Text('Accept', style: TextStyle(color: AppColors.textlight)),
                               ),
                       ),
                     ],

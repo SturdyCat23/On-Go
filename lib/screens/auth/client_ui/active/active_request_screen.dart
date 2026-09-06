@@ -91,9 +91,9 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Paste the code the mechanic shared with you. It can\'t be typed or edited manually.',
-                  style: TextStyle(fontSize: 12, color: AppColors.grey),
+                  style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55)),
                 ),
                 const SizedBox(height: 10),
                 TextField(
@@ -168,7 +168,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Pay ${payload.mechanicName}', style: const TextStyle(fontSize: 14, color: AppColors.grey)),
+            Text('Pay ${payload.mechanicName}', style: TextStyle(fontSize: 14, color: AppColors.textdark.withValues(alpha: 0.55))),
             const SizedBox(height: 8),
             Text('₱${totalAmount.toStringAsFixed(0)}',
                 style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppColors.primary)),
@@ -180,8 +180,8 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
               _PaymentBreakdownRow(
                   label: '${currentRequest.urgency} priority fee', value: '₱${platformFee.toStringAsFixed(0)}'),
               const SizedBox(height: 6),
-              const Text('The priority fee is an ONGO service charge and is not paid to the mechanic.',
-                  style: TextStyle(fontSize: 11, color: AppColors.grey)),
+              Text('The priority fee is an ONGO service charge and is not paid to the mechanic.',
+                  style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
             ],
           ],
         ),
@@ -215,14 +215,14 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.background,
+        foregroundColor: AppColors.textmedium,
         title: const Text('Job Progress'),
       ),
       body: (request == null || quote == null)
-          ? const Center(
+          ? Center(
               child: Padding(
                 padding: EdgeInsets.all(20),
-                child: Text('This job is no longer active.', style: TextStyle(color: AppColors.grey)),
+                child: Text('This job is no longer active.', style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55))),
               ),
             )
           : _buildBody(request, quote),
@@ -240,9 +240,9 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
               Container(
                 height: 190,
                 width: double.infinity,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFFB3E5FC), Color(0xFFE1F5FE)],
+                    colors: [AppColors.info.withValues(alpha: 0.22), AppColors.info.withValues(alpha: 0.08)],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                   ),
@@ -254,11 +254,11 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                     const SizedBox(height: 8),
                     Text(
                       request.arrived ? 'Mechanic has arrived' : (request.enRoute ? 'Mechanic is on the way' : 'Mechanic is preparing'),
-                      style: const TextStyle(color: AppColors.dark, fontSize: 14, fontWeight: FontWeight.w600),
+                      style: const TextStyle(color: AppColors.textdark, fontSize: 14, fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 2),
                     Text(request.durationLabel,
-                        style: TextStyle(color: AppColors.dark.withValues(alpha: 0.7), fontSize: 12)),
+                        style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.7), fontSize: 12)),
                   ],
                 ),
               ),
@@ -272,10 +272,10 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                     children: [
                       Row(
                         children: [
-                          const CircleAvatar(
+                          CircleAvatar(
                             radius: 24,
                             backgroundColor: AppColors.background,
-                            child: Icon(Icons.person, color: AppColors.grey),
+                            child: Icon(Icons.person, color: AppColors.textdark.withValues(alpha: 0.55)),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -284,11 +284,11 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                               children: [
                                 Text(quote.mechanicName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
                                 const SizedBox(height: 2),
-                                Text(request.urgency, style: const TextStyle(fontSize: 12, color: AppColors.grey)),
+                                Text(request.urgency, style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
                               ],
                             ),
                           ),
-                          _CircleIconButton(icon: Icons.call, color: AppColors.green, onTap: () {}),
+                          _CircleIconButton(icon: Icons.call, color: AppColors.success, onTap: () {}),
                           const SizedBox(width: 8),
                           ChatIconButton(
                             requestId: request.id,
@@ -317,7 +317,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                                   const _VerticalDivider(),
                                   _InfoColumn(label: 'Rating', value: _ratingDisplay(quote.mechanicName)),
                                   const _VerticalDivider(),
-                                  _InfoColumn(label: 'Quote', value: quote.price, valueColor: AppColors.green),
+                                  _InfoColumn(label: 'Quote', value: quote.price, valueColor: AppColors.success),
                                 ],
                               ),
                       ),
@@ -355,13 +355,13 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: AppColors.green.withValues(alpha: 0.1),
+                      color: AppColors.success.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.green.withValues(alpha: 0.3)),
+                      border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.check_circle, color: AppColors.green),
+                        const Icon(Icons.check_circle, color: AppColors.success),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(
@@ -369,12 +369,12 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                             children: [
                               Text(
                                   'Payment complete — ₱${(effectivePaymentAmount(request, quote) ?? 0).toStringAsFixed(0)} sent to ${quote.mechanicName}.',
-                                  style: const TextStyle(color: AppColors.green, fontWeight: FontWeight.w600, fontSize: 13)),
+                                  style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.w600, fontSize: 13)),
                               if (request.platformFeeCharged != null) ...[
                                 const SizedBox(height: 2),
                                 Text(
                                     'Plus a ₱${request.platformFeeCharged!.toStringAsFixed(0)} ${request.urgency} priority fee — ONGO service charge.',
-                                    style: const TextStyle(color: AppColors.grey, fontSize: 11)),
+                                    style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55), fontSize: 11)),
                               ],
                             ],
                           ),
@@ -398,10 +398,10 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
-                      child: const Text(
+                      child: Text(
                         'Waiting for the mechanic to set a payment amount. Once they share a code, you can pay here.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: AppColors.grey, fontSize: 12),
+                        style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55), fontSize: 12),
                       ),
                     )
                   else
@@ -409,7 +409,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                       onPressed: () => _sendPayment(request, quote),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.background,
+                        foregroundColor: AppColors.textlight,
                         minimumSize: const Size(double.infinity, 46),
                         shape: const StadiumBorder(),
                       ),
@@ -443,11 +443,11 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                 ] else ...[
                   ElevatedButton.icon(
                     onPressed: () {},
-                    icon: const Icon(Icons.my_location, size: 18, color: AppColors.background),
+                    icon: const Icon(Icons.my_location, size: 18, color: AppColors.textlight),
                     label: const Text('Track Mechanic Location'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.green,
-                      foregroundColor: AppColors.background,
+                      backgroundColor: AppColors.success,
+                      foregroundColor: AppColors.textlight,
                       minimumSize: const Size(double.infinity, 46),
                       shape: const StadiumBorder(),
                     ),
@@ -457,7 +457,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                 Center(
                   child: Column(
                     children: [
-                      const Text('Need help?', style: TextStyle(fontSize: 12, color: AppColors.grey)),
+                      Text('Need help?', style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
                       TextButton(
                         onPressed: () {},
                         style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
@@ -494,10 +494,10 @@ class _PaymentBreakdownRow extends StatelessWidget {
           child: Text(label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12, color: AppColors.grey)),
+              style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
         ),
         const SizedBox(width: 8),
-        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.dark)),
+        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textdark)),
       ],
     );
   }
@@ -530,7 +530,7 @@ class _VerticalDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(width: 1, height: 28, color: AppColors.grey.withValues(alpha: 0.3));
+    return Container(width: 1, height: 28, color: AppColors.textdark.withValues(alpha: 0.2));
   }
 }
 
@@ -546,9 +546,9 @@ class _InfoColumn extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.grey)),
+          Text(label, style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
           const SizedBox(height: 2),
-          Text(value, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: valueColor ?? AppColors.dark)),
+          Text(value, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: valueColor ?? AppColors.textdark)),
         ],
       ),
     );
@@ -570,7 +570,7 @@ class _StatusStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = done ? AppColors.green : AppColors.grey;
+    final color = done ? AppColors.success : AppColors.textdark.withValues(alpha: 0.2);
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -588,7 +588,7 @@ class _StatusStep extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 16),
               child: Text(title,
                   style: TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w600, color: done ? AppColors.dark : AppColors.grey)),
+                      fontSize: 13, fontWeight: FontWeight.w600, color: done ? AppColors.textdark : AppColors.textdark.withValues(alpha: 0.55))),
             ),
           ),
         ],

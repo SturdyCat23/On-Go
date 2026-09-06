@@ -60,7 +60,7 @@ class _EarningScreenState extends State<EarningScreen> {
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(color: AppColors.green, borderRadius: BorderRadius.circular(14)),
+          decoration: BoxDecoration(color: AppColors.success, borderRadius: BorderRadius.circular(14)),
           child: Row(
             children: [
               Expanded(
@@ -70,24 +70,24 @@ class _EarningScreenState extends State<EarningScreen> {
                     Row(
                       children: [
                         const Text('Available Balance',
-                            style: TextStyle(color: AppColors.background, fontSize: 13, fontWeight: FontWeight.w600)),
+                            style: TextStyle(color: AppColors.textlight, fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(width: 4),
                         InkWell(
                           onTap: _toggleBalance,
                           child: Icon(_showBalance ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                              color: AppColors.background, size: 16),
+                              color: AppColors.textlight, size: 16),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Text(
                       _showBalance ? '₱${balance.toStringAsFixed(2)}' : '••••',
-                      style: const TextStyle(color: AppColors.background, fontSize: 28, fontWeight: FontWeight.w800),
+                      style: const TextStyle(color: AppColors.textlight, fontSize: 28, fontWeight: FontWeight.w800),
                     ),
                   ],
                 ),
               ),
-              Container(width: 1, height: 48, color: AppColors.background.withValues(alpha: 0.3)),
+              Container(width: 1, height: 48, color: AppColors.surface.withValues(alpha: 0.3)),
               const SizedBox(width: 20),
               Expanded(
                 child: Column(
@@ -95,15 +95,15 @@ class _EarningScreenState extends State<EarningScreen> {
                   children: [
                     const Row(
                       children: [
-                        Icon(Icons.card_giftcard, color: AppColors.background, size: 16),
+                        Icon(Icons.card_giftcard, color: AppColors.textlight, size: 16),
                         SizedBox(width: 4),
-                        Text('Points', style: TextStyle(color: AppColors.background, fontSize: 13, fontWeight: FontWeight.w600)),
+                        Text('Points', style: TextStyle(color: AppColors.textlight, fontSize: 13, fontWeight: FontWeight.w600)),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Text(
                       _showBalance ? '$points' : '••••',
-                      style: const TextStyle(color: AppColors.background, fontSize: 28, fontWeight: FontWeight.w800),
+                      style: const TextStyle(color: AppColors.textlight, fontSize: 28, fontWeight: FontWeight.w800),
                     ),
                   ],
                 ),
@@ -141,7 +141,7 @@ class _EarningScreenState extends State<EarningScreen> {
                       child: CircleAvatar(
                         radius: 26,
                         backgroundColor: AppColors.background,
-                        child: const Icon(Icons.person, color: AppColors.grey),
+                        child: Icon(Icons.person, color: AppColors.textdark.withValues(alpha: 0.55)),
                       ),
                     ))
                 .toList(),
@@ -151,10 +151,10 @@ class _EarningScreenState extends State<EarningScreen> {
         const Text('Service History', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
         const SizedBox(height: 12),
         if (paidJobs.isEmpty)
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Center(
-              child: Text('Completed and paid jobs will show up here.', style: TextStyle(color: AppColors.grey, fontSize: 12)),
+              child: Text('Completed and paid jobs will show up here.', style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55), fontSize: 12)),
             ),
           )
         else
@@ -164,7 +164,7 @@ class _EarningScreenState extends State<EarningScreen> {
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)), borderRadius: BorderRadius.circular(16)),
+              decoration: BoxDecoration(border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)), borderRadius: BorderRadius.circular(16)),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -174,14 +174,14 @@ class _EarningScreenState extends State<EarningScreen> {
                       children: [
                         Text(job.clientName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                         const SizedBox(height: 2),
-                        Text(problem.issue, style: const TextStyle(fontSize: 12, color: AppColors.dark)),
+                        Text(problem.issue, style: const TextStyle(fontSize: 12, color: AppColors.textdark)),
                         const SizedBox(height: 2),
-                        Text(_formatDate(job.paymentCompletedAt), style: const TextStyle(fontSize: 11, color: AppColors.grey)),
+                        Text(_formatDate(job.paymentCompletedAt), style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(color: AppColors.green.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
-                          child: const Text('Paid', style: TextStyle(fontSize: 11, color: AppColors.green, fontWeight: FontWeight.w600)),
+                          decoration: BoxDecoration(color: AppColors.success.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
+                          child: const Text('Paid', style: TextStyle(fontSize: 11, color: AppColors.success, fontWeight: FontWeight.w600)),
                         ),
                       ],
                     ),
@@ -189,7 +189,7 @@ class _EarningScreenState extends State<EarningScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(quote?.price ?? '—', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.green)),
+                      Text(quote?.price ?? '—', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.success)),
                       const SizedBox(height: 6),
                       Row(
                         children: [

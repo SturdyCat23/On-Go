@@ -146,15 +146,15 @@ class _JobChatScreenState extends State<JobChatScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.background,
+        foregroundColor: AppColors.textmedium,
         title: Text(widget.otherPartyName),
       ),
       body: Column(
         children: [
           Expanded(
             child: messages.isEmpty
-                ? const Center(
-                    child: Text('Send a message to get started', style: TextStyle(color: AppColors.grey, fontSize: 12)),
+                ? Center(
+                    child: Text('Send a message to get started', style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55), fontSize: 12)),
                   )
                 : ListView.builder(
                     controller: _scrollController,
@@ -195,7 +195,7 @@ class _JobChatScreenState extends State<JobChatScreen> {
                                       repliedTo.text ?? (repliedTo.imagePath != null ? 'Photo' : ''),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 11, color: AppColors.grey),
+                                      style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55)),
                                     ),
                                   ),
                                 msg.imagePath != null
@@ -211,7 +211,7 @@ class _JobChatScreenState extends State<JobChatScreen> {
                                           child: Image.file(File(msg.imagePath!), width: 180, fit: BoxFit.cover),
                                         ),
                                       )
-                                    : Text(msg.text ?? '', style: const TextStyle(fontSize: 13, color: AppColors.dark)),
+                                    : Text(msg.text ?? '', style: const TextStyle(fontSize: 13, color: AppColors.textdark)),
                               ],
                             ),
                           ),
@@ -238,7 +238,7 @@ class _JobChatScreenState extends State<JobChatScreen> {
                           _replyingTo!.text ?? (_replyingTo!.imagePath != null ? 'Photo' : ''),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 12, color: AppColors.grey),
+                          style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55)),
                         ),
                       ],
                     ),
@@ -257,11 +257,11 @@ class _JobChatScreenState extends State<JobChatScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.camera_alt_outlined, color: AppColors.grey),
+                    icon: Icon(Icons.camera_alt_outlined, color: AppColors.textdark.withValues(alpha: 0.55)),
                     onPressed: () => _pickImage(ImageSource.camera),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.image_outlined, color: AppColors.grey),
+                    icon: Icon(Icons.image_outlined, color: AppColors.textdark.withValues(alpha: 0.55)),
                     onPressed: () => _pickImage(ImageSource.gallery),
                   ),
                   Expanded(

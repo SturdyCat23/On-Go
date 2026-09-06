@@ -45,11 +45,11 @@ class _AuditTabState extends State<AuditTab> {
   Color _colorFor(AuditAction a) {
     switch (a) {
       case AuditAction.added:
-        return AppColors.green;
+        return AppColors.success;
       case AuditAction.removed:
         return AppColors.primary;
       case AuditAction.promoted:
-        return AppColors.yellow;
+        return AppColors.warning;
     }
   }
 
@@ -88,9 +88,9 @@ class _AuditTabState extends State<AuditTab> {
                       margin: const EdgeInsets.only(bottom: 10),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                          color: AppColors.background,
+                          color: AppColors.surface,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.grey.withValues(alpha: 0.3))),
+                          border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2))),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -121,13 +121,13 @@ class _AuditTabState extends State<AuditTab> {
                                   ],
                                 ),
                                 const SizedBox(height: 2),
-                                Text('${e.role} · by ${e.actorName}', style: const TextStyle(fontSize: 13, color: AppColors.grey)),
+                                Text('${e.role} · by ${e.actorName}', style: TextStyle(fontSize: 13, color: AppColors.textdark.withValues(alpha: 0.55))),
                                 if (e.reason != null) ...[
                                   const SizedBox(height: 2),
                                   Text(e.reason!, style: const TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w600)),
                                 ],
                                 const SizedBox(height: 4),
-                                Text(formatDateTime(e.date), style: const TextStyle(fontSize: 11, color: AppColors.grey)),
+                                Text(formatDateTime(e.date), style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
                               ],
                             ),
                           ),
@@ -148,11 +148,11 @@ class _AuditTabState extends State<AuditTab> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.background,
+          color: selected ? AppColors.primary : AppColors.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: selected ? AppColors.primary : AppColors.grey),
+          border: Border.all(color: selected ? AppColors.primary : AppColors.textdark.withValues(alpha: 0.2)),
         ),
-        child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.background : AppColors.dark)),
+        child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.textlight : AppColors.textdark)),
       ),
     );
   }

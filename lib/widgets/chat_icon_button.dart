@@ -46,8 +46,8 @@ class _ChatIconButtonState extends State<ChatIconButton> {
           Container(
             width: 36,
             height: 36,
-            decoration: BoxDecoration(color: AppColors.blue.withValues(alpha: 0.12), shape: BoxShape.circle),
-            child: const Icon(Icons.chat_bubble_outline, color: AppColors.blue, size: 18),
+            decoration: BoxDecoration(color: AppColors.info.withValues(alpha: 0.12), shape: BoxShape.circle),
+            child: const Icon(Icons.chat_bubble_outline, color: AppColors.info, size: 18),
           ),
           if (unread > 0)
             Positioned(
@@ -60,7 +60,7 @@ class _ChatIconButtonState extends State<ChatIconButton> {
                 child: Text(
                   unread > 9 ? '9+' : '$unread',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 9, color: AppColors.background, fontWeight: FontWeight.w700),
+                  style: const TextStyle(fontSize: 9, color: AppColors.textlight, fontWeight: FontWeight.w700),
                 ),
               ),
             ),

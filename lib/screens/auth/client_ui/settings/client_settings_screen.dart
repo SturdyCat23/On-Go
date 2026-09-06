@@ -68,26 +68,26 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.background,
+        foregroundColor: AppColors.textmedium,
         title: const Text('Settings'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const Text('SECURITY', style: TextStyle(fontSize: 11, color: AppColors.grey, fontWeight: FontWeight.w600)),
+          Text('SECURITY', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w600)),
           const SizedBox(height: 12),
           if (!hasLocalPassword) ...[
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.info_outline, size: 18, color: AppColors.grey),
+                  Icon(Icons.info_outline, size: 18, color: AppColors.textdark.withValues(alpha: 0.55)),
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'Your account uses Google Sign-In, so there\'s no On Go password to change here. Manage your password from your Google account instead.',
-                      style: TextStyle(fontSize: 12, color: AppColors.grey),
+                      style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55)),
                     ),
                   ),
                 ],
@@ -132,7 +132,7 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                child: const Text('Update Password', style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700)),
+                child: const Text('Update Password', style: TextStyle(color: AppColors.textmedium, fontWeight: FontWeight.w700)),
               ),
             ),
           ],
@@ -171,7 +171,7 @@ class _PasswordField extends StatelessWidget {
           decoration: InputDecoration(
             hintText: '••••••••',
             suffixIcon: IconButton(
-              icon: Icon(obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20, color: AppColors.grey),
+              icon: Icon(obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20, color: AppColors.textdark.withValues(alpha: 0.55)),
               onPressed: onToggleObscure,
             ),
           ),

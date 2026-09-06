@@ -11,7 +11,7 @@ class MechanicNotificationsScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.background,
+        foregroundColor: AppColors.textmedium,
         title: const Text('Notifications'),
       ),
       body: AnimatedBuilder(
@@ -21,11 +21,11 @@ class MechanicNotificationsScreen extends StatelessWidget {
 
           if (notifications.isEmpty) {
             return Padding(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(Icons.notifications_none, size: 48, color: AppColors.grey),
+                children: [
+                  Icon(Icons.notifications_none, size: 48, color: AppColors.textdark.withValues(alpha: 0.55)),
                   SizedBox(height: 12),
                   Text(
                     'No notifications yet',
@@ -35,7 +35,7 @@ class MechanicNotificationsScreen extends StatelessWidget {
                   Text(
                     'Accepted quotes and emergency jobs will appear here once they arrive.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: AppColors.grey),
+                    style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55)),
                   ),
                 ],
               ),
@@ -57,12 +57,12 @@ class MechanicNotificationsScreen extends StatelessWidget {
               return Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.background,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.grey.withValues(alpha: 0.35)),
+                  border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.grey.withValues(alpha: 0.08),
+                      color: AppColors.textdark.withValues(alpha: 0.12),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -73,7 +73,7 @@ class MechanicNotificationsScreen extends StatelessWidget {
                   children: [
                     Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 6),
-                    Text(subtitle, style: const TextStyle(fontSize: 13, color: AppColors.grey)),
+                    Text(subtitle, style: TextStyle(fontSize: 13, color: AppColors.textdark.withValues(alpha: 0.55))),
                     const SizedBox(height: 12),
                     Row(
                       children: [
@@ -81,7 +81,7 @@ class MechanicNotificationsScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Mechanic', style: TextStyle(fontSize: 11, color: AppColors.grey)),
+                              Text('Mechanic', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
                               const SizedBox(height: 4),
                               Text(quote.mechanicName, style: const TextStyle(fontWeight: FontWeight.w600)),
                             ],
@@ -91,7 +91,7 @@ class MechanicNotificationsScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Price', style: TextStyle(fontSize: 11, color: AppColors.grey)),
+                              Text('Price', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
                               const SizedBox(height: 4),
                               Text(quote.price, style: const TextStyle(fontWeight: FontWeight.w600)),
                             ],
@@ -110,7 +110,7 @@ class MechanicNotificationsScreen extends StatelessWidget {
                         const Spacer(),
                         Text(
                           'ETA ${quote.eta}',
-                          style: const TextStyle(fontSize: 12, color: AppColors.grey),
+                          style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55)),
                         ),
                       ],
                     ),

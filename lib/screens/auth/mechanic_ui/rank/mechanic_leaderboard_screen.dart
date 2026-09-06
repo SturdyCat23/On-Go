@@ -71,18 +71,18 @@ class _MechanicLeaderboardScreenState extends State<MechanicLeaderboardScreen> {
       return _ascending ? cmp : -cmp;
     });
     return list;
-  }
+  } 
 
   String _reviewLabel(int count) => count >= 1000 ? '${(count / 1000).toStringAsFixed(0)}k reviews' : '$count reviews';
 
   Widget _trailingFor(_Leader leader) {
     switch (_filter) {
       case _RankFilter.rank:
-        return Text(leader.tier, style: const TextStyle(fontSize: 14, color: AppColors.dark));
+        return Text(leader.tier, style: const TextStyle(fontSize: 14, color: AppColors.textdark));
       case _RankFilter.ratings:
         return RatingStars(rating: leader.rating);
       case _RankFilter.reviews:
-        return Text(_reviewLabel(leader.reviewCount), style: const TextStyle(fontSize: 14, color: AppColors.dark));
+        return Text(_reviewLabel(leader.reviewCount), style: const TextStyle(fontSize: 14, color: AppColors.textdark));
     }
   }
 
@@ -102,7 +102,7 @@ class _MechanicLeaderboardScreenState extends State<MechanicLeaderboardScreen> {
           color: selected ? AppColors.primary : AppColors.background,
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.background : AppColors.dark)),
+        child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.textmedium : AppColors.textdark)),
       ),
     );
   }
@@ -147,18 +147,17 @@ class _MechanicLeaderboardScreenState extends State<MechanicLeaderboardScreen> {
               final rank = entry.key + 1;
               final leader = entry.value;
               final isYou = leader.name == myName;
-              return InkWell(
+              return GestureDetector(
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const MechanicProfileScreen()),
                 ),
-                borderRadius: BorderRadius.circular(10),
                 child: Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
                   color: isYou ? AppColors.primary.withValues(alpha: 0.06) : null,
-                  border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)),
+                  border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
@@ -168,10 +167,10 @@ class _MechanicLeaderboardScreenState extends State<MechanicLeaderboardScreen> {
                       child: Text('$rank', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                     ),
                     const SizedBox(width: 8),
-                    const CircleAvatar(
+                    CircleAvatar(
                       radius: 20,
                       backgroundColor: AppColors.background,
-                      child: Icon(Icons.person, color: AppColors.grey),
+                      child: Icon(Icons.person, color: AppColors.textdark.withValues(alpha: 0.55)),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -183,7 +182,7 @@ class _MechanicLeaderboardScreenState extends State<MechanicLeaderboardScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                               decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(4)),
-                              child: const Text('You', style: TextStyle(fontSize: 10, color: AppColors.background, fontWeight: FontWeight.w700)),
+                              child: const Text('You', style: TextStyle(fontSize: 10, color: AppColors.textlight, fontWeight: FontWeight.w700)),
                             ),
                           ],
                         ],
@@ -211,7 +210,7 @@ class _MechanicLeaderboardScreenState extends State<MechanicLeaderboardScreen> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
                 boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 12, offset: const Offset(0, 4))],

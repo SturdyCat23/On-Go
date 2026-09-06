@@ -86,13 +86,13 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
             color: AppColors.background,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Center(
+          child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.verified_outlined, size: 48, color: AppColors.grey),
+                Icon(Icons.verified_outlined, size: 48, color: AppColors.textdark.withValues(alpha: 0.55)),
                 SizedBox(height: 8),
-                Text('Certificate preview', style: TextStyle(color: AppColors.grey, fontSize: 12)),
+                Text('Certificate preview', style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55), fontSize: 12)),
               ],
             ),
           ),
@@ -177,20 +177,7 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
                         backgroundImage: photo == null
                             ? null
                             : (_account.photoIsNetwork ? NetworkImage(photo) : FileImage(File(photo))) as ImageProvider?,
-                        child: photo == null ? const Icon(Icons.person, color: AppColors.grey, size: 44) : null,
-                      ),
-                      Positioned(
-                        right: 0,
-                        bottom: 0,
-                        child: InkWell(
-                          onTap: _changePhoto,
-                          borderRadius: BorderRadius.circular(14),
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(color: AppColors.grey, shape: BoxShape.circle),
-                            child: const Icon(Icons.camera_alt, color: AppColors.background, size: 14),
-                          ),
-                        ),
+                        child: photo == null ? Icon(Icons.person, color: AppColors.textdark.withValues(alpha: 0.55), size: 44) : null,
                       ),
                     ],
                   ),
@@ -211,14 +198,14 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: (approvalNote == 'Account Rejected' ? AppColors.primary : AppColors.yellow).withValues(alpha: 0.15),
+                                  color: (approvalNote == 'Account Rejected' ? AppColors.primary : AppColors.warning).withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(approvalNote,
                                     style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w700,
-                                        color: approvalNote == 'Account Rejected' ? AppColors.primary : const Color(0xFFB07A00))),
+                                        color: approvalNote == 'Account Rejected' ? AppColors.primary : AppColors.warning)),
                               ),
                             ],
                           ],
@@ -226,9 +213,9 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
                         const SizedBox(height: 2),
                         Row(
                           children: [
-                            const Icon(Icons.location_on_outlined, size: 14, color: AppColors.grey),
+                            Icon(Icons.location_on_outlined, size: 14, color: AppColors.textdark.withValues(alpha: 0.55)),
                             const SizedBox(width: 2),
-                            Text('Puerto Princesa City', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.grey)),
+                            Text('Puerto Princesa City', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textdark.withValues(alpha: 0.55))),
                           ],
                         ),
                       ],
@@ -276,10 +263,10 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
                   if (reviews.isNotEmpty)
                     Row(
                       children: [
-                        const Icon(Icons.star, size: 14, color: AppColors.yellow),
+                        const Icon(Icons.star, size: 14, color: AppColors.warning),
                         const SizedBox(width: 2),
                         Text(average.toStringAsFixed(1), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-                        Text(' (${reviews.length})', style: const TextStyle(fontSize: 12, color: AppColors.grey)),
+                        Text(' (${reviews.length})', style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
                       ],
                     ),
                 ],
@@ -305,9 +292,9 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
               // screen, and ReviewStore.submitReview would throw at runtime
               // even if something tried to call it from this tree.
               if (reviews.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Text('No reviews yet.', style: TextStyle(color: AppColors.grey, fontSize: 13)),
+                  child: Text('No reviews yet.', style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55), fontSize: 13)),
                 )
               else
                 ...reviews.map((r) => Padding(
@@ -334,7 +321,7 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.background,
+        foregroundColor: AppColors.textmedium,
         title: const Text('Mechanic Profile'),
       ),
       body: content,
@@ -368,14 +355,14 @@ class _StatBox extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)),
+          border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
           children: [
             Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.primary)),
             const SizedBox(height: 2),
-            Text(label, style: const TextStyle(fontSize: 11, color: AppColors.dark)),
+            Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textdark)),
           ],
         ),
       ),
@@ -392,13 +379,13 @@ class _CertificationRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Icon(Icons.check_circle, color: AppColors.green, size: 18),
+        const Icon(Icons.check_circle, color: AppColors.success, size: 18),
         const SizedBox(width: 8),
         Expanded(child: Text(label, style: const TextStyle(fontSize: 13))),
         TextButton(
           onPressed: onView,
           style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
-          child: const Text('View', style: TextStyle(color: AppColors.blue, fontSize: 12, fontWeight: FontWeight.w600)),
+          child: const Text('View', style: TextStyle(color: AppColors.info, fontSize: 12, fontWeight: FontWeight.w600)),
         ),
       ],
     );
@@ -419,8 +406,8 @@ class _FilterChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.background,
-          border: Border.all(color: selected ? AppColors.primary : AppColors.grey),
+          color: selected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.surface,
+          border: Border.all(color: selected ? AppColors.primary : AppColors.textdark.withValues(alpha: 0.2)),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
@@ -428,7 +415,7 @@ class _FilterChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: selected ? AppColors.primary : AppColors.grey,
+            color: selected ? AppColors.primary : AppColors.textdark.withValues(alpha: 0.55),
           ),
         ),
       ),
@@ -462,15 +449,15 @@ class _ReviewCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            const CircleAvatar(
-                radius: 16, backgroundColor: AppColors.background, child: Icon(Icons.person, size: 18, color: AppColors.grey)),
+            CircleAvatar(
+                radius: 16, backgroundColor: AppColors.background, child: Icon(Icons.person, size: 18, color: AppColors.textdark.withValues(alpha: 0.55))),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                  Text(timeAgo, style: const TextStyle(fontSize: 11, color: AppColors.grey)),
+                  Text(timeAgo, style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
                 ],
               ),
             ),
@@ -480,11 +467,11 @@ class _ReviewCard extends StatelessWidget {
         Row(
           children: List.generate(
             5,
-            (i) => Icon(i < rating ? Icons.star : Icons.star_border, color: AppColors.yellow, size: 14),
+            (i) => Icon(i < rating ? Icons.star : Icons.star_border, color: AppColors.warning, size: 14),
           ),
         ),
         const SizedBox(height: 8),
-        Text(comment, style: const TextStyle(fontSize: 12, color: AppColors.dark)),
+        Text(comment, style: const TextStyle(fontSize: 12, color: AppColors.textdark)),
         const SizedBox(height: 8),
         InkWell(
           onTap: onToggleLike,
@@ -495,12 +482,12 @@ class _ReviewCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(likedByMe ? Icons.thumb_up_alt : Icons.thumb_up_alt_outlined,
-                    size: 14, color: likedByMe ? AppColors.primary : AppColors.grey),
+                    size: 14, color: likedByMe ? AppColors.primary : AppColors.textdark.withValues(alpha: 0.55)),
                 const SizedBox(width: 4),
                 Text('$helpfulCount',
                     style: TextStyle(
                         fontSize: 11,
-                        color: likedByMe ? AppColors.primary : AppColors.grey,
+                        color: likedByMe ? AppColors.primary : AppColors.textdark.withValues(alpha: 0.55),
                         fontWeight: likedByMe ? FontWeight.w700 : FontWeight.normal)),
               ],
             ),

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class PhotoGalleryViewerScreen extends StatefulWidget {
   final List<String> photoPaths;
@@ -42,7 +43,7 @@ class _PhotoGalleryViewerScreenState extends State<PhotoGalleryViewerScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.textmedium,
         elevation: 0,
         title: multiple ? Text('${_index + 1} / ${widget.photoPaths.length}') : null,
       ),
@@ -61,7 +62,7 @@ class _PhotoGalleryViewerScreenState extends State<PhotoGalleryViewerScreen> {
                   File(widget.photoPaths[i]),
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stack) =>
-                      const Icon(Icons.broken_image_outlined, color: Colors.white38, size: 64),
+                      Icon(Icons.broken_image_outlined, color: AppColors.textmedium.withValues(alpha: 0.38), size: 64),
                 ),
               ),
             ),
@@ -97,7 +98,7 @@ class _NavArrow extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(6),
           decoration: const BoxDecoration(color: Colors.black45, shape: BoxShape.circle),
-          child: Icon(icon, color: Colors.white, size: 32),
+          child: Icon(icon, color: AppColors.textmedium, size: 32),
         ),
       ),
     );

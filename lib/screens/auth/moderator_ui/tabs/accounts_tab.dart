@@ -51,7 +51,7 @@ class _AccountsTabState extends State<AccountsTab> {
         ),
         Expanded(
           child: accounts.isEmpty
-              ? const Center(child: Text('No accounts found', style: TextStyle(color: AppColors.grey)))
+              ? Center(child: Text('No accounts found', style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55))))
               : ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: accounts
@@ -59,7 +59,7 @@ class _AccountsTabState extends State<AccountsTab> {
                             margin: const EdgeInsets.only(bottom: 10),
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                                border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)),
+                                border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
                                 borderRadius: BorderRadius.circular(16)),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,8 +67,8 @@ class _AccountsTabState extends State<AccountsTab> {
                                 Container(
                                   width: 44,
                                   height: 44,
-                                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.dark, width: 1.3)),
-                                  child: const Icon(Icons.person_outline, size: 26, color: AppColors.dark),
+                                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.textdark, width: 1.3)),
+                                  child: const Icon(Icons.person_outline, size: 26, color: AppColors.textdark),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -81,23 +81,23 @@ class _AccountsTabState extends State<AccountsTab> {
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                             decoration: BoxDecoration(
-                                                color: AppColors.green.withValues(alpha: 0.12),
+                                                color: AppColors.success.withValues(alpha: 0.12),
                                                 borderRadius: BorderRadius.circular(12)),
-                                            child: const Text('active', style: TextStyle(fontSize: 11, color: AppColors.green, fontWeight: FontWeight.w700)),
+                                            child: const Text('active', style: TextStyle(fontSize: 11, color: AppColors.success, fontWeight: FontWeight.w700)),
                                           ),
                                         ],
                                       ),
                                       const SizedBox(height: 2),
                                       Row(
                                         children: [
-                                          Text(a.userNumber, style: const TextStyle(fontSize: 13, color: AppColors.grey)),
+                                          Text(a.userNumber, style: TextStyle(fontSize: 13, color: AppColors.textdark.withValues(alpha: 0.55))),
                                           const SizedBox(width: 8),
                                           _roleBadge(a.role),
                                         ],
                                       ),
                                       const SizedBox(height: 2),
                                       Text('Approved ${formatShortDate(a.reviewedAt ?? a.submittedAt)}',
-                                          style: const TextStyle(fontSize: 13, color: AppColors.grey)),
+                                          style: TextStyle(fontSize: 13, color: AppColors.textdark.withValues(alpha: 0.55))),
                                     ],
                                   ),
                                 ),
@@ -112,7 +112,7 @@ class _AccountsTabState extends State<AccountsTab> {
   }
 
   Widget _roleBadge(AccountRole role) {
-    final color = role == AccountRole.mechanic ? AppColors.primary : AppColors.blue;
+    final color = role == AccountRole.mechanic ? AppColors.primary : AppColors.info;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),

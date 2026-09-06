@@ -54,11 +54,11 @@ class _OverviewTabState extends State<OverviewTab> {
           mainAxisSpacing: 12,
           childAspectRatio: 1.3,
           children: [
-            AdminStatCard(icon: Icons.groups, iconColor: AppColors.purple, value: '${_admin.activeModCount}', label: 'Active Mods'),
-            AdminStatCard(icon: Icons.watch_later_outlined, iconColor: AppColors.yellow, value: '${_moderation.pending.length}', label: 'Queue'),
+            AdminStatCard(icon: Icons.groups, iconColor: AppColors.info, value: '${_admin.activeModCount}', label: 'Active Mods'),
+            AdminStatCard(icon: Icons.watch_later_outlined, iconColor: AppColors.warning, value: '${_moderation.pending.length}', label: 'Queue'),
             AdminStatCard(
               icon: Icons.attach_money,
-              iconColor: AppColors.green,
+              iconColor: AppColors.success,
               value: income.isEmpty ? '₱0' : formatAdminPeso(income.last.revenue),
               label: income.isEmpty ? 'Revenue' : '${income.last.month} Revenue',
             ),
@@ -71,24 +71,24 @@ class _OverviewTabState extends State<OverviewTab> {
           children: [
             Text('Revenue — ${income.isEmpty ? DateTime.now().year : income.first.year}',
                 style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-            const Text('YTD', style: TextStyle(fontSize: 11, color: AppColors.grey, fontWeight: FontWeight.w600)),
+            Text('YTD', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w600)),
           ],
         ),
         const SizedBox(height: 12),
         if (income.isEmpty)
-          const SizedBox(
+          SizedBox(
             height: _chartHeight,
-            child: Center(child: Text('No payments yet', style: TextStyle(color: AppColors.grey, fontSize: 12))),
+            child: Center(child: Text('No payments yet', style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55), fontSize: 12))),
           )
         else
           _buildLineChart(income),
         const SizedBox(height: 24),
-        const Text('MODERATOR THROUGHPUT', style: TextStyle(fontSize: 11, color: AppColors.grey, fontWeight: FontWeight.w600)),
+        Text('MODERATOR THROUGHPUT', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         if (throughput.isEmpty)
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 8),
-            child: Text('No moderators yet', style: TextStyle(color: AppColors.grey, fontSize: 12)),
+            child: Text('No moderators yet', style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55), fontSize: 12)),
           )
         else
           ...throughput.map((m) => Padding(
@@ -97,8 +97,8 @@ class _OverviewTabState extends State<OverviewTab> {
                   children: [
                     CircleAvatar(
                         radius: 14,
-                        backgroundColor: AppColors.grey.withValues(alpha: 0.25),
-                        child: Text(m.initials, style: const TextStyle(fontSize: 10, color: AppColors.dark, fontWeight: FontWeight.w700))),
+                        backgroundColor: AppColors.textdark.withValues(alpha: 0.2),
+                        child: Text(m.initials, style: const TextStyle(fontSize: 10, color: AppColors.textdark, fontWeight: FontWeight.w700))),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -111,7 +111,7 @@ class _OverviewTabState extends State<OverviewTab> {
                             child: LinearProgressIndicator(
                               value: maxActions == 0 ? 0 : m.actionsHandled / maxActions,
                               minHeight: 6,
-                              backgroundColor: AppColors.grey.withValues(alpha: 0.25),
+                              backgroundColor: AppColors.textdark.withValues(alpha: 0.2),
                               valueColor: const AlwaysStoppedAnimation(AppColors.primary),
                             ),
                           ),
@@ -215,7 +215,7 @@ class _OverviewTabState extends State<OverviewTab> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 10,
-                      color: e.key == idx ? AppColors.blue : AppColors.grey,
+                      color: e.key == idx ? AppColors.info : AppColors.textdark.withValues(alpha: 0.55),
                       fontWeight: e.key == idx ? FontWeight.w700 : FontWeight.w400,
                     ),
                   ),
@@ -239,7 +239,7 @@ class _LineChartPainter extends CustomPainter {
     if (income.isEmpty) return;
 
     final gridPaint = Paint()
-      ..color = AppColors.grey.withValues(alpha: 0.3)
+      ..color = AppColors.textdark.withValues(alpha: 0.12)
       ..strokeWidth = 1;
     for (var i = 0; i <= 4; i++) {
       final y = size.height * i / 4;
@@ -247,7 +247,7 @@ class _LineChartPainter extends CustomPainter {
     }
 
     final linePaint = Paint()
-      ..color = AppColors.blue
+      ..color = AppColors.info
       ..strokeWidth = 2.5
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -255,7 +255,7 @@ class _LineChartPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [AppColors.blue.withValues(alpha: 0.18), AppColors.blue.withValues(alpha: 0.0)],
+        colors: [AppColors.info.withValues(alpha: 0.18), AppColors.info.withValues(alpha: 0.0)],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
 
     final dx = size.width / (income.length - 1).clamp(1, income.length);
@@ -288,7 +288,7 @@ class _LineChartPainter extends CustomPainter {
       final highlight = points[highlightIndex!.clamp(0, points.length - 1)];
       _drawDashedLine(canvas, Offset(highlight.dx, highlight.dy), Offset(highlight.dx, size.height));
 
-      canvas.drawCircle(highlight, 5, Paint()..color = AppColors.blue);
+      canvas.drawCircle(highlight, 5, Paint()..color = AppColors.info);
       canvas.drawCircle(
         highlight,
         5,
@@ -307,7 +307,7 @@ class _LineChartPainter extends CustomPainter {
     if (totalLength == 0) return;
     final dashCount = (totalLength / (dashWidth + dashSpace)).floor();
     final paint = Paint()
-      ..color = AppColors.grey
+      ..color = AppColors.textdark.withValues(alpha: 0.12)
       ..strokeWidth = 1;
     final dir = (end - start) / totalLength;
     var current = start;

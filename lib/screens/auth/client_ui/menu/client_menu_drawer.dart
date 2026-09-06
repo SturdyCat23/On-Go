@@ -46,18 +46,18 @@ class _ClientMenuDrawerState extends State<ClientMenuDrawer> {
               children: [
                 CircleAvatar(
                   radius: 28,
-                  backgroundColor: AppColors.background.withValues(alpha: 0.25),
+                  backgroundColor: AppColors.surface.withValues(alpha: 0.25),
                   backgroundImage: photo == null
                       ? null
                       : (_store.photoIsNetwork ? NetworkImage(photo) : FileImage(File(photo))) as ImageProvider?,
-                  child: photo == null ? const Icon(Icons.person_outline, color: AppColors.background, size: 32) : null,
+                  child: photo == null ? const Icon(Icons.person_outline, color: AppColors.textlight, size: 32) : null,
                 ),
                 const SizedBox(width: 14),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(displayName, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.background, fontWeight: FontWeight.w700)),
-                    Text(_store.isDemo ? 'Demo Mode' : 'Client', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70)),
+                    Text(displayName, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.textlight, fontWeight: FontWeight.w700)),
+                    Text(_store.isDemo ? 'Demo Mode' : 'Client', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textlight.withValues(alpha: 0.7))),
                   ],
                 ),
               ],
@@ -119,8 +119,8 @@ class _DrawerItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, color: AppColors.dark),
-      title: Text(label, style: const TextStyle(color: AppColors.dark, fontWeight: FontWeight.w500, fontSize: 14)),
+      leading: Icon(icon, color: AppColors.textdark),
+      title: Text(label, style: const TextStyle(color: AppColors.textdark, fontWeight: FontWeight.w500, fontSize: 14)),
       onTap: onTap,
     );
   }

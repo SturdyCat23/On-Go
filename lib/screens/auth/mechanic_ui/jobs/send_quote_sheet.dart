@@ -71,7 +71,7 @@ class _SendQuoteSheetState extends State<SendQuoteSheet> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
         decoration: const BoxDecoration(
-          color: AppColors.background,
+          color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           border: Border(top: BorderSide(color: AppColors.primary, width: 1.5)),
         ),
@@ -160,7 +160,7 @@ class _QuoteField extends StatelessWidget {
           decoration: InputDecoration(
             prefixText: keyboardType == TextInputType.number ? '₱ ' : null,
             isDense: true,
-            border: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.grey.withValues(alpha: 0.3))),
+            border: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.textdark.withValues(alpha: 0.2))),
           ),
         ),
       ],

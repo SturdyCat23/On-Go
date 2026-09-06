@@ -17,7 +17,7 @@ class OnGoHeader extends StatelessWidget {
           const Text(
             'On Go',
             style: TextStyle(
-              color: AppColors.background,
+              color: AppColors.textmedium,
               fontSize: 28,
               fontWeight: FontWeight.w800,
               letterSpacing: 1,
@@ -27,7 +27,7 @@ class OnGoHeader extends StatelessWidget {
           Text(
             subtitle,
             style: const TextStyle(
-              color: AppColors.background,
+              color: AppColors.textmedium,
               fontSize: 13,
             ),
           ),
@@ -70,7 +70,7 @@ class OnGoTextField extends StatelessWidget {
           style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: AppColors.dark,
+            color: AppColors.textdark,
           ),
         ),
         const SizedBox(height: 6),
@@ -139,7 +139,7 @@ class RegistrationStepper extends StatelessWidget {
                 return Expanded(
                   child: Container(
                     height: 3,
-                    color: active ? AppColors.green : AppColors.grey,
+                    color: active ? AppColors.success : AppColors.textdark.withValues(alpha: 0.2),
                   ),
                 );
               }
@@ -158,19 +158,19 @@ class RegistrationStepper extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: (done || current || step <= highestCompletedStep)
-                      ? AppColors.green
-                      : AppColors.grey,
+                      ? AppColors.success
+                      : AppColors.textdark.withValues(alpha: 0.12),
                 ),
                 child: Center(
                   child: done || (step <= highestCompletedStep && !current)
                       ? const Icon(Icons.check,
-                          color: AppColors.background, size: 14)
+                          color: AppColors.textlight, size: 14)
                       : Text(
                           '$step',
                           style: TextStyle(
                             color: current
-                                ? AppColors.background
-                                : AppColors.grey,
+                              ? AppColors.textlight
+                                : AppColors.textdark.withValues(alpha: 0.55),
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -205,8 +205,8 @@ class RegistrationStepper extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 9,
                     color: (done || current)
-                        ? AppColors.green
-                        : AppColors.grey,
+                        ? AppColors.success
+                        : AppColors.textdark.withValues(alpha: 0.55),
                     fontWeight:
                         current ? FontWeight.w600 : FontWeight.normal,
                   ),
@@ -317,12 +317,12 @@ class AuthTextField extends StatelessWidget {
       controller: controller,
       obscureText: obscure,
       keyboardType: keyboardType,
-      style: const TextStyle(color: AppColors.dark),
+      style: const TextStyle(color: AppColors.textdark),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: AppColors.grey),
+        hintStyle: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55)),
         filled: true,
-        fillColor: AppColors.background,
+        fillColor: AppColors.surface,
         suffixIcon: suffixIcon,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -346,7 +346,7 @@ class AuthWhiteButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.surface,
         foregroundColor: AppColors.primary,
         minimumSize: const Size(double.infinity, 50),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

@@ -34,7 +34,7 @@ class OnGoAppBar extends StatelessWidget implements PreferredSizeWidget {
       centerTitle: false,
       leading: showMenuButton
           ? IconButton(
-              icon: const Icon(Icons.menu, color: AppColors.background),
+              icon: const Icon(Icons.menu, color: AppColors.textlight),
               onPressed: () => Scaffold.of(context).openDrawer(),
             )
           : const SizedBox(width: 48),
@@ -46,11 +46,11 @@ class OnGoAppBar extends StatelessWidget implements PreferredSizeWidget {
           children: [
             Text(
               'On Go',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppColors.background),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppColors.surface),
             ),
             Text(
               subtitle,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.background.withValues(alpha: 0.95)),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.surface.withValues(alpha: 0.95)),
             ),
           ],
         ),
@@ -95,7 +95,7 @@ class NotificationBell extends StatelessWidget {
     required this.count,
     this.onTap,
     this.badgeColor = AppColors.primary,
-    this.iconColor = AppColors.background,
+    this.iconColor = AppColors.surface,
   });
 
   @override
@@ -118,7 +118,7 @@ class NotificationBell extends StatelessWidget {
                 color: badgeColor,
                 shape: BoxShape.circle,
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 2, offset: Offset(0, 1)),
+                  BoxShadow(color: AppColors.textdark.withValues(alpha: 0.12), blurRadius: 2, offset: Offset(0, 1)),
                 ],
               ),
               child: Text(
@@ -127,7 +127,7 @@ class NotificationBell extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.background,
+                  color: AppColors.surface,
                 ),
               ),
             ),
@@ -148,7 +148,7 @@ class RatingStars extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.star, color: Colors.amber, size: size),
+        Icon(Icons.star, color: AppColors.warning, size: size),
         const SizedBox(width: 4),
         Text(
           rating.toStringAsFixed(1),
@@ -173,7 +173,7 @@ class TierBadge extends StatelessWidget {
       case 'Silver':
         return const Color(0xFF9E9E9E);
       default:
-        return AppColors.grey;
+        return AppColors.textdark.withValues(alpha: 0.55);
     }
   }
 
@@ -225,8 +225,8 @@ class RatingSummaryBars extends StatelessWidget {
                 child: Row(
                   children: [
                     Text('$star',
-                        style: const TextStyle(
-                            fontSize: 11, color: AppColors.grey)),
+                        style: TextStyle(
+                            fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
                     const SizedBox(width: 6),
                     Expanded(
                       child: ClipRRect(
@@ -235,9 +235,9 @@ class RatingSummaryBars extends StatelessWidget {
                           value: value,
                           minHeight: 6,
                           backgroundColor:
-                              AppColors.grey.withValues(alpha: 0.25),
+                              AppColors.textdark.withValues(alpha: 0.2),
                           valueColor:
-                              const AlwaysStoppedAnimation(Colors.amber),
+                              const AlwaysStoppedAnimation(AppColors.warning),
                         ),
                       ),
                     ),
@@ -260,13 +260,13 @@ class RatingSummaryBars extends StatelessWidget {
                 5,
                 (i) => Icon(
                   i < average.round() ? Icons.star : Icons.star_border,
-                  color: Colors.amber,
+                  color: AppColors.warning,
                   size: 14,
                 ),
               ),
             ),
             Text('$reviewCount reviews',
-                style: const TextStyle(fontSize: 10, color: AppColors.grey)),
+                style: TextStyle(fontSize: 10, color: AppColors.textdark.withValues(alpha: 0.55))),
           ],
         ),
       ],

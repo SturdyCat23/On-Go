@@ -293,16 +293,16 @@ class _DemoModeBanner extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.blue.withValues(alpha: 0.1),
+        color: AppColors.info.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.blue.withValues(alpha: 0.3)),
+        border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: const [
-          Icon(Icons.science_outlined, size: 14, color: AppColors.blue),
+          Icon(Icons.science_outlined, size: 14, color: AppColors.info),
           SizedBox(width: 6),
-          Text('DEMO MODE — for testing only', style: TextStyle(fontSize: 11, color: AppColors.blue, fontWeight: FontWeight.w700)),
+          Text('DEMO MODE — for testing only', style: TextStyle(fontSize: 11, color: AppColors.info, fontWeight: FontWeight.w700)),
         ],
       ),
     );
@@ -316,16 +316,16 @@ class _ApprovalBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rejected = status == ApprovalStatus.rejected;
-    final color = rejected ? AppColors.primary : const Color(0xFFB07A00);
+    final color = rejected ? AppColors.primary : AppColors.warning;
 
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: (rejected ? AppColors.primary : AppColors.yellow).withValues(alpha: 0.12),
+        color: (rejected ? AppColors.primary : AppColors.warning).withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: (rejected ? AppColors.primary : AppColors.yellow).withValues(alpha: 0.4)),
+        border: Border.all(color: (rejected ? AppColors.primary : AppColors.warning).withValues(alpha: 0.4)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,9 +355,9 @@ Color _urgencyColor(String urgency) {
     case 'Emergency':
       return AppColors.primary;
     case 'Urgent':
-      return AppColors.yellow;
+      return AppColors.warning;
     default:
-      return AppColors.green;
+      return AppColors.success;
   }
 }
 
@@ -427,7 +427,7 @@ class _JobTabBar extends StatelessWidget {
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: selected ? AppColors.background : AppColors.dark)),
+                        color: selected ? AppColors.surface : AppColors.textdark)),
               ),
             ),
           );
@@ -449,17 +449,17 @@ class _TipCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFE3F2FD),
+        color: AppColors.info.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.blue.withValues(alpha: 0.3)),
+        border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
       ),
       child: Text.rich(
         TextSpan(
           children: [
-            TextSpan(text: 'Tip: ', style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.blue)),
+            TextSpan(text: 'Tip: ', style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.info)),
             TextSpan(
               text: 'Send competitive quotes to win more jobs! Clients compare multiple mechanics before choosing.',
-              style: TextStyle(color: AppColors.blue),
+              style: TextStyle(color: AppColors.info),
             ),
           ],
         ),
@@ -480,13 +480,13 @@ class _LocationBlock extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.location_on_outlined, size: 14, color: AppColors.grey),
+            Icon(Icons.location_on_outlined, size: 14, color: AppColors.textdark.withValues(alpha: 0.55)),
             const SizedBox(width: 4),
-            const Text('Location', style: TextStyle(fontSize: 11, color: AppColors.grey)),
+            Text('Location', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
           ],
         ),
         const SizedBox(height: 2),
-        Text(location, style: const TextStyle(fontSize: 13, color: AppColors.dark)),
+        Text(location, style: const TextStyle(fontSize: 13, color: AppColors.textdark)),
       ],
     );
   }
@@ -502,10 +502,10 @@ class _DeadlineRow extends StatelessWidget {
       padding: const EdgeInsets.only(top: 8),
       child: Row(
         children: [
-          const Icon(Icons.schedule, size: 13, color: AppColors.grey),
+          Icon(Icons.schedule, size: 13, color: AppColors.textdark.withValues(alpha: 0.55)),
           const SizedBox(width: 4),
           Expanded(
-            child: Text(request.durationLabel, style: const TextStyle(fontSize: 11, color: AppColors.grey)),
+            child: Text(request.durationLabel, style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
           ),
         ],
       ),
@@ -538,10 +538,10 @@ class _AvailableTab extends StatelessWidget {
         const _TipCard(),
         const SizedBox(height: 16),
         if (requests.isEmpty)
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 40),
             child: Center(
-              child: Text('No available jobs right now', style: TextStyle(color: AppColors.grey)),
+              child: Text('No available jobs right now', style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55))),
             ),
           ),
         ...requests.map((request) {
@@ -592,7 +592,7 @@ class _JobCard extends StatelessWidget {
                   children: [
                     Text(request.clientName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                     Text(_timeAgo(request.createdAt),
-                        style: const TextStyle(fontSize: 12, color: AppColors.grey)),
+                        style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
                   ],
                 ),
               ),
@@ -607,7 +607,7 @@ class _JobCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(problem.issue, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
           const SizedBox(height: 2),
-          Text(problem.description, style: const TextStyle(fontSize: 12, color: AppColors.grey)),
+          Text(problem.description, style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
                     if (request.photoPaths.isNotEmpty) ...[
             const SizedBox(height: 10),
             JobPhotoPreview(photoPaths: request.photoPaths),
@@ -673,10 +673,10 @@ class _EmergencyTab extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         if (requests.isEmpty)
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 40),
             child: Center(
-              child: Text('No emergency jobs right now', style: TextStyle(color: AppColors.grey)),
+              child: Text('No emergency jobs right now', style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55))),
             ),
           ),
         ...requests.map((request) => Padding(
@@ -769,7 +769,7 @@ class _AcceptedTabState extends State<_AcceptedTab> {
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(value.label,
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.background : AppColors.dark)),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.textmedium : AppColors.textdark)),
       ),
     );
   }
@@ -777,7 +777,7 @@ class _AcceptedTabState extends State<_AcceptedTab> {
   @override
   Widget build(BuildContext context) {
     if (widget.requests.isEmpty) {
-      return const Center(child: Text('No active jobs', style: TextStyle(color: AppColors.grey)));
+      return Center(child: Text('No active jobs', style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55))));
     }
 
     return Stack(
@@ -789,7 +789,7 @@ class _AcceptedTabState extends State<_AcceptedTab> {
               children: [
                 Expanded(
                   child: Text('Sorted by ${_sort.label}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.grey, fontWeight: FontWeight.w600)),
+                      style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w600)),
                 ),
                 IconButton(
                   icon: const Icon(Icons.filter_list),
@@ -868,7 +868,7 @@ class _ActiveJobCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final problem = _splitProblem(request.problem);
     final label = _mechanicStatusLabel(request);
-    final statusColor = label == 'Awaiting Payment' ? AppColors.primary : AppColors.green;
+    final statusColor = label == 'Awaiting Payment' ? AppColors.primary : AppColors.success;
     final showCancel = !request.isEmergency && !request.navigating;
 
     return InkWell(
@@ -885,14 +885,14 @@ class _ActiveJobCard extends StatelessWidget {
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
-                      color: request.isEmergency ? AppColors.primary : AppColors.green, shape: BoxShape.circle),
+                      color: request.isEmergency ? AppColors.primary : AppColors.success, shape: BoxShape.circle),
                 ),
                 const SizedBox(width: 6),
                 Text(request.isEmergency ? 'ACTIVE · EMERGENCY' : 'ACTIVE',
                     style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: request.isEmergency ? AppColors.primary : AppColors.green,
+                        color: request.isEmergency ? AppColors.primary : AppColors.success,
                         letterSpacing: 0.5)),
               ],
             ),
@@ -902,7 +902,7 @@ class _ActiveJobCard extends StatelessWidget {
                 Expanded(
                   child: Text(request.clientName, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
                 ),
-                _CircleIconButton(icon: Icons.call, color: AppColors.green, onTap: () {}),
+                _CircleIconButton(icon: Icons.call, color: AppColors.success, onTap: () {}),
                 const SizedBox(width: 8),
                 ChatIconButton(
                   requestId: request.id,
@@ -915,7 +915,7 @@ class _ActiveJobCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(problem.issue, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-            Text(problem.description, style: const TextStyle(fontSize: 12, color: AppColors.grey)),
+            Text(problem.description, style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
             const SizedBox(height: 12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -924,10 +924,10 @@ class _ActiveJobCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Text('Payment', style: TextStyle(fontSize: 11, color: AppColors.grey)),
+                    Text('Payment', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
                     const SizedBox(height: 2),
                     Text(_paymentDisplay(request, quote),
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.green)),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.success)),
                   ],
                 ),
               ],
@@ -944,7 +944,7 @@ class _ActiveJobCard extends StatelessWidget {
                           onPressed: onOpen,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: statusColor,
-                            foregroundColor: AppColors.background,
+                            foregroundColor: AppColors.textlight,
                             shape: const StadiumBorder(),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
@@ -957,7 +957,7 @@ class _ActiveJobCard extends StatelessWidget {
                           onPressed: onCancel,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
-                            foregroundColor: AppColors.background,
+                            foregroundColor: AppColors.textlight,
                             shape: const StadiumBorder(),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
@@ -972,7 +972,7 @@ class _ActiveJobCard extends StatelessWidget {
                       onPressed: onOpen,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: statusColor,
-                        foregroundColor: AppColors.background,
+                        foregroundColor: AppColors.textlight,
                         shape: const StadiumBorder(),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
@@ -1005,7 +1005,7 @@ class _TimeRemainingRow extends StatelessWidget {
 
     // Runs hot in the final hour, so a job about to be handed back reads as
     // urgent rather than as just another grey line.
-    final color = remaining <= const Duration(hours: 1) ? AppColors.primary : AppColors.grey;
+    final color = remaining <= const Duration(hours: 1) ? AppColors.primary : AppColors.textdark.withValues(alpha: 0.55);
 
     return Padding(
       padding: const EdgeInsets.only(top: 4),

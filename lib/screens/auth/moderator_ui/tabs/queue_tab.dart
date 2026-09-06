@@ -65,13 +65,13 @@ class _QueueTabState extends State<QueueTab> {
     final perms = _session.currentPermissions;
 
     if (pending.isEmpty) {
-      return const Center(child: Text('No pending requests', style: TextStyle(color: AppColors.grey)));
+      return Center(child: Text('No pending requests', style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55))));
     }
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('${pending.length} pending', style: const TextStyle(color: AppColors.grey, fontSize: 13)),
+        Text('${pending.length} pending', style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55), fontSize: 13)),
         const SizedBox(height: 8),
         ...pending.map((r) => _QueueCard(
               request: r,
@@ -95,8 +95,8 @@ class _OutlineAvatar extends StatelessWidget {
     return Container(
       width: 44,
       height: 44,
-      decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.dark, width: 1.3)),
-      child: const Icon(Icons.person_outline, size: 26, color: AppColors.dark),
+      decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.textdark, width: 1.3)),
+      child: const Icon(Icons.person_outline, size: 26, color: AppColors.textdark),
     );
   }
 }
@@ -137,7 +137,7 @@ class _QueueCard extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
               const SizedBox(height: 4),
               Text('${request.documents.length} files submitted',
-                  style: const TextStyle(fontSize: 12, color: AppColors.grey)),
+                  style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
               const SizedBox(height: 12),
               ...request.documents.map((doc) => ListTile(
                     contentPadding: EdgeInsets.zero,
@@ -171,8 +171,8 @@ class _QueueCard extends StatelessWidget {
             color: AppColors.background,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Center(
-            child: Icon(Icons.insert_drive_file_outlined, size: 48, color: AppColors.grey),
+          child: Center(
+            child: Icon(Icons.insert_drive_file_outlined, size: 48, color: AppColors.textdark.withValues(alpha: 0.55)),
           ),
         ), // Todo: wire up real file/image preview once documents are hosted
         actions: [
@@ -188,7 +188,7 @@ class _QueueCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)),
+        border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -214,8 +214,8 @@ class _QueueCard extends StatelessWidget {
                         ],
                       ],
                     ),
-                    Text(request.email, style: const TextStyle(color: AppColors.grey, fontSize: 13)),
-                    Text(request.userNumber, style: const TextStyle(color: AppColors.grey, fontSize: 13)),
+                    Text(request.email, style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55), fontSize: 13)),
+                    Text(request.userNumber, style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55), fontSize: 13)),
                   ],
                 ),
               ),
@@ -229,7 +229,7 @@ class _QueueCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('SUBMITTED', style: TextStyle(fontSize: 10, color: AppColors.grey)),
+                    Text('SUBMITTED', style: TextStyle(fontSize: 10, color: AppColors.textdark.withValues(alpha: 0.55))),
                     Text(formatDateTime(request.submittedAt), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                   ],
                 ),
@@ -238,7 +238,7 @@ class _QueueCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('DOCUMENTS', style: TextStyle(fontSize: 10, color: AppColors.grey)),
+                    Text('DOCUMENTS', style: TextStyle(fontSize: 10, color: AppColors.textdark.withValues(alpha: 0.55))),
                     Row(
                       children: [
                         Text('${request.documentCount} files', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
@@ -260,12 +260,12 @@ class _QueueCard extends StatelessWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: onReject,
-                  icon: Icon(Icons.cancel_outlined, color: canReject ? AppColors.primary : AppColors.grey, size: 18),
-                  label: Text('Reject', style: TextStyle(color: canReject ? AppColors.primary : AppColors.grey, fontWeight: FontWeight.w700)),
+                  icon: Icon(Icons.cancel_outlined, color: canReject ? AppColors.primary : AppColors.textdark.withValues(alpha: 0.55), size: 18),
+                  label: Text('Reject', style: TextStyle(color: canReject ? AppColors.primary : AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w700)),
                   style: OutlinedButton.styleFrom(
                     shape: const StadiumBorder(),
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    side: BorderSide(color: canReject ? AppColors.primary : AppColors.grey),
+                    side: BorderSide(color: canReject ? AppColors.primary : AppColors.textdark.withValues(alpha: 0.2)),
                   ),
                 ),
               ),
@@ -273,12 +273,12 @@ class _QueueCard extends StatelessWidget {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: onApprove,
-                  icon: const Icon(Icons.check_circle, size: 18, color: AppColors.background),
-                  label: const Text('Approved', style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700)),
+                  icon: const Icon(Icons.check_circle, size: 18, color: AppColors.textmedium),
+                  label: const Text('Approved', style: TextStyle(color: AppColors.textmedium, fontWeight: FontWeight.w700)),
                   style: ElevatedButton.styleFrom(
                     shape: const StadiumBorder(),
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    backgroundColor: canApprove ? AppColors.green : AppColors.grey,
+                    backgroundColor: canApprove ? AppColors.success : AppColors.textdark.withValues(alpha: 0.2),
                   ),
                 ),
               ),
@@ -287,7 +287,7 @@ class _QueueCard extends StatelessWidget {
                 IconButton(
                   tooltip: 'Escalate to admin',
                   onPressed: request.escalated ? null : onEscalate,
-                  icon: Icon(Icons.flag_outlined, color: request.escalated ? AppColors.grey : AppColors.yellow),
+                  icon: Icon(Icons.flag_outlined, color: request.escalated ? AppColors.textdark.withValues(alpha: 0.55) : AppColors.warning),
                 ),
               ],
             ],
@@ -304,7 +304,7 @@ class _RoleBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = role == AccountRole.mechanic ? AppColors.primary : AppColors.blue;
+    final color = role == AccountRole.mechanic ? AppColors.primary : AppColors.info;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
@@ -320,13 +320,13 @@ class _EscalatedBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(color: AppColors.yellow.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(6)),
+      decoration: BoxDecoration(color: AppColors.warning.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(6)),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.flag, size: 11, color: AppColors.yellow),
+          Icon(Icons.flag, size: 11, color: AppColors.warning),
           SizedBox(width: 3),
-          Text('Escalated', style: TextStyle(fontSize: 10, color: AppColors.yellow, fontWeight: FontWeight.w600)),
+          Text('Escalated', style: TextStyle(fontSize: 10, color: AppColors.warning, fontWeight: FontWeight.w600)),
         ],
       ),
     );

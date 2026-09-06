@@ -49,13 +49,13 @@ class _ServiceHistoryScreenState extends State<ServiceHistoryScreen> {
         const Text('Service History', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
         const SizedBox(height: 16),
         if (completed.isEmpty)
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Center(
               child: Text(
                 'Completed jobs will show up here once you\'ve paid a mechanic.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.grey, fontSize: 13),
+                style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55), fontSize: 13),
               ),
             ),
           )
@@ -104,7 +104,7 @@ class _HistoryCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)),
+          border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -116,18 +116,18 @@ class _HistoryCard extends StatelessWidget {
                 children: [
                   Text(mechanicName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                   const SizedBox(height: 2),
-                  Text(location, style: const TextStyle(fontSize: 13, color: AppColors.dark)),
+                  Text(location, style: const TextStyle(fontSize: 13, color: AppColors.textdark)),
                   const SizedBox(height: 2),
-                  Text(date, style: const TextStyle(fontSize: 12, color: AppColors.grey)),
+                  Text(date, style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.green.withValues(alpha: 0.12),
+                      color: AppColors.success.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Text('Completed',
-                        style: TextStyle(fontSize: 11, color: AppColors.green, fontWeight: FontWeight.w600)),
+                        style: TextStyle(fontSize: 11, color: AppColors.success, fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),
@@ -135,12 +135,12 @@ class _HistoryCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(price, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.green)),
+                Text(price, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.success)),
                 const SizedBox(height: 6),
                 if (rating != null)
                   Row(
                     children: [
-                      const Icon(Icons.star, size: 14, color: AppColors.yellow),
+                      const Icon(Icons.star, size: 14, color: AppColors.warning),
                       const SizedBox(width: 2),
                       Text('$rating', style: const TextStyle(fontSize: 13)),
                     ],

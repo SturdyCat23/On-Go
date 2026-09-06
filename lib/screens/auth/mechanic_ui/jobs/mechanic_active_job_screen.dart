@@ -111,9 +111,9 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Emergency jobs have no fixed quote — enter the price you and the client agreed on.',
-              style: TextStyle(fontSize: 12, color: AppColors.grey),
+              style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55)),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -152,14 +152,14 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.background,
+        foregroundColor: AppColors.textmedium,
         title: const Text('Active Job'),
       ),
       body: Builder(
         builder: (context) {
           final request = _store.requestFor(widget.requestId);
           if (request == null) {
-            return const Center(child: Text('This job is no longer active.', style: TextStyle(color: AppColors.grey)));
+            return Center(child: Text('This job is no longer active.', style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55))));
           }
           final quote = _store.acceptedQuoteFor(widget.requestId);
 
@@ -173,9 +173,9 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                     Container(
                       height: 190,
                       width: double.infinity,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Color(0xFFB3E5FC), Color(0xFFE1F5FE)],
+                          colors: [AppColors.info.withValues(alpha: 0.22), AppColors.info.withValues(alpha: 0.08)],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                         ),
@@ -189,7 +189,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                             request.arrived
                                 ? "You've arrived"
                                 : (request.navigating ? 'Heading to client' : 'Ready to head out'),
-                            style: const TextStyle(color: AppColors.dark, fontSize: 14, fontWeight: FontWeight.w600),
+                            style: const TextStyle(color: AppColors.textdark, fontSize: 14, fontWeight: FontWeight.w600),
                           ),
                           if (_trackingError != null) ...[
                             const SizedBox(height: 4),
@@ -197,7 +197,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                               padding: const EdgeInsets.symmetric(horizontal: 24),
                               child: Text(_trackingError!,
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(color: AppColors.dark.withValues(alpha: 0.7), fontSize: 11)),
+                                  style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.7), fontSize: 11)),
                             ),
                           ],
                         ],
@@ -213,10 +213,10 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                           children: [
                             Row(
                               children: [
-                                const CircleAvatar(
+                                CircleAvatar(
                                   radius: 24,
                                   backgroundColor: AppColors.background,
-                                  child: Icon(Icons.person, color: AppColors.grey),
+                                  child: Icon(Icons.person, color: AppColors.textdark.withValues(alpha: 0.55)),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -224,11 +224,11 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(request.clientName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-                                      Text(request.urgency, style: const TextStyle(fontSize: 12, color: AppColors.grey)),
+                                      Text(request.urgency, style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
                                     ],
                                   ),
                                 ),
-                                _CircleIconButton(icon: Icons.call, color: AppColors.green, onTap: () {}),
+                                _CircleIconButton(icon: Icons.call, color: AppColors.success, onTap: () {}),
                                 const SizedBox(width: 8),
                                 ChatIconButton(
                                   requestId: request.id,
@@ -257,7 +257,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                                         const _VerticalDivider(),
                                         const _InfoColumn(label: 'Distance', value: '20 km'),
                                         const _VerticalDivider(),
-                                        _InfoColumn(label: 'Quote', value: quote?.price ?? '₱200', valueColor: AppColors.green),
+                                        _InfoColumn(label: 'Quote', value: quote?.price ?? '₱200', valueColor: AppColors.success),
                                       ],
                                     ),
                             ),
@@ -309,18 +309,18 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
         width: double.infinity,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.green.withValues(alpha: 0.1),
+          color: AppColors.success.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.green.withValues(alpha: 0.3)),
+          border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
-            const Icon(Icons.check_circle, color: AppColors.green),
+            const Icon(Icons.check_circle, color: AppColors.success),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 'Payment received — ₱${amount.toStringAsFixed(0)} · +${request.pointsAwarded ?? 0} points',
-                style: const TextStyle(color: AppColors.green, fontWeight: FontWeight.w700, fontSize: 13),
+                style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.w700, fontSize: 13),
               ),
             ),
           ],
@@ -339,10 +339,10 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
-                child: const Text(
+                child: Text(
                   'Emergency jobs have no set price. Agree on a price with the client, then set it here to generate a payment code.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12, color: AppColors.grey),
+                  style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55)),
                 ),
               ),
               const SizedBox(height: 12),
@@ -350,7 +350,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                 onPressed: () => _setEmergencyPaymentAmount(request),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.background,
+                  foregroundColor: AppColors.textlight,
                   minimumSize: const Size(double.infinity, 46),
                   shape: const StadiumBorder(),
                 ),
@@ -372,22 +372,22 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(color: AppColors.yellow.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(color: AppColors.warning.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
               child: const Text('Waiting for Client Payment',
-                  textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFFB07A00))),
+                  textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.warning)),
             ),
             const SizedBox(height: 8),
             Text('Agreed price: ₱${amount.toStringAsFixed(0)}',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.green)),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.success)),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)), borderRadius: BorderRadius.circular(16)),
+              decoration: BoxDecoration(border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)), borderRadius: BorderRadius.circular(16)),
               child: QrImageView(data: qrData, size: 200),
             ),
             const SizedBox(height: 10),
             Text('Have the client scan this to pay ₱${amount.toStringAsFixed(0)}',
-                style: const TextStyle(fontSize: 12, color: AppColors.grey)),
+                style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
             const SizedBox(height: 12),
             Container(
               width: double.infinity,
@@ -396,7 +396,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
               child: SelectableText(
                 qrData,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 11, color: AppColors.grey, fontFamily: 'monospace'),
+                style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontFamily: 'monospace'),
               ),
             ),
             const SizedBox(height: 8),
@@ -419,10 +419,10 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
               ],
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'If the client disagrees with this price, tap Edit Amount to agree on a new one.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 11, color: AppColors.grey),
+              style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55)),
             ),
           ],
         );
@@ -441,19 +441,19 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(color: AppColors.yellow.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(color: AppColors.warning.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
             child: const Text('Waiting for Client Payment',
-                textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFFB07A00))),
+                textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.warning)),
           ),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)), borderRadius: BorderRadius.circular(16)),
+            decoration: BoxDecoration(border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)), borderRadius: BorderRadius.circular(16)),
             child: QrImageView(data: qrData, size: 200),
           ),
           const SizedBox(height: 10),
           Text('Have the client scan this to pay ${quote?.price ?? ''}',
-              style: const TextStyle(fontSize: 12, color: AppColors.grey)),
+              style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
           const SizedBox(height: 12),
           Container(
             width: double.infinity,
@@ -462,7 +462,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
             child: SelectableText(
               qrData,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 11, color: AppColors.grey, fontFamily: 'monospace'),
+              style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontFamily: 'monospace'),
             ),
           ),
           const SizedBox(height: 8),
@@ -485,7 +485,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
           onPressed: () => _store.mechanicCompleteService(request.id),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.background,
+            foregroundColor: AppColors.textlight,
             minimumSize: const Size(double.infinity, 46),
             shape: const StadiumBorder(),
           ),
@@ -500,8 +500,8 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
         child: ElevatedButton(
           onPressed: () => _store.mechanicStartWork(request.id),
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.green,
-            foregroundColor: AppColors.background,
+            backgroundColor: AppColors.success,
+            foregroundColor: AppColors.textlight,
             minimumSize: const Size(double.infinity, 46),
             shape: const StadiumBorder(),
           ),
@@ -517,8 +517,8 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
           child: OutlinedButton(
             onPressed: () => _confirmArrivalManually(request),
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.dark,
-              side: BorderSide(color: AppColors.grey.withValues(alpha: 0.3)),
+              foregroundColor: AppColors.textdark,
+              side: BorderSide(color: AppColors.textdark.withValues(alpha: 0.2)),
               minimumSize: const Size(double.infinity, 46),
               shape: const StadiumBorder(),
             ),
@@ -530,10 +530,10 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
         width: double.infinity,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
-        child: const Text(
+        child: Text(
           'Tracking your location — En Route and Arrived will be detected automatically as you travel.',
           textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.grey, fontSize: 12),
+          style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55), fontSize: 12),
         ),
       );
     }
@@ -542,11 +542,11 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
       width: double.infinity,
       child: ElevatedButton.icon(
         onPressed: () => _beginNavigating(request),
-        icon: const Icon(Icons.navigation_outlined, size: 18, color: AppColors.background),
+        icon: const Icon(Icons.navigation_outlined, size: 18, color: AppColors.textlight),
         label: const Text('Navigate'),
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.green,
-          foregroundColor: AppColors.background,
+          backgroundColor: AppColors.success,
+          foregroundColor: AppColors.textlight,
           minimumSize: const Size(double.infinity, 46),
           shape: const StadiumBorder(),
         ),
@@ -582,7 +582,7 @@ class _VerticalDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(width: 1, height: 28, color: AppColors.grey.withValues(alpha: 0.3));
+    return Container(width: 1, height: 28, color: AppColors.textdark.withValues(alpha: 0.2));
   }
 }
 
@@ -598,9 +598,9 @@ class _InfoColumn extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.grey)),
+          Text(label, style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
           const SizedBox(height: 2),
-          Text(value, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: valueColor ?? AppColors.dark)),
+          Text(value, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: valueColor ?? AppColors.textdark)),
         ],
       ),
     );
@@ -622,7 +622,7 @@ class _StatusStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = done ? AppColors.green : AppColors.grey;
+    final color = done ? AppColors.success : AppColors.textdark.withValues(alpha: 0.2);
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -640,7 +640,7 @@ class _StatusStep extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 16),
               child: Text(title,
                   style: TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w600, color: done ? AppColors.dark : AppColors.grey)),
+                      fontSize: 13, fontWeight: FontWeight.w600, color: done ? AppColors.textdark : AppColors.textdark.withValues(alpha: 0.55))),
             ),
           ),
         ],

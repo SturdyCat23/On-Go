@@ -1,30 +1,27 @@
 import 'package:flutter/material.dart';
 
-/// The whole palette: four base colors and four status colors, and nothing
-/// else. Every surface, border, divider and piece of text in the app is one
-/// of the four base colors (at whatever opacity the spot calls for) — there
-/// are deliberately no separate white / surface / text / border shades to
-/// drift apart from each other.
 class AppColors {
-  /// The brand red: primary actions, accents, and anything that reads as
-  /// "ONGO" or "urgent".
-  static const Color primary = Color.fromARGB(255, 209, 0, 0);
+  
+  // Theme palette colors — use these for all surfaces, borders, dividers and text.
+  
+  // Primary and secondary colors
+  static const Color primary = Color.fromARGB(255, 230, 0, 0);
+  static const Color primarydark = Color.fromARGB(255, 183, 0, 0);
 
-  /// The app background, and every light surface sitting on it — cards,
-  /// sheets, inputs, and text or icons placed on a dark or colored fill.
-  static const Color background = Color(0xFFF7F0F0);
+  // Background and surface colors
+  static const Color background = Color.fromARGB(255, 243, 241, 241);
+  static const Color surface = Color.fromARGB(255, 255, 255, 255);
 
-  /// Secondary text, borders, dividers, disabled controls and other muted UI.
-  static const Color grey = Color.fromARGB(255, 145, 145, 150);
+  // Text colors
+  static const Color textdark = Color.fromARGB(255, 13, 14, 15);
+  static const Color textmedium = Color.fromARGB(255, 104, 109, 122);
+  static const Color textlight = Color.fromARGB(255, 248, 249, 250);
 
-  /// Primary text and dark UI elements.
-  static const Color dark = Color(0xFF1E1E1F);
-
-  // Status colors — use these only where that status is what's being said.
-  static const Color blue = Color.fromARGB(255, 42, 33, 218);
-  static const Color green = Color(0xFF11B848);
-  static const Color yellow = Color(0xFFF2B530);
-  static const Color purple = Color(0xFFAC22D6);
+  // Utility colors for specific use cases
+  static const Color info = Color.fromARGB(255, 24, 143, 228);
+  static const Color success = Color.fromARGB(255, 0, 161, 32);
+  static const Color warning = Color.fromARGB(255, 254, 174, 1);
+  static const Color error = Color.fromARGB(255, 223, 0, 0);
 }
 
 class AppDurations {
@@ -37,7 +34,7 @@ class AppTheme {
         scaffoldBackgroundColor: AppColors.background,
         fontFamily: 'Roboto',
         colorScheme: const ColorScheme.light(
-          primary: AppColors.primary,
+          primary: AppColors.textdark,
           secondary: AppColors.primary,
           surface: AppColors.background,
         ),
@@ -55,7 +52,7 @@ class AppTheme {
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
           backgroundColor: AppColors.background,
           selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.grey,
+          unselectedItemColor: AppColors.textmedium,
           selectedLabelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
           unselectedLabelStyle: TextStyle(fontSize: 12),
           type: BottomNavigationBarType.fixed,
@@ -83,28 +80,28 @@ class AppTheme {
               const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: AppColors.grey.withValues(alpha: 0.3)),
+            borderSide: BorderSide(color: AppColors.textmedium.withValues(alpha: 0.3)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: AppColors.grey.withValues(alpha: 0.3)),
+            borderSide: BorderSide(color: AppColors.textmedium.withValues(alpha: 0.3)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
             borderSide:
-                const BorderSide(color: AppColors.primary, width: 1.5),
+                const BorderSide(color: AppColors.textdark, width: 1.5),
           ),
           hintStyle: const TextStyle(
-            color: AppColors.grey,
+            color: AppColors.textmedium,
             fontSize: 14,
           ),
         ),
         textTheme: const TextTheme(
-          titleLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.dark),
-          titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.dark),
-          bodyLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.dark),
-          bodyMedium: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.grey),
-          bodySmall: TextStyle(fontSize: 12, color: AppColors.grey),
+          titleLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textdark),
+          titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textdark),
+          bodyLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textdark),
+          bodyMedium: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textmedium),
+          bodySmall: TextStyle(fontSize: 12, color: AppColors.textmedium),
         ),
         cardTheme: const CardThemeData(
           elevation: 2,
@@ -118,6 +115,6 @@ class AppTheme {
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.background,
         ),
-        dividerTheme: DividerThemeData(color: AppColors.grey.withValues(alpha: 0.3), thickness: 1),
+        dividerTheme: DividerThemeData(color: AppColors.textmedium.withValues(alpha: 0.3), thickness: 1),
       );
 }

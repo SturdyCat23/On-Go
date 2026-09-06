@@ -44,10 +44,10 @@ class _IncomeTabState extends State<IncomeTab> {
     if (lastYearRevenue > 0) {
       final change = (_admin.ytdRevenue - lastYearRevenue) / lastYearRevenue * 100;
       revenueTrend = '${change >= 0 ? '+' : ''}${change.toStringAsFixed(0)}% vs ${year - 1}';
-      revenueTrendColor = change >= 0 ? AppColors.green : AppColors.primary;
+      revenueTrendColor = change >= 0 ? AppColors.success : AppColors.primary;
     } else {
       revenueTrend = 'Since Jan $year';
-      revenueTrendColor = AppColors.grey;
+      revenueTrendColor = AppColors.textdark.withValues(alpha: 0.55);
     }
 
     return SingleChildScrollView(
@@ -60,7 +60,7 @@ class _IncomeTabState extends State<IncomeTab> {
               Expanded(
                 child: AdminStatCard(
                   icon: Icons.attach_money,
-                  iconColor: AppColors.green,
+                  iconColor: AppColors.success,
                   value: formatAdminPeso(_admin.ytdRevenue),
                   label: 'YTD Revenue',
                   trend: revenueTrend,
@@ -71,11 +71,11 @@ class _IncomeTabState extends State<IncomeTab> {
               Expanded(
                 child: AdminStatCard(
                   icon: Icons.receipt_long,
-                  iconColor: AppColors.purple,
+                  iconColor: AppColors.info,
                   value: '$transactions',
                   label: 'Transactions',
                   trend: transactions == 1 ? '1 completed payment' : '$transactions completed payments',
-                  trendColor: AppColors.grey,
+                  trendColor: AppColors.textdark.withValues(alpha: 0.55),
                 ),
               ),
             ],
@@ -86,26 +86,26 @@ class _IncomeTabState extends State<IncomeTab> {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.green.withValues(alpha: 0.08),
+                color: AppColors.success.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.green.withValues(alpha: 0.3)),
+                border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.bolt, size: 16, color: AppColors.green),
+                      const Icon(Icons.bolt, size: 16, color: AppColors.success),
                       const SizedBox(width: 6),
                       Text('₱${_admin.priorityFeeRevenue.toStringAsFixed(0)} from priority fees',
-                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.green)),
+                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.success)),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '${_admin.priorityFeeCount} paid ${_admin.priorityFeeCount == 1 ? 'job' : 'jobs'} carried an '
                     'Urgent (+₱50) or Emergency (+₱100) charge. Already counted in the totals below.',
-                    style: const TextStyle(fontSize: 11, color: AppColors.grey),
+                    style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55)),
                   ),
                 ],
               ),
@@ -115,30 +115,30 @@ class _IncomeTabState extends State<IncomeTab> {
           const Text('Monthly Revenue', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
           const SizedBox(height: 12),
           if (income.isEmpty)
-            const SizedBox(
+            SizedBox(
               height: _chartHeight,
               child: Center(
-                child: Text('No payments yet', style: TextStyle(color: AppColors.grey, fontSize: 12)),
+                child: Text('No payments yet', style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55), fontSize: 12)),
               ),
             )
           else
             _buildBarChart(income),
           const SizedBox(height: 24),
-          const Text('MONTHLY BREAKDOWN', style: TextStyle(fontSize: 11, color: AppColors.grey, fontWeight: FontWeight.w600)),
+          Text('MONTHLY BREAKDOWN', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           if (income.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Text('Months appear here as client payments come in.',
-                  style: TextStyle(color: AppColors.grey, fontSize: 12)),
+                  style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55), fontSize: 12)),
             ),
           ...income.reversed.map((m) => Container(
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                    color: AppColors.background,
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.grey.withValues(alpha: 0.3))),
+                    border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2))),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -147,7 +147,7 @@ class _IncomeTabState extends State<IncomeTab> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text('₱${m.revenue.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w700)),
-                        Text('${m.transactions} tx', style: const TextStyle(fontSize: 11, color: AppColors.grey)),
+                        Text('${m.transactions} tx', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
                       ],
                     ),
                   ],
@@ -231,7 +231,7 @@ class _IncomeTabState extends State<IncomeTab> {
                                     left: 0,
                                     right: 0,
                                     top: y,
-                                    child: Container(height: 1, color: AppColors.grey.withValues(alpha: 0.3)),
+                                    child: Container(height: 1, color: AppColors.textdark.withValues(alpha: 0.2)),
                                   );
                                 }),
                                 Row(
@@ -247,7 +247,7 @@ class _IncomeTabState extends State<IncomeTab> {
                                           child: Container(
                                             height: h,
                                             decoration: BoxDecoration(
-                                              color: isSelected ? AppColors.grey : AppColors.blue,
+                                              color: isSelected ? AppColors.textdark.withValues(alpha: 0.12) : AppColors.info,
                                               borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
                                             ),
                                           ),
@@ -279,7 +279,7 @@ class _IncomeTabState extends State<IncomeTab> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 10,
-                      color: e.key == idx ? AppColors.blue : AppColors.grey,
+                      color: e.key == idx ? AppColors.info : AppColors.textdark.withValues(alpha: 0.55),
                       fontWeight: e.key == idx ? FontWeight.w700 : FontWeight.w400,
                     ),
                   ),

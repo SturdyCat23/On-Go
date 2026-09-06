@@ -46,17 +46,16 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
   double? _capturedLng;
 
   static const List<Map<String, dynamic>> _issues = [
-    {'icon': Icons.car_repair, 'label': 'Engine Problem', 'color': Color(0xFFFF9800)},
-    {'icon': Icons.album_outlined, 'label': 'Brake Issue', 'color': AppColors.primary},
-    {'icon': Icons.tire_repair, 'label': 'Flat Tire', 'color': AppColors.dark},
-    {'icon': Icons.battery_alert_outlined, 'label': 'Battery Dead', 'color': AppColors.green},
-    {'icon': Icons.settings_input_component_outlined, 'label': 'Chain Problem', 'color': AppColors.blue},
-    {'icon': Icons.electrical_services_outlined, 'label': 'Electrical Issue', 'color': AppColors.yellow},
+    {'icon': Icons.car_repair, 'label': 'Engine Problem', 'color': AppColors.warning},
+    {'icon': Icons.album_outlined, 'label': 'Brake Issue', 'color': AppColors.error},
+    {'icon': Icons.tire_repair, 'label': 'Flat Tire', 'color': AppColors.success},
+    {'icon': Icons.battery_alert_outlined, 'label': 'Battery Dead', 'color': AppColors.success},
+    {'icon': Icons.settings_input_component_outlined, 'label': 'Chain Problem', 'color': AppColors.info},
+    {'icon': Icons.electrical_services_outlined, 'label': 'Electrical Issue', 'color': AppColors.warning},
   ];
 
   // Sampled directly from the design reference: light-blue card, deep navy text.
-  static const _pricingCardBg = Color(0xFFE7F4FD);
-  static const _pricingCardText = Color(0xFF00297E);
+  static const _pricingCardBg = AppColors.surface;
 
   static const Map<String, _UrgencyInfo> _urgencyInfo = {
     'Normal': _UrgencyInfo(0),
@@ -227,6 +226,11 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
   @override
   Widget build(BuildContext context) {
     final info = _urgencyInfo[_urgency]!;
+    final urgencyColor = _urgency == 'Emergency'
+      ? AppColors.error
+      : _urgency == 'Urgent'
+        ? AppColors.warning
+        : AppColors.success;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -236,12 +240,12 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
           const Text(
             'Need Help?',
             style: TextStyle(
-                fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.dark),
+                fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.textdark),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Describe your motorcycle problem and get matched with nearby mechanics',
-            style: TextStyle(fontSize: 13, color: AppColors.grey),
+            style: TextStyle(fontSize: 13, color: AppColors.textdark.withValues(alpha: 0.55)),
           ),
           const SizedBox(height: 20),
           const Text('Common Issues',
@@ -265,9 +269,9 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
                 }),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: selected ? color.withValues(alpha: 0.08) : AppColors.background,
+                    color: selected ? color.withValues(alpha: 0.08) : AppColors.surface,
                     border: Border.all(
-                      color: selected ? color : AppColors.grey,
+                      color: selected ? color : AppColors.textdark.withValues(alpha: 0.2),
                     ),
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -347,7 +351,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
                               color: AppColors.primary,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.close, size: 14, color: AppColors.background),
+                            child: const Icon(Icons.close, size: 14, color: AppColors.textmedium),
                           ),
                         ),
                       ),
@@ -401,10 +405,10 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
             const SizedBox(height: 4),
             Row(
               children: [
-                const Icon(Icons.gps_fixed, size: 12, color: AppColors.green),
+                const Icon(Icons.gps_fixed, size: 12, color: AppColors.success),
                 const SizedBox(width: 4),
                 Text('Precise location captured — mechanic arrival will be detected automatically',
-                    style: const TextStyle(fontSize: 11, color: AppColors.green)),
+                    style: const TextStyle(fontSize: 11, color: AppColors.success)),
               ],
             ),
           ],
@@ -416,21 +420,21 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
             children: [
               _UrgencyChip(
                 label: 'Normal',
-                color: AppColors.green,
+                color: AppColors.success,
                 selected: _urgency == 'Normal',
                 onTap: () => setState(() => _urgency = 'Normal'),
               ),
               const SizedBox(width: 10),
               _UrgencyChip(
                 label: 'Urgent',
-                color: AppColors.yellow,
+                color: AppColors.warning,
                 selected: _urgency == 'Urgent',
                 onTap: () => setState(() => _urgency = 'Urgent'),
               ),
               const SizedBox(width: 10),
               _UrgencyChip(
                 label: 'Emergency',
-                color: AppColors.primary,
+                color: AppColors.error,
                 selected: _urgency == 'Emergency',
                 onTap: () => setState(() => _urgency = 'Emergency'),
               ),
@@ -441,20 +445,20 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: info.surcharge > 0 ? AppColors.yellow.withValues(alpha: 0.12) : AppColors.green.withValues(alpha: 0.1),
+              color: urgencyColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: (info.surcharge > 0 ? AppColors.yellow : AppColors.green).withValues(alpha: 0.4)),
+              border: Border.all(color: urgencyColor.withValues(alpha: 0.4)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.schedule, size: 16, color: AppColors.dark),
+                    Icon(Icons.schedule, size: 16, color: urgencyColor),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(completionWindowLabel(_urgency),
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: urgencyColor)),
                     ),
                   ],
                 ),
@@ -462,7 +466,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
                 Row(
                   children: [
                     Icon(Icons.warning_amber_rounded,
-                        size: 16, color: info.surcharge > 0 ? const Color(0xFFB07A00) : AppColors.green),
+                        size: 16, color: urgencyColor),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -472,7 +476,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
                             : 'No additional charge for standard service',
                         style: TextStyle(
                           fontSize: 12,
-                          color: info.surcharge > 0 ? const Color(0xFFB07A00) : AppColors.green,
+                          color: urgencyColor,
                         ),
                       ),
                     ),
@@ -488,18 +492,18 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
             child: const Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.attach_money, color: _pricingCardText),
+                Icon(Icons.attach_money, color: AppColors.info),
                 SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('How pricing works',
-                          style: TextStyle(color: _pricingCardText, fontWeight: FontWeight.w700, fontSize: 16)),
+                          style: TextStyle(color: AppColors.info, fontWeight: FontWeight.w700, fontSize: 16)),
                       SizedBox(height: 4),
                       Text(
                         'Mechanic will review your problem and send their quotes. You can compare prices and choose the best mechanic for you.',
-                        style: TextStyle(color: _pricingCardText, fontSize: 13),
+                        style: TextStyle(color: AppColors.info, fontSize: 13),
                       ),
                     ],
                   ),
@@ -514,7 +518,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
                 ? const SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.surface),
                   )
                 : const Icon(Icons.cloud_upload_outlined, size: 18),
             label: Text(_uploading ? 'Uploading…' : 'Upload'),

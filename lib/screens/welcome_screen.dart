@@ -18,10 +18,10 @@ class WelcomeScreen extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(20, 20, 20, 4),
               child: Text('Sign up as Client', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
             ),
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(20, 0, 20, 12),
               child: Text('Choose how you\'d like to create your account',
-                  style: TextStyle(fontSize: 12, color: AppColors.grey)),
+                  style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
             ),
             ListTile(
               leading: const Icon(Icons.g_mobiledata_rounded, color: Color(0xFFEA4335), size: 32),
@@ -52,7 +52,7 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.surface,
       body: SafeArea(
         child: AuthBottomCard(
           children: [
@@ -62,14 +62,14 @@ class WelcomeScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 30,
                 fontWeight: FontWeight.w800,
-                color: AppColors.background,
+                color: AppColors.surface,
               ),
             ),
             const SizedBox(height: 8),
             const Text(
               'Please select how you want to register',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: AppColors.background),
+              style: TextStyle(fontSize: 13, color: AppColors.textlight),
             ),
             const SizedBox(height: 24),
             AuthRoleButton(

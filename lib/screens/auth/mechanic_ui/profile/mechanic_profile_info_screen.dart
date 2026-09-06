@@ -84,7 +84,7 @@ class _MechanicProfileInfoScreenState extends State<MechanicProfileInfoScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.background,
+        foregroundColor: AppColors.textmedium,
         title: const Text('My Profile'),
       ),
       body: ListView(
@@ -101,7 +101,7 @@ class _MechanicProfileInfoScreenState extends State<MechanicProfileInfoScreen> {
                           width: 120,
                           height: 120,
                           color: AppColors.background,
-                          child: const Icon(Icons.person, size: 56, color: AppColors.grey),
+                          child: Icon(Icons.person, size: 56, color: AppColors.textdark.withValues(alpha: 0.55)),
                         )
                       : (_store.photoIsNetwork
                           ? Image.network(photo, width: 120, height: 120, fit: BoxFit.cover)
@@ -116,11 +116,11 @@ class _MechanicProfileInfoScreenState extends State<MechanicProfileInfoScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: canChange ? AppColors.primary : AppColors.grey,
+                        color: canChange ? AppColors.primary : AppColors.textdark.withValues(alpha: 0.55),
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.background, width: 2),
+                        border: Border.all(color: AppColors.surface, width: 2),
                       ),
-                      child: const Icon(Icons.camera_alt, color: AppColors.background, size: 16),
+                      child: const Icon(Icons.camera_alt, color: AppColors.textlight, size: 16),
                     ),
                   ),
                 ),
@@ -133,11 +133,11 @@ class _MechanicProfileInfoScreenState extends State<MechanicProfileInfoScreen> {
               canChange
                   ? 'You can change your photo'
                   : 'Next photo change: ${_formatDate(_store.nextPhotoChangeAt!)}',
-              style: const TextStyle(fontSize: 11, color: AppColors.grey),
+              style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55)),
             ),
           ),
           const SizedBox(height: 28),
-          const Text('ACCOUNT INFORMATION', style: TextStyle(fontSize: 11, color: AppColors.grey, fontWeight: FontWeight.w600)),
+          Text('ACCOUNT INFORMATION', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w600)),
           const SizedBox(height: 12),
           _InfoRow(icon: Icons.person_outline, label: 'Full Name', value: _store.name.isEmpty ? '—' : _store.name),
           _InfoRow(icon: Icons.email_outlined, label: 'Email', value: _store.email.isEmpty ? '—' : _store.email),
@@ -161,16 +161,16 @@ class _InfoRow extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)), borderRadius: BorderRadius.circular(12)),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: AppColors.grey),
+          Icon(icon, size: 20, color: AppColors.textdark.withValues(alpha: 0.55)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontSize: 11, color: AppColors.grey)),
+                Text(label, style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
                 const SizedBox(height: 2),
                 Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
               ],

@@ -175,7 +175,7 @@ class _MechanicStep5VerificationState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.surface,
       body: Column(
         children: [
           _buildHeader(),
@@ -197,7 +197,7 @@ class _MechanicStep5VerificationState
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.dark,
+                      color: AppColors.textdark,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -212,14 +212,14 @@ class _MechanicStep5VerificationState
                           style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
-                              color: Colors.red)),
+                              color: AppColors.error)),
                     ],
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Upload a clear photo of yourself. You can update it every 3 months for security purposes.',
                     style:
-                        TextStyle(fontSize: 11, color: AppColors.grey),
+                        TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55)),
                   ),
                   const SizedBox(height: 10),
 
@@ -244,9 +244,9 @@ class _MechanicStep5VerificationState
                               },
                               child: const CircleAvatar(
                                 radius: 12,
-                                backgroundColor: Colors.red,
+                                backgroundColor: AppColors.error,
                                 child: Icon(Icons.close,
-                                    size: 14, color: Colors.white),
+                                    size: 14, color: AppColors.textmedium),
                               ),
                             ),
                           ),
@@ -265,11 +265,11 @@ class _MechanicStep5VerificationState
                               textAlign: TextAlign.center),
                           onPressed: _pickFromGallery,
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.blue,
+                            foregroundColor: AppColors.info,
                             side: BorderSide(
                                 color: _profilePhotoError
-                                    ? Colors.red
-                                    : AppColors.blue),
+                                    ? AppColors.error
+                                    : AppColors.info),
                             minimumSize: const Size(0, 56),
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8)),
@@ -285,11 +285,11 @@ class _MechanicStep5VerificationState
                               textAlign: TextAlign.center),
                           onPressed: _takeSelfie,
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.blue,
+                            foregroundColor: AppColors.info,
                             side: BorderSide(
                                 color: _profilePhotoError
-                                    ? Colors.red
-                                    : AppColors.blue),
+                                    ? AppColors.error
+                                    : AppColors.info),
                             minimumSize: const Size(0, 56),
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8)),
@@ -303,7 +303,7 @@ class _MechanicStep5VerificationState
                       padding: EdgeInsets.only(top: 6),
                       child: Text('A profile picture is required',
                           style:
-                              TextStyle(fontSize: 11, color: Colors.red)),
+                              TextStyle(fontSize: 11, color: AppColors.error)),
                     ),
 
                   const SizedBox(height: 24),
@@ -318,14 +318,14 @@ class _MechanicStep5VerificationState
                           style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
-                              color: Colors.red)),
+                              color: AppColors.error)),
                     ],
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'We need to confirm you are a real person. You will be asked to blink and smile.',
                     style:
-                        TextStyle(fontSize: 11, color: AppColors.grey),
+                        TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55)),
                   ),
                   const SizedBox(height: 20),
 
@@ -337,17 +337,17 @@ class _MechanicStep5VerificationState
                           vertical: 24, horizontal: 20),
                       decoration: BoxDecoration(
                         color: _livenessPass
-                            ? Colors.green.shade50
+                            ? AppColors.success.withValues(alpha: 0.08)
                             : _faceScanError
-                                ? Colors.red.shade50
+                                ? AppColors.error.withValues(alpha: 0.08)
                                 : AppColors.background,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: _livenessPass
-                              ? Colors.green
+                              ? AppColors.success
                               : _faceScanError
-                                  ? Colors.red
-                                  : AppColors.grey,
+                                  ? AppColors.error
+                                  : AppColors.textdark.withValues(alpha: 0.55),
                           width: 1.5,
                         ),
                       ),
@@ -361,10 +361,10 @@ class _MechanicStep5VerificationState
                                     : Icons.face_outlined,
                             size: 52,
                             color: _livenessPass
-                                ? Colors.green
+                                ? AppColors.success
                                 : _faceScanError
-                                    ? Colors.red
-                                    : AppColors.grey,
+                                    ? AppColors.error
+                                    : AppColors.textdark.withValues(alpha: 0.55),
                           ),
                           const SizedBox(height: 12),
                           Text(
@@ -377,10 +377,10 @@ class _MechanicStep5VerificationState
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: _livenessPass
-                                  ? Colors.green
+                                  ? AppColors.success
                                   : _faceScanError
-                                      ? Colors.red
-                                      : AppColors.grey,
+                                      ? AppColors.error
+                                      : AppColors.textdark.withValues(alpha: 0.55),
                             ),
                           ),
                           if (_livenessPass) ...[
@@ -389,7 +389,7 @@ class _MechanicStep5VerificationState
                               'Liveness confirmed — blink & smile challenges passed.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                  fontSize: 11, color: Colors.green),
+                                  fontSize: 11, color: AppColors.success),
                             ),
                           ],
                         ],
@@ -421,7 +421,7 @@ class _MechanicStep5VerificationState
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 48),
                       backgroundColor: _livenessPass
-                          ? Colors.green
+                          ? AppColors.success
                           : AppColors.primary,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8)),
@@ -477,12 +477,12 @@ class _MechanicStep5VerificationState
         children: [
           Text('On Go Registration',
               style: TextStyle(
-                  color: AppColors.background,
+                  color: AppColors.textlight,
                   fontSize: 20,
                   fontWeight: FontWeight.w700)),
           SizedBox(height: 4),
           Text('Complete all steps to provide services',
-              style: TextStyle(color: AppColors.background, fontSize: 12)),
+              style: TextStyle(color: AppColors.textlight, fontSize: 12)),
         ],
       ),
     );

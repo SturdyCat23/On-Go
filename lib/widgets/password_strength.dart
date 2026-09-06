@@ -39,15 +39,15 @@ extension PasswordStrengthDisplay on PasswordStrength {
   Color get color {
     switch (this) {
       case PasswordStrength.empty:
-        return AppColors.grey;
+        return AppColors.textdark.withValues(alpha: 0.12);
       case PasswordStrength.weak:
         return AppColors.primary;
       case PasswordStrength.fair:
-        return AppColors.yellow;
+        return AppColors.warning;
       case PasswordStrength.good:
-        return const Color(0xFF4CAF50);
+        return AppColors.success;
       case PasswordStrength.strong:
-        return AppColors.green;
+        return AppColors.success;
     }
   }
 
@@ -88,7 +88,7 @@ class PasswordStrengthMeter extends StatelessWidget {
             child: LinearProgressIndicator(
               value: strength.fraction,
               minHeight: 5,
-              backgroundColor: AppColors.grey.withValues(alpha: 0.25),
+              backgroundColor: AppColors.textdark.withValues(alpha: 0.2),
               valueColor: AlwaysStoppedAnimation(strength.color),
             ),
           ),

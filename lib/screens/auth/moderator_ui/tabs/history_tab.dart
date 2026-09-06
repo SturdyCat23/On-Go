@@ -61,7 +61,7 @@ class _HistoryTabState extends State<HistoryTab> {
         ),
         Expanded(
           child: items.isEmpty
-              ? const Center(child: Text('No records', style: TextStyle(color: AppColors.grey)))
+              ? Center(child: Text('No records', style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55))))
               : ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: items.map((r) => _HistoryCard(request: r)).toList(),
@@ -78,10 +78,10 @@ class _HistoryTabState extends State<HistoryTab> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.grey.withValues(alpha: 0.35),
+          color: selected ? AppColors.primary : AppColors.textdark.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.background : AppColors.dark)),
+        child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.textlight : AppColors.textdark)),
       ),
     );
   }
@@ -94,12 +94,12 @@ class _HistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final approved = request.status == ApprovalStatus.approved;
-    final color = approved ? AppColors.green : AppColors.primary;
+    final color = approved ? AppColors.success : AppColors.primary;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)), borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)), borderRadius: BorderRadius.circular(16)),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -127,7 +127,7 @@ class _HistoryCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    Text(request.userNumber, style: const TextStyle(fontSize: 13, color: AppColors.grey)),
+                    Text(request.userNumber, style: TextStyle(fontSize: 13, color: AppColors.textdark.withValues(alpha: 0.55))),
                     const SizedBox(width: 8),
                     _RoleBadgeStatic(role: request.role),
                   ],
@@ -154,7 +154,7 @@ class _RoleBadgeStatic extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = role == AccountRole.mechanic ? AppColors.primary : AppColors.blue;
+    final color = role == AccountRole.mechanic ? AppColors.primary : AppColors.info;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),

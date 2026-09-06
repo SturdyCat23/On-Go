@@ -212,7 +212,7 @@ class _JobTabBar extends StatelessWidget {
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: selected ? AppColors.background : AppColors.dark)),
+                        color: selected ? AppColors.surface : AppColors.textdark)),
               ),
             ),
           );
@@ -244,9 +244,9 @@ Color _urgencyColor(String urgency) {
     case 'Emergency':
       return AppColors.primary;
     case 'Urgent':
-      return AppColors.yellow;
+      return AppColors.warning;
     default:
-      return AppColors.green;
+      return AppColors.success;
   }
 }
 
@@ -264,13 +264,13 @@ Widget _locationBlock(String location) {
     children: [
       Row(
         children: [
-          const Icon(Icons.location_on_outlined, size: 14, color: AppColors.grey),
+          Icon(Icons.location_on_outlined, size: 14, color: AppColors.textdark.withValues(alpha: 0.55)),
           const SizedBox(width: 4),
-          const Text('Location', style: TextStyle(fontSize: 11, color: AppColors.grey)),
+          Text('Location', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
         ],
       ),
       const SizedBox(height: 2),
-      Text(location, style: const TextStyle(fontSize: 13, color: AppColors.dark)),
+      Text(location, style: const TextStyle(fontSize: 13, color: AppColors.textdark)),
     ],
   );
 }
@@ -322,8 +322,8 @@ class _JobActionButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
           disabledBackgroundColor: color,
-          foregroundColor: AppColors.background,
-          disabledForegroundColor: AppColors.background,
+          foregroundColor: AppColors.textlight,
+          disabledForegroundColor: AppColors.textlight,
           shape: const StadiumBorder(),
           padding: EdgeInsets.zero,
           textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
@@ -352,7 +352,7 @@ Widget _countBadge(int count) {
     child: Text(
       '$count',
       textAlign: TextAlign.center,
-      style: const TextStyle(fontSize: 10, color: AppColors.background, fontWeight: FontWeight.w700),
+      style: const TextStyle(fontSize: 10, color: AppColors.textlight, fontWeight: FontWeight.w700),
     ),
   );
 }
@@ -372,13 +372,13 @@ class _UploadedJobList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (requests.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
           padding: EdgeInsets.all(24),
           child: Text(
             'Nothing uploaded yet — problems you submit from Need Help will show up here while they\'re awaiting quotes.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.grey),
+            style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55)),
           ),
         ),
       );
@@ -417,9 +417,9 @@ class _UploadedJobCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.green, shape: BoxShape.circle)),
+              Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle)),
               const SizedBox(width: 6),
-              const Text('UPLOADED', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.green, letterSpacing: 0.5)),
+              const Text('UPLOADED', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.success, letterSpacing: 0.5)),
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -457,7 +457,7 @@ class _UploadedJobCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(problem.issue, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
           const SizedBox(height: 2),
-          Text(problem.description, style: const TextStyle(fontSize: 13, color: AppColors.grey)),
+          Text(problem.description, style: TextStyle(fontSize: 13, color: AppColors.textdark.withValues(alpha: 0.55))),
           if (request.photoPaths.isNotEmpty) ...[
             const SizedBox(height: 10),
             JobPhotoPreview(photoPaths: request.photoPaths),
@@ -471,7 +471,7 @@ class _UploadedJobCard extends StatelessWidget {
             request.isEmergency
                 ? 'Waiting for a mechanic to accept this emergency.'
                 : (quoteCount == 0 ? 'Waiting for quotes...' : '$quoteCount quote${quoteCount == 1 ? '' : 's'} received'),
-            style: const TextStyle(fontSize: 12, color: AppColors.grey),
+            style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55)),
           ),
           const SizedBox(height: 14),
           Row(
@@ -479,7 +479,7 @@ class _UploadedJobCard extends StatelessWidget {
               Expanded(
                 child: _JobActionButton(
                   label: 'Quotes',
-                  color: AppColors.green,
+                  color: AppColors.success,
                   onTap: onQuotes,
                   badge: unseen > 0 ? _countBadge(unseen) : null,
                 ),
@@ -511,13 +511,13 @@ class _PendingJobList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (requests.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
           padding: EdgeInsets.all(24),
           child: Text(
             'No pending jobs — accepted Normal or Urgent requests will show up here before your mechanic starts heading over.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.grey),
+            style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55)),
           ),
         ),
       );
@@ -557,9 +557,9 @@ class _PendingJobCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.green, shape: BoxShape.circle)),
+                Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle)),
                 const SizedBox(width: 6),
-                const Text('PENDING', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.green, letterSpacing: 0.5)),
+                const Text('PENDING', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.success, letterSpacing: 0.5)),
               ],
             ),
             if (request.lastCancelReason != null) ...[
@@ -577,7 +577,7 @@ class _PendingJobCard extends StatelessWidget {
                         Row(
               children: [
                 Expanded(child: Text(quote?.mechanicName ?? 'Mechanic', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18))),
-                _CircleIconButton(icon: Icons.call, color: AppColors.green, onTap: () {}),
+                _CircleIconButton(icon: Icons.call, color: AppColors.success, onTap: () {}),
                 const SizedBox(width: 8),
                 ChatIconButton(
                   requestId: request.id,
@@ -590,7 +590,7 @@ class _PendingJobCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(problem.issue, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-            Text(problem.description, style: const TextStyle(fontSize: 12, color: AppColors.grey)),
+            Text(problem.description, style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
             if (request.photoPaths.isNotEmpty) ...[
               const SizedBox(height: 10),
               JobPhotoPreview(photoPaths: request.photoPaths),
@@ -603,9 +603,9 @@ class _PendingJobCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Text('Payment', style: TextStyle(fontSize: 11, color: AppColors.grey)),
+                    Text('Payment', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
                     const SizedBox(height: 2),
-                    Text(_paymentDisplay(request, quote), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.green)),
+                    Text(_paymentDisplay(request, quote), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.success)),
                   ],
                 ),
               ],
@@ -613,7 +613,7 @@ class _PendingJobCard extends StatelessWidget {
             const SizedBox(height: 14),
             Row(
               children: [
-                Expanded(child: _JobActionButton(label: 'Pending', color: AppColors.green, onTap: null)),
+                Expanded(child: _JobActionButton(label: 'Pending', color: AppColors.success, onTap: null)),
                 const SizedBox(width: 10),
                 Expanded(child: _JobActionButton(label: 'Cancel', color: AppColors.primary, onTap: onCancel)),
               ],
@@ -639,7 +639,7 @@ class _ActiveJobList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (requests.isEmpty) {
-      return const Center(child: Text('No active jobs right now.', style: TextStyle(color: AppColors.grey)));
+      return Center(child: Text('No active jobs right now.', style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55))));
     }
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -667,7 +667,7 @@ class _ActiveJobCard extends StatelessWidget {
     return 'Send Payment';
   }
 
-  Color get _statusColor => _statusLabel == 'Send Payment' ? AppColors.primary : AppColors.green;
+  Color get _statusColor => _statusLabel == 'Send Payment' ? AppColors.primary : AppColors.success;
 
   @override
   Widget build(BuildContext context) {
@@ -687,14 +687,14 @@ class _ActiveJobCard extends StatelessWidget {
                 Container(
                   width: 8,
                   height: 8,
-                  decoration: BoxDecoration(color: request.isEmergency ? AppColors.primary : AppColors.green, shape: BoxShape.circle),
+                  decoration: BoxDecoration(color: request.isEmergency ? AppColors.primary : AppColors.success, shape: BoxShape.circle),
                 ),
                 const SizedBox(width: 6),
                 Text(request.isEmergency ? 'ACTIVE · EMERGENCY' : 'ACTIVE',
                     style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: request.isEmergency ? AppColors.primary : AppColors.green,
+                        color: request.isEmergency ? AppColors.primary : AppColors.success,
                         letterSpacing: 0.5)),
               ],
             ),
@@ -702,7 +702,7 @@ class _ActiveJobCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(child: Text(quote?.mechanicName ?? 'Mechanic', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18))),
-                _CircleIconButton(icon: Icons.call, color: AppColors.green, onTap: () {}),
+                _CircleIconButton(icon: Icons.call, color: AppColors.success, onTap: () {}),
                 const SizedBox(width: 8),
                 ChatIconButton(
                   requestId: request.id,
@@ -715,7 +715,7 @@ class _ActiveJobCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(problem.issue, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-            Text(problem.description, style: const TextStyle(fontSize: 12, color: AppColors.grey)),
+            Text(problem.description, style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
             if (request.photoPaths.isNotEmpty) ...[
               const SizedBox(height: 10),
               JobPhotoPreview(photoPaths: request.photoPaths),
@@ -728,13 +728,13 @@ class _ActiveJobCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Text('Payment', style: TextStyle(fontSize: 11, color: AppColors.grey)),
+                    Text('Payment', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
                     const SizedBox(height: 2),
                     // Same rule the Mechanic UI shows: an Emergency job has no
                     // price until the mechanic sets the agreed one, so it reads
                     // "To be agreed" rather than a stand-in amount.
                     Text(_paymentDisplay(request, quote),
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.green)),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.success)),
                   ],
                 ),
               ],

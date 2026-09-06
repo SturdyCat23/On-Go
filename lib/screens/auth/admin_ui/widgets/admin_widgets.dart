@@ -50,13 +50,13 @@ class AdminStatCard extends StatelessWidget {
           Text(label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10.5, color: AppColors.grey)),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10.5, color: AppColors.textdark.withValues(alpha: 0.55))),
           if (trend != null) ...[
             const SizedBox(height: 2),
             Text(trend!,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10, color: trendColor ?? AppColors.green, fontWeight: FontWeight.w600)),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10, color: trendColor ?? AppColors.success, fontWeight: FontWeight.w600)),
           ],
         ],
       ),
@@ -76,7 +76,7 @@ class AdminChartTooltip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.14), blurRadius: 10, offset: const Offset(0, 4)),
@@ -86,10 +86,10 @@ class AdminChartTooltip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.dark, fontWeight: FontWeight.w600)),
+          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textdark, fontWeight: FontWeight.w600)),
           const SizedBox(height: 2),
           Text('Revenue : ₱${value.toStringAsFixed(0)}',
-              style: const TextStyle(fontSize: 12, color: AppColors.blue, fontWeight: FontWeight.w700)),
+              style: const TextStyle(fontSize: 12, color: AppColors.info, fontWeight: FontWeight.w700)),
         ],
       ),
     );
@@ -116,7 +116,7 @@ class AdminYAxisLabels extends StatelessWidget {
           // One unit for the whole axis, picked from the top of the scale —
           // small real amounts read as ₱150, not a column of ₱0k.
           final label = maxValue >= 1000 ? '₱${(v / 1000).toStringAsFixed(0)}k' : '₱${v.toStringAsFixed(0)}';
-          return Text(label, style: const TextStyle(fontSize: 10, color: AppColors.grey));
+          return Text(label, style: TextStyle(fontSize: 10, color: AppColors.textdark.withValues(alpha: 0.55)));
         }),
       ),
     );

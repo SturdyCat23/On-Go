@@ -178,7 +178,7 @@ class _MechanicStep2PersonalState extends State<MechanicStep2Personal> {
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(error,
-                style: const TextStyle(fontSize: 11, color: Colors.red)),
+                style: const TextStyle(fontSize: 11, color: AppColors.error)),
           ),
       ],
     );
@@ -193,7 +193,7 @@ class _MechanicStep2PersonalState extends State<MechanicStep2Personal> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.surface,
       body: Column(
         children: [
           const _RegHeader(),
@@ -213,7 +213,7 @@ class _MechanicStep2PersonalState extends State<MechanicStep2Personal> {
                       style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.dark)),
+                          color: AppColors.textdark)),
                   const SizedBox(height: 16),
 
                   // First Name
@@ -291,8 +291,8 @@ class _MechanicStep2PersonalState extends State<MechanicStep2Personal> {
                       },
                       suffixIcon: GestureDetector(
                         onTap: _openCalendar,
-                        child: const Icon(Icons.calendar_today_outlined,
-                            size: 18, color: AppColors.grey),
+                        child: Icon(Icons.calendar_today_outlined,
+                            size: 18, color: AppColors.textdark.withValues(alpha: 0.55)),
                       ),
                     ),
                   ),
@@ -403,12 +403,12 @@ class _RegHeader extends StatelessWidget {
         children: [
           Text('On Go Registration',
               style: TextStyle(
-                  color: AppColors.background,
+                  color: AppColors.textlight,
                   fontSize: 20,
                   fontWeight: FontWeight.w700)),
           SizedBox(height: 4),
           Text('Complete all steps to provide services',
-              style: TextStyle(color: AppColors.background, fontSize: 12)),
+              style: TextStyle(color: AppColors.textlight, fontSize: 12)),
         ],
       ),
     );

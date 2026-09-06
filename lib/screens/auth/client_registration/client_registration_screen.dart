@@ -193,7 +193,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg),
-      backgroundColor: error ? Colors.red : AppColors.primary,
+      backgroundColor: error ? AppColors.error : AppColors.primary,
       duration: AppDurations.snackBar,
     ));
   }
@@ -222,7 +222,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                     Text(
                       'Client Registration',
                       style: TextStyle(
-                        color: AppColors.background,
+                        color: AppColors.textlight,
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
                       ),
@@ -230,7 +230,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                     SizedBox(height: 4),
                     Text(
                       'Create your account to book services',
-                      style: TextStyle(color: AppColors.background, fontSize: 12),
+                      style: TextStyle(color: AppColors.textlight, fontSize: 12),
                     ),
                   ],
                 ),
@@ -249,9 +249,9 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE8F5E9),
+                            color: AppColors.success.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFF4CAF50)),
+                            border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
                           ),
                           child: Row(
                             children: [
@@ -270,14 +270,14 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 13,
-                                        color: Color(0xFF2E7D32),
+                                        color: AppColors.success,
                                       ),
                                     ),
                                     Text(
                                       _emailCtrl.text,
                                       style: const TextStyle(
                                           fontSize: 12,
-                                          color: Color(0xFF388E3C)),
+                                          color: AppColors.success),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
@@ -286,7 +286,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                               TextButton(
                                 onPressed: _disconnectSocial,
                                 style: TextButton.styleFrom(
-                                    foregroundColor: const Color(0xFF2E7D32)),
+                                    foregroundColor: AppColors.success),
                                 child: const Text('Change'),
                               ),
                             ],
@@ -308,15 +308,15 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                             style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.red),
+                                color: AppColors.error),
                           ),
                         ],
                       ),
                       const SizedBox(height: 4),
-                      const Text(
+                      Text(
                         'Upload a clear photo of yourself.',
                         style:
-                            TextStyle(fontSize: 11, color: AppColors.grey),
+                            TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55)),
                       ),
                       const SizedBox(height: 10),
 
@@ -345,10 +345,10 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                                           width: 140,
                                           height: 140,
                                           color: AppColors.background,
-                                          child: const Icon(
+                                          child: Icon(
                                             Icons.person_outline,
                                             size: 52,
-                                            color: AppColors.grey,
+                                            color: AppColors.textdark.withValues(alpha: 0.55),
                                           ),
                                         ),
                                       ),
@@ -361,9 +361,9 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                                   onTap: _removePhoto,
                                   child: const CircleAvatar(
                                     radius: 12,
-                                    backgroundColor: Colors.red,
+                                    backgroundColor: AppColors.error,
                                     child: Icon(Icons.close,
-                                        size: 14, color: Colors.white),
+                                        size: 14, color: AppColors.textmedium),
                                   ),
                                 ),
                               ),
@@ -383,8 +383,8 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                                   textAlign: TextAlign.center),
                               onPressed: _pickGallery,
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.blue,
-                                side: const BorderSide(color: AppColors.blue),
+                                foregroundColor: AppColors.info,
+                                side: const BorderSide(color: AppColors.info),
                                 minimumSize: const Size(0, 56),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8)),
@@ -400,8 +400,8 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                                   textAlign: TextAlign.center),
                               onPressed: _takeSelfie,
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.blue,
-                                side: const BorderSide(color: AppColors.blue),
+                                foregroundColor: AppColors.info,
+                                side: const BorderSide(color: AppColors.info),
                                 minimumSize: const Size(0, 56),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8)),
@@ -466,7 +466,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                                   ? Icons.visibility_off_outlined
                                   : Icons.visibility_outlined,
                               size: 20,
-                              color: AppColors.grey,
+                              color: AppColors.textdark.withValues(alpha: 0.55),
                             ),
                             onPressed: () =>
                                 setState(() => _obscurePass = !_obscurePass),
@@ -486,7 +486,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                                   ? Icons.visibility_off_outlined
                                   : Icons.visibility_outlined,
                               size: 20,
-                              color: AppColors.grey,
+                              color: AppColors.textdark.withValues(alpha: 0.55),
                             ),
                             onPressed: () =>
                                 setState(() => _obscureConfirm = !_obscureConfirm),
@@ -501,17 +501,17 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                           decoration: BoxDecoration(
                             color: AppColors.background,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)),
+                            border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
                           ),
-                          child: const Row(
+                          child: Row(
                             children: [
                               Icon(Icons.lock_outline,
-                                  size: 16, color: AppColors.grey),
+                                  size: 16, color: AppColors.textdark.withValues(alpha: 0.55)),
                               SizedBox(width: 8),
                               Text(
                                 'Password is managed by Google',
                                 style: TextStyle(
-                                    fontSize: 12, color: AppColors.grey),
+                                    fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55)),
                               ),
                             ],
                           ),
@@ -527,7 +527,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                           onPressed: _submit,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
-                            foregroundColor: AppColors.background,
+                            foregroundColor: AppColors.textlight,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8)),

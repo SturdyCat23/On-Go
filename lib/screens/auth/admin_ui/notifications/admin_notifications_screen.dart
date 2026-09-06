@@ -31,11 +31,11 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
   Color _colorFor(ModAction a) {
     switch (a) {
       case ModAction.approved:
-        return AppColors.green;
+        return AppColors.success;
       case ModAction.rejected:
         return AppColors.primary;
       case ModAction.escalated:
-        return AppColors.yellow;
+        return AppColors.warning;
     }
   }
 
@@ -62,8 +62,8 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
             color: AppColors.background,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Center(
-            child: Icon(Icons.insert_drive_file_outlined, size: 48, color: AppColors.grey),
+          child: Center(
+            child: Icon(Icons.insert_drive_file_outlined, size: 48, color: AppColors.textdark.withValues(alpha: 0.55)),
           ),
         ), // Todo: wire up real file/image preview once documents are hosted
         actions: [
@@ -99,30 +99,30 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(color: AppColors.yellow.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
-                      child: const Text('escalated', style: TextStyle(fontSize: 11, color: AppColors.yellow, fontWeight: FontWeight.w700)),
+                      decoration: BoxDecoration(color: AppColors.warning.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
+                      child: const Text('escalated', style: TextStyle(fontSize: 11, color: AppColors.warning, fontWeight: FontWeight.w700)),
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(request.email, style: const TextStyle(fontSize: 13, color: AppColors.grey)),
-                Text('${request.userNumber}  •  ${request.role.label}', style: const TextStyle(fontSize: 13, color: AppColors.grey)),
+                Text(request.email, style: TextStyle(fontSize: 13, color: AppColors.textdark.withValues(alpha: 0.55))),
+                Text('${request.userNumber}  •  ${request.role.label}', style: TextStyle(fontSize: 13, color: AppColors.textdark.withValues(alpha: 0.55))),
                 const SizedBox(height: 4),
-                Text('Submitted ${formatDateTime(request.submittedAt)}', style: const TextStyle(fontSize: 13, color: AppColors.grey)),
+                Text('Submitted ${formatDateTime(request.submittedAt)}', style: TextStyle(fontSize: 13, color: AppColors.textdark.withValues(alpha: 0.55))),
                 const SizedBox(height: 20),
-                Text('DOCUMENTS (${request.documentCount})', style: const TextStyle(fontSize: 11, color: AppColors.grey, fontWeight: FontWeight.w600)),
+                Text('DOCUMENTS (${request.documentCount})', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 if (request.documents.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Text('No documents submitted', style: TextStyle(fontSize: 13, color: AppColors.grey)),
+                    child: Text('No documents submitted', style: TextStyle(fontSize: 13, color: AppColors.textdark.withValues(alpha: 0.55))),
                   )
                 else
                   ...request.documents.map((doc) => Container(
                         margin: const EdgeInsets.only(bottom: 8),
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
-                          border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)),
+                          border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: ListTile(
@@ -139,7 +139,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                         ),
                       )),
                 const SizedBox(height: 12),
-                Text('DECISION', style: const TextStyle(fontSize: 11, color: AppColors.grey, fontWeight: FontWeight.w600)),
+                Text('DECISION', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 TextField(
                   controller: reasonController,
@@ -168,13 +168,13 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                         style: ElevatedButton.styleFrom(
                           shape: const StadiumBorder(),
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          backgroundColor: AppColors.green,
+                          backgroundColor: AppColors.success,
                         ),
                         onPressed: () {
                           _store.approve(request.id, actorName: 'Admin');
                           Navigator.pop(sheetCtx);
                         },
-                        child: const Text('Approve', style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700)),
+                        child: const Text('Approve', style: TextStyle(color: AppColors.textmedium, fontWeight: FontWeight.w700)),
                       ),
                     ),
                   ],
@@ -193,7 +193,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.background,
+        foregroundColor: AppColors.textmedium,
         title: const Text('Notifications'),
       ),
       body: Builder(
@@ -202,18 +202,18 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
 
           if (activity.isEmpty) {
             return Padding(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(Icons.notifications_none, size: 48, color: AppColors.grey),
+                children: [
+                  Icon(Icons.notifications_none, size: 48, color: AppColors.textdark.withValues(alpha: 0.55)),
                   SizedBox(height: 12),
                   Text('No activity yet', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                   SizedBox(height: 4),
                   Text(
                     'Moderator approvals, rejections, and escalations will show up here.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: AppColors.grey),
+                    style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55)),
                   ),
                 ],
               ),
@@ -269,13 +269,13 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                               ),
                               const SizedBox(height: 2),
                               Text('${entry.role.label} · by ${entry.moderatorName}',
-                                  style: const TextStyle(fontSize: 12, color: AppColors.grey)),
+                                  style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
                               if (entry.reason != null) ...[
                                 const SizedBox(height: 2),
                                 Text(entry.reason!, style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600)),
                               ],
                               const SizedBox(height: 4),
-                              Text(formatDateTime(entry.date), style: const TextStyle(fontSize: 11, color: AppColors.grey)),
+                              Text(formatDateTime(entry.date), style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
                             ],
                           ),
                         ),
@@ -287,18 +287,18 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                         width: double.infinity,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.yellow,
+                            backgroundColor: AppColors.warning,
                             shape: const StadiumBorder(),
                             padding: const EdgeInsets.symmetric(vertical: 10),
                           ),
                           onPressed: () => _reviewEscalation(request),
-                          child: const Text('Review', style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700)),
+                          child: const Text('Review', style: TextStyle(color: AppColors.textmedium, fontWeight: FontWeight.w700)),
                         ),
                       ),
                     ] else if (alreadyResolved) ...[
                       const SizedBox(height: 8),
                       Text('Resolved · ${request.status == ApprovalStatus.approved ? 'approved' : 'rejected'} by ${request.reviewerName ?? '—'}',
-                          style: const TextStyle(fontSize: 11, color: AppColors.grey, fontStyle: FontStyle.italic)),
+                          style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontStyle: FontStyle.italic)),
                     ],
                   ],
                 ),

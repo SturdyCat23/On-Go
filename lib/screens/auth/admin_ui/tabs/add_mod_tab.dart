@@ -87,7 +87,7 @@ class _AddModTabState extends State<AddModTab> {
               decoration: InputDecoration(
                 hintText: 'At least 6 characters',
                 suffixIcon: IconButton(
-                  icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20, color: AppColors.grey),
+                  icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20, color: AppColors.textdark.withValues(alpha: 0.55)),
                   onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                 ),
               ),
@@ -100,8 +100,8 @@ class _AddModTabState extends State<AddModTab> {
             PasswordStrengthMeter(password: _passwordController.text),
             
             const SizedBox(height: 4),
-            const Text('The moderator signs in with this password and can change it later from Settings.',
-                style: TextStyle(fontSize: 11, color: AppColors.grey)),
+            Text('The moderator signs in with this password and can change it later from Settings.',
+                style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
           ]),
           const SizedBox(height: 16),
           _sectionCard('PERMISSIONS', [
@@ -111,14 +111,14 @@ class _AddModTabState extends State<AddModTab> {
               value: _canApprove,
               onChanged: (v) => setState(() => _canApprove = v),
             ),
-            Divider(height: 1, color: AppColors.grey.withValues(alpha: 0.3)),
+            Divider(height: 1, color: AppColors.textdark.withValues(alpha: 0.2)),
             _permissionRow(
               title: 'Can reject accounts',
               subtitle: 'Decline with reasons',
               value: _canReject,
               onChanged: (v) => setState(() => _canReject = v),
             ),
-            Divider(height: 1, color: AppColors.grey.withValues(alpha: 0.3)),
+            Divider(height: 1, color: AppColors.textdark.withValues(alpha: 0.2)),
             _permissionRow(
               title: 'Can escalate to admin',
               subtitle: 'Flag for admin review',
@@ -136,7 +136,7 @@ class _AddModTabState extends State<AddModTab> {
                 shape: const StadiumBorder(),
               ),
               onPressed: _submit,
-              child: const Text('ADD MODERATOR', style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+              child: const Text('ADD MODERATOR', style: TextStyle(color: AppColors.textlight, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
             ),
           ),
         ],
@@ -160,7 +160,7 @@ class _AddModTabState extends State<AddModTab> {
               children: [
                 Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
-                Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.grey)),
+                Text(subtitle, style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
               ],
             ),
           ),
@@ -168,7 +168,7 @@ class _AddModTabState extends State<AddModTab> {
             onTap: () => onChanged(!value),
             child: Icon(
               value ? Icons.check_circle : Icons.circle_outlined,
-              color: value ? AppColors.primary : AppColors.grey,
+              color: value ? AppColors.primary : AppColors.textdark.withValues(alpha: 0.2),
               size: 24,
             ),
           ),
@@ -181,13 +181,13 @@ class _AddModTabState extends State<AddModTab> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-          color: AppColors.background,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.grey.withValues(alpha: 0.3))),
+          border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 11, color: AppColors.grey, fontWeight: FontWeight.w600)),
+          Text(title, style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w600)),
           const SizedBox(height: 10),
           ...children,
         ],

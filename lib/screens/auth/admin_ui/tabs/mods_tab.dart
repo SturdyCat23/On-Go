@@ -72,8 +72,8 @@ class _ModsTabState extends State<ModsTab> {
                     children: [
                       CircleAvatar(
                         radius: 20,
-                        backgroundColor: AppColors.grey.withValues(alpha: 0.25),
-                        child: Text(mod.initials, style: const TextStyle(color: AppColors.dark, fontWeight: FontWeight.w700)),
+                        backgroundColor: AppColors.textdark.withValues(alpha: 0.12),
+                        child: Text(mod.initials, style: const TextStyle(color: AppColors.textdark, fontWeight: FontWeight.w700)),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -81,7 +81,7 @@ class _ModsTabState extends State<ModsTab> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(mod.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                            Text('Edit permissions', style: const TextStyle(fontSize: 12, color: AppColors.grey)),
+                            Text('Edit permissions', style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
                           ],
                         ),
                       ),
@@ -94,14 +94,14 @@ class _ModsTabState extends State<ModsTab> {
                     value: canApprove,
                     onChanged: (v) => setSheetState(() => canApprove = v),
                   ),
-                  Divider(height: 1, color: AppColors.grey.withValues(alpha: 0.3)),
+                  Divider(height: 1, color: AppColors.textdark.withValues(alpha: 0.2)),
                   _permissionRow(
                     title: 'Can reject accounts',
                     subtitle: 'Decline with reasons',
                     value: canReject,
                     onChanged: (v) => setSheetState(() => canReject = v),
                   ),
-                  Divider(height: 1, color: AppColors.grey.withValues(alpha: 0.3)),
+                  Divider(height: 1, color: AppColors.textdark.withValues(alpha: 0.2)),
                   _permissionRow(
                     title: 'Can escalate to admin',
                     subtitle: 'Flag for admin review',
@@ -124,7 +124,7 @@ class _ModsTabState extends State<ModsTab> {
                         );
                         Navigator.pop(sheetCtx);
                       },
-                      child: const Text('SAVE PERMISSIONS', style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+                      child: const Text('SAVE PERMISSIONS', style: TextStyle(color: AppColors.textlight, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
                     ),
                   ),
                 ],
@@ -152,7 +152,7 @@ class _ModsTabState extends State<ModsTab> {
               children: [
                 Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
-                Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.grey)),
+                Text(subtitle, style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
               ],
             ),
           ),
@@ -160,7 +160,7 @@ class _ModsTabState extends State<ModsTab> {
             onTap: () => onChanged(!value),
             child: Icon(
               value ? Icons.check_circle : Icons.circle_outlined,
-              color: value ? AppColors.primary : AppColors.grey,
+              color: value ? AppColors.primary : AppColors.textdark.withValues(alpha: 0.2),
               size: 24,
             ),
           ),
@@ -170,7 +170,7 @@ class _ModsTabState extends State<ModsTab> {
   }
 
   Widget _permLabel(IconData icon, String label, bool granted, Color color) {
-    final c = granted ? color : AppColors.grey;
+    final c = granted ? color : AppColors.textdark.withValues(alpha: 0.2);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -185,8 +185,8 @@ class _ModsTabState extends State<ModsTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 10, color: AppColors.grey)),
-        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.dark)),
+        Text(label, style: TextStyle(fontSize: 10, color: AppColors.textdark.withValues(alpha: 0.55))),
+        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textdark)),
       ],
     );
   }
@@ -197,15 +197,15 @@ class _ModsTabState extends State<ModsTab> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('${mods.length} moderators', style: const TextStyle(color: AppColors.grey, fontSize: 13)),
+        Text('${mods.length} moderators', style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55), fontSize: 13)),
         const SizedBox(height: 12),
         ...mods.map((m) => Container(
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                  color: AppColors.background,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.grey.withValues(alpha: 0.3))),
+                  border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2))),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -214,8 +214,8 @@ class _ModsTabState extends State<ModsTab> {
                     children: [
                       CircleAvatar(
                           radius: 24,
-                          backgroundColor: AppColors.grey.withValues(alpha: 0.25),
-                          child: Text(m.initials, style: const TextStyle(color: AppColors.dark, fontWeight: FontWeight.w700))),
+                          backgroundColor: AppColors.textdark.withValues(alpha: 0.12),
+                          child: Text(m.initials, style: const TextStyle(color: AppColors.textdark, fontWeight: FontWeight.w700))),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -228,28 +228,28 @@ class _ModsTabState extends State<ModsTab> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: (m.status == ModStatus.active ? AppColors.green : AppColors.grey).withValues(alpha: 0.15),
+                                    color: (m.status == ModStatus.active ? AppColors.success : AppColors.textdark.withValues(alpha: 0.55)).withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Text(m.status == ModStatus.active ? 'active' : 'inactive',
                                       style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,
-                                          color: m.status == ModStatus.active ? AppColors.green : AppColors.grey)),
+                                          color: m.status == ModStatus.active ? AppColors.success : AppColors.textdark.withValues(alpha: 0.55))),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 2),
-                            Text(m.email, style: const TextStyle(fontSize: 13, color: AppColors.grey)),
-                            Text(m.role, style: const TextStyle(fontSize: 13, color: AppColors.grey)),
+                            Text(m.email, style: TextStyle(fontSize: 13, color: AppColors.textdark.withValues(alpha: 0.55))),
+                            Text(m.role, style: TextStyle(fontSize: 13, color: AppColors.textdark.withValues(alpha: 0.55))),
                             const SizedBox(height: 8),
                             Wrap(
                               spacing: 12,
                               runSpacing: 4,
                               children: [
-                                _permLabel(Icons.check, 'Approve', m.permissions.canApprove, AppColors.green),
+                                _permLabel(Icons.check, 'Approve', m.permissions.canApprove, AppColors.success),
                                 _permLabel(Icons.close, 'Reject', m.permissions.canReject, AppColors.primary),
-                                _permLabel(Icons.flag, 'Escalate', m.permissions.canEscalate, AppColors.yellow),
+                                _permLabel(Icons.flag, 'Escalate', m.permissions.canEscalate, AppColors.warning),
                               ],
                             ),
                             const SizedBox(height: 8),
@@ -274,10 +274,10 @@ class _ModsTabState extends State<ModsTab> {
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
-                              color: AppColors.blue.withValues(alpha: 0.12),
+                              color: AppColors.info.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Text('Edit', style: TextStyle(color: AppColors.blue, fontWeight: FontWeight.w700, fontSize: 13)),
+                            child: const Text('Edit', style: TextStyle(color: AppColors.info, fontWeight: FontWeight.w700, fontSize: 13)),
                           ),
                         ),
                       ),

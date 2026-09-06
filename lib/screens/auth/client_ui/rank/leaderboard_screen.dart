@@ -77,11 +77,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   Widget _trailingFor(_Leader leader) {
     switch (_filter) {
       case _RankFilter.rank:
-        return Text(leader.tier, style: const TextStyle(fontSize: 14, color: AppColors.dark));
+        return Text(leader.tier, style: const TextStyle(fontSize: 14, color: AppColors.textdark));
       case _RankFilter.ratings:
         return RatingStars(rating: leader.rating);
       case _RankFilter.reviews:
-        return Text(_reviewLabel(leader.reviewCount), style: const TextStyle(fontSize: 14, color: AppColors.dark));
+        return Text(_reviewLabel(leader.reviewCount), style: const TextStyle(fontSize: 14, color: AppColors.textdark));
     }
   }
 
@@ -101,7 +101,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           color: selected ? AppColors.primary : AppColors.background,
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.background : AppColors.dark)),
+        child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.textlight : AppColors.textdark)),
       ),
     );
   }
@@ -141,17 +141,16 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             ...sorted.asMap().entries.map((entry) {
               final rank = entry.key + 1;
               final leader = entry.value;
-              return InkWell(
+              return GestureDetector(
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => MechanicProfileViewScreen(name: leader.name)),
                 ),
-                borderRadius: BorderRadius.circular(10),
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.grey.withValues(alpha: 0.3)),
+                    border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
@@ -161,10 +160,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                         child: Text('$rank', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                       ),
                       const SizedBox(width: 8),
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 20,
                         backgroundColor: AppColors.background,
-                        child: Icon(Icons.person, color: AppColors.grey),
+                        child: Icon(Icons.person, color: AppColors.textdark.withValues(alpha: 0.55)),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -192,7 +191,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
                 boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 12, offset: const Offset(0, 4))],

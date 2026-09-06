@@ -227,7 +227,7 @@ class _MechanicStep3IdDetailsState extends State<MechanicStep3IdDetails> {
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(error,
-                style: const TextStyle(fontSize: 11, color: Colors.red)),
+                style: const TextStyle(fontSize: 11, color: AppColors.error)),
           ),
       ],
     );
@@ -242,7 +242,7 @@ class _MechanicStep3IdDetailsState extends State<MechanicStep3IdDetails> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.surface,
       body: Column(
         children: [
           const _RegHeader(),
@@ -258,12 +258,12 @@ class _MechanicStep3IdDetailsState extends State<MechanicStep3IdDetails> {
                     onStepTapped: _onStepTapped,
                   ),
                   const SizedBox(height: 8),
-                  const Text('Valid ID Details',
+                  Text('Valid ID Details',
                       style: TextStyle(
-                          fontSize: 14, color: AppColors.grey)),
-                  const Text(
+                          fontSize: 14, color: AppColors.textdark.withValues(alpha: 0.55))),
+                  Text(
                     'Please enter the details exactly as they appear on your ID',
-                    style: TextStyle(fontSize: 12, color: AppColors.grey),
+                    style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55)),
                   ),
                   const SizedBox(height: 16),
 
@@ -274,9 +274,9 @@ class _MechanicStep3IdDetailsState extends State<MechanicStep3IdDetails> {
                       margin: const EdgeInsets.only(bottom: 16),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.red.shade50,
+                        color: AppColors.error.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red.shade200),
+                        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,7 +286,7 @@ class _MechanicStep3IdDetailsState extends State<MechanicStep3IdDetails> {
                             style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.red),
+                                color: AppColors.error),
                           ),
                           const SizedBox(height: 6),
                           ..._mismatchErrors.map((e) => Padding(
@@ -298,12 +298,12 @@ class _MechanicStep3IdDetailsState extends State<MechanicStep3IdDetails> {
                                     const Text('• ',
                                         style: TextStyle(
                                             fontSize: 11,
-                                            color: Colors.red)),
+                                            color: AppColors.error)),
                                     Expanded(
                                       child: Text(e,
                                           style: const TextStyle(
                                               fontSize: 11,
-                                              color: Colors.red)),
+                                              color: AppColors.error)),
                                     ),
                                   ],
                                 ),
@@ -325,23 +325,23 @@ class _MechanicStep3IdDetailsState extends State<MechanicStep3IdDetails> {
                         hint: const Text('Type of ID'),
                         decoration: InputDecoration(
                           filled: true,
-                          fillColor: AppColors.background,
+                          fillColor: AppColors.surface,
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 14),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
                               color: _idTypeError != null
-                                  ? Colors.red
-                                  : AppColors.grey,
+                                  ? AppColors.error
+                                  : AppColors.textdark.withValues(alpha: 0.2),
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
                               color: _idTypeError != null
-                                  ? Colors.red
-                                  : AppColors.grey,
+                                  ? AppColors.error
+                                  : AppColors.textdark.withValues(alpha: 0.2),
                             ),
                           ),
                         ),
@@ -362,7 +362,7 @@ class _MechanicStep3IdDetailsState extends State<MechanicStep3IdDetails> {
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(_idTypeError!,
                               style: const TextStyle(
-                                  fontSize: 11, color: Colors.red)),
+                                  fontSize: 11, color: AppColors.error)),
                         ),
                     ],
                   ),
@@ -473,8 +473,8 @@ class _MechanicStep3IdDetailsState extends State<MechanicStep3IdDetails> {
                       },
                       suffixIcon: GestureDetector(
                         onTap: _openCalendar,
-                        child: const Icon(Icons.calendar_today_outlined,
-                            size: 18, color: AppColors.grey),
+                        child: Icon(Icons.calendar_today_outlined,
+                            size: 18, color: AppColors.textdark.withValues(alpha: 0.55)),
                       ),
                     ),
                   ),
@@ -567,12 +567,12 @@ class _RegHeader extends StatelessWidget {
         children: [
           Text('On Go Registration',
               style: TextStyle(
-                  color: AppColors.background,
+                  color: AppColors.textlight,
                   fontSize: 20,
                   fontWeight: FontWeight.w700)),
           SizedBox(height: 4),
           Text('Complete all steps to provide services',
-              style: TextStyle(color: AppColors.background, fontSize: 12)),
+              style: TextStyle(color: AppColors.textlight, fontSize: 12)),
         ],
       ),
     );
