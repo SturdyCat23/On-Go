@@ -63,6 +63,17 @@ class _MyAppState extends State<MyApp> {
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.themeFor(_themeController.selected),
+      // The Warm Filter tints everything below MaterialApp — routes, sheets
+      // and dialogs alike — in one compositing pass.
+      builder: (context, child) {
+        final content = child ?? const SizedBox.shrink();
+        final tint = AppTheme.warmFilterTint(_themeController.warmFilter);
+        if (tint == null) return content;
+        return ColorFiltered(
+          colorFilter: ColorFilter.mode(tint, BlendMode.modulate),
+          child: content,
+        );
+      },
       home: SignInScreen(),
     );
   }

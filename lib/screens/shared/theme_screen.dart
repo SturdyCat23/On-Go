@@ -63,7 +63,14 @@ class _ThemeScreenState extends State<ThemeScreen> {
             style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55)),
           ),
           const SizedBox(height: 16),
-          for (final option in AppThemes.all) ...[
+          _ControlsCard(controller: _controller),
+          const SizedBox(height: 20),
+          Text(
+            _controller.isDarkModeActive ? 'DARK THEMES' : 'LIGHT THEMES',
+            style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 12),
+          for (final option in _controller.availableThemes) ...[
             _ThemeOptionCard(
               option: option,
               selected: option.id == _controller.selectedId,
@@ -71,6 +78,181 @@ class _ThemeScreenState extends State<ThemeScreen> {
             ),
             const SizedBox(height: 12),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Dark Mode, Dynamic Themes and the Warm Filter, grouped above the list.
+class _ControlsCard extends StatelessWidget {
+  final ThemeController controller;
+
+  const _ControlsCard({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final dynamicOn = controller.dynamicThemes;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: AppRadii.borderLg,
+        border: Border.all(color: AppColors.textmedium.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          _SwitchRow(
+            label: 'Dark Mode',
+            // Dynamic Themes owns the light/dark decision while it is on, so
+            // the switch reports what the clock is doing and can't be moved.
+            subtitle: dynamicOn
+                ? 'Controlled by Dynamic Themes right now.'
+                : 'Show the dark version of each theme.',
+            value: controller.isDarkModeActive,
+            onChanged: dynamicOn ? null : (v) => controller.setDarkMode(v),
+          ),
+          Divider(height: 1, color: AppColors.textmedium.withValues(alpha: 0.25)),
+          _SwitchRow(
+            label: 'Dynamic Themes',
+            subtitle: 'Follow the time of day — light from '
+                '${ThemeController.dayStartHour}:00, dark from '
+                '${ThemeController.nightStartHour}:00.',
+            value: dynamicOn,
+            onChanged: (v) => controller.setDynamicThemes(v),
+          ),
+          Divider(height: 1, color: AppColors.textmedium.withValues(alpha: 0.25)),
+          _WarmFilterRow(controller: controller),
+        ],
+      ),
+    );
+  }
+}
+
+class _SwitchRow extends StatelessWidget {
+  final String label;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+
+  const _SwitchRow({
+    required this.label,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onChanged != null;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textdark.withValues(alpha: enabled ? 1 : 0.45),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Theme(
+            data: Theme.of(context).copyWith(
+              switchTheme: SwitchThemeData(
+                trackColor: WidgetStateProperty.resolveWith((states) {
+                  return Colors.transparent;
+                }),
+                trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return AppColors.primary;
+                  }
+                  return AppColors.textmedium;
+                }),
+                thumbColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return AppColors.primary;
+                  }
+                  return AppColors.textmedium;
+                }),
+              ),
+            ),
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WarmFilterRow extends StatelessWidget {
+  final ThemeController controller;
+
+  const _WarmFilterRow({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final level = controller.warmFilter;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 10, bottom: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Warm Filter',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textdark),
+                ),
+              ),
+              Text(
+                level == 0 ? 'Off' : '$level',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.primary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Warms the whole screen for easier reading in low light.',
+            style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55)),
+          ),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: AppColors.primary,
+              inactiveTrackColor: AppColors.textmedium.withValues(alpha: 0.3),
+              thumbColor: AppColors.primary,
+              overlayColor: AppColors.primary.withValues(alpha: 0.12),
+              valueIndicatorColor: AppColors.primary,
+            ),
+            child: Slider(
+              value: level.toDouble(),
+              min: 0,
+              max: ThemeController.maxWarmFilter.toDouble(),
+              divisions: ThemeController.maxWarmFilter,
+              label: '$level',
+              onChanged: (v) => controller.setWarmFilter(v.round()),
+            ),
+          ),
         ],
       ),
     );

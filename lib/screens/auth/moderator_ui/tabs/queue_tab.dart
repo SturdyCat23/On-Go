@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../../../data/mechanic_credential_store.dart';
 import '../../../../data/moderator_data.dart';
 import '../../../../data/session_store.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../utils/date_format.dart';
+import '../../../../widgets/credential_widgets.dart';
 
 class QueueTab extends StatefulWidget {
   const QueueTab({super.key});
@@ -139,18 +141,31 @@ class _QueueCard extends StatelessWidget {
               Text('${request.documents.length} files submitted',
                   style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55))),
               const SizedBox(height: 12),
-              ...request.documents.map((doc) => ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(
-                      doc.endsWith('.pdf') ? Icons.picture_as_pdf_outlined : Icons.image_outlined,
-                      color: AppColors.primary,
-                    ),
-                    title: Text(doc, style: const TextStyle(fontSize: 13)),
-                    trailing: TextButton(
-                      onPressed: () => _previewDocument(context, doc),
-                      child: const Text('Preview'),
-                    ),
-                  )),
+              // The real uploads, grouped so a reviewer can tell the identity
+              // document from the credentials being claimed. Requests filed
+              // before uploads were stored (or seeded ones) still list their
+              // file names below.
+              ...(() {
+                final uploads = MechanicCredentialStore.instance.forMechanic(request.name);
+                if (uploads.isEmpty) {
+                  return request.documents.map<Widget>((doc) => ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(
+                          doc.endsWith('.pdf') ? Icons.picture_as_pdf_outlined : Icons.image_outlined,
+                          color: AppColors.primary,
+                        ),
+                        title: Text(doc, style: const TextStyle(fontSize: 13)),
+                        trailing: TextButton(
+                          onPressed: () => _previewDocument(context, doc),
+                          child: const Text('Preview'),
+                        ),
+                      ));
+                }
+                return CredentialKind.values.map<Widget>((kind) => CredentialGroup(
+                      title: kind.label,
+                      credentials: uploads.where((c) => c.kind == kind).toList(),
+                    ));
+              })(),
             ],
           ),
         ),

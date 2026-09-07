@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../../../data/mechanic_credential_store.dart';
 import '../../../../data/moderator_data.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../utils/date_format.dart';
 import '../../../../widgets/common_widgets.dart';
+import '../../../../widgets/credential_widgets.dart';
 
 class AdminNotificationsScreen extends StatefulWidget {
   const AdminNotificationsScreen({super.key});
@@ -112,7 +114,16 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                 const SizedBox(height: 20),
                 Text('DOCUMENTS (${request.documentCount})', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
-                if (request.documents.isEmpty)
+                // Escalated to the admin: show the mechanic's actual uploads,
+                // ID separated from documents and certifications, so the call
+                // is made on the files rather than on file names.
+                if (MechanicCredentialStore.instance.hasCredentials(request.name))
+                  ...CredentialKind.values.map((kind) => CredentialGroup(
+                        title: kind.label,
+                        credentials: MechanicCredentialStore.instance
+                            .ofKind(request.name, kind),
+                      ))
+                else if (request.documents.isEmpty)
                   Padding(
                     padding: EdgeInsets.symmetric(vertical: 8),
                     child: Text('No documents submitted', style: TextStyle(fontSize: 13, color: AppColors.textdark.withValues(alpha: 0.55))),

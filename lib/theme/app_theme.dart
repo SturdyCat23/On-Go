@@ -45,6 +45,22 @@ class AppDurations {
 }
 
 class AppTheme {
+  /// The warmest tint the Warm Filter applies, at the top of its range.
+  static const Color _warmestTint = Color(0xFFFFC080);
+
+  /// The tint to multiply the whole app by for a Warm Filter [level]
+  /// (0..[ThemeController.maxWarmFilter]), or null at 0 where the filter is
+  /// off and the extra compositing layer isn't worth paying for.
+  ///
+  /// Multiplying rather than overlaying is what makes this safe on every
+  /// theme: white goes warm, black stays black, so a dark palette gets warmer
+  /// without its blacks washing out to orange.
+  static Color? warmFilterTint(int level) {
+    if (level <= 0) return null;
+    final t = (level / ThemeController.maxWarmFilter).clamp(0.0, 1.0);
+    return Color.lerp(const Color(0xFFFFFFFF), _warmestTint, t);
+  }
+
   /// The [ThemeData] for the currently selected theme.
   static ThemeData get theme => themeFor(ThemeController.instance.selected);
 

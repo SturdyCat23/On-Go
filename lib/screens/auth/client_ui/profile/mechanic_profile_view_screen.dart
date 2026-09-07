@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../../data/app_session.dart';
+import '../../../../data/mechanic_credential_store.dart';
 import '../../../../data/review_store.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_widgets.dart';
 import '../../../../widgets/common_widgets.dart';
+import '../../../../widgets/credential_widgets.dart';
 import '../../../../data/quote_store.dart';
 
 enum _ReviewFilter { all, rating, mostRelevant }
@@ -18,17 +20,20 @@ class MechanicProfileViewScreen extends StatefulWidget {
 
 class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
   final _store = ReviewStore.instance;
+  final _credentials = MechanicCredentialStore.instance;
   _ReviewFilter _filter = _ReviewFilter.all;
 
   @override
   void initState() {
     super.initState();
     _store.addListener(_onChange);
+    _credentials.addListener(_onChange);
   }
 
   @override
   void dispose() {
     _store.removeListener(_onChange);
+    _credentials.removeListener(_onChange);
     super.dispose();
   }
 
@@ -61,36 +66,6 @@ class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
     }
     if (diff.inDays >= 1) return '${diff.inDays} day${diff.inDays == 1 ? '' : 's'} ago';
     return 'today';
-  }
-
-  void _viewCertificate(String label) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(label),
-        content: Container(
-          height: 220,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: AppColors.background,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.verified_outlined, size: 48, color: AppColors.textdark.withValues(alpha: 0.55)),
-                SizedBox(height: 8),
-                Text('Certificate preview', style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55), fontSize: 12)),
-              ],
-            ),
-          ),
-        ), // Todo: wire up real certificate image/file preview once documents are hosted
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
-        ],
-      ),
-    );
   }
 
   /// CLIENT-ONLY write path — the dialog itself is only reachable from this
@@ -156,6 +131,7 @@ class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final credentials = _credentials.publicFor(widget.name);
     final reviews = _applyFilter(_store.reviewsFor(widget.name));
     final average = _store.averageRatingFor(widget.name);
     final distribution = _store.ratingDistributionFor(widget.name);
@@ -228,9 +204,17 @@ class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
               children: [
                 const Text('Certifications', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
-                _CertificationRow(label: 'NC II', onView: () => _viewCertificate('NC II')),
-                const SizedBox(height: 6),
-                _CertificationRow(label: 'Related Certificates', onView: () => _viewCertificate('Related Certificates')),
+                // The documents and certifications this mechanic uploaded at
+                // registration. Their Mechanic ID is never among them —
+                // publicFor withholds it from every profile.
+                if (credentials.isEmpty)
+                  Text('No documents or certifications uploaded yet.',
+                      style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55)))
+                else
+                  ...credentials.map((c) => Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: CredentialRow(credential: c, onView: () => showCredentialPreview(context, c)),
+                      )),
               ],
             ),
           ),
@@ -352,28 +336,6 @@ class _StatBox extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _CertificationRow extends StatelessWidget {
-  final String label;
-  final VoidCallback onView;
-  const _CertificationRow({required this.label, required this.onView});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(Icons.check_circle, color: AppColors.success, size: 18),
-        const SizedBox(width: 8),
-        Expanded(child: Text(label, style: const TextStyle(fontSize: 13))),
-        TextButton(
-          onPressed: onView,
-          style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0)),
-          child: Text('View', style: TextStyle(color: AppColors.info, fontSize: 12, fontWeight: FontWeight.w600)),
-        ),
-      ],
     );
   }
 }

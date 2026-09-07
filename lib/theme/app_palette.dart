@@ -63,6 +63,11 @@ class AppThemeOption {
   /// Stable key persisted to storage — never rename an existing one.
   final String id;
 
+  /// The light/dark pair this theme belongs to. Both members share one visual
+  /// identity, and Dark Mode / Dynamic Themes swap between them, so a family
+  /// should always have exactly one light and one dark member.
+  final String family;
+
   /// Label shown in the Themes list.
   final String label;
 
@@ -78,6 +83,7 @@ class AppThemeOption {
 
   const AppThemeOption({
     required this.id,
+    required this.family,
     required this.label,
     required this.description,
     required this.palette,
@@ -98,6 +104,7 @@ class AppThemes {
 
   static const AppThemeOption _default = AppThemeOption(
     id: defaultId,
+    family: 'classic',
     label: 'Default',
     description: 'The original On Go red on a light background.',
     palette: AppPalette(
@@ -117,6 +124,7 @@ class AppThemes {
 
   static const AppThemeOption _dark = AppThemeOption(
     id: 'dark',
+    family: 'classic',
     label: 'Dark',
     description: 'Low-light palette for night driving and roadside work.',
     isDark: true,
@@ -137,6 +145,7 @@ class AppThemes {
 
   static const AppThemeOption _blue = AppThemeOption(
     id: 'blue',
+    family: 'blue',
     label: 'Calm Blue',
     description: 'Calm blue accents on a cool light background.',
     palette: AppPalette(
@@ -154,27 +163,54 @@ class AppThemes {
     ),
   );
 
-  static const AppThemeOption _red = AppThemeOption(
-    id: 'red',
-    label: 'Crimson',
-    description: 'Deeper crimson with a warm-tinted background.',
+  /// Calm Blue in dark mode: the same blue identity, lifted just enough to
+  /// read against a cool near-black while white still sits legibly on it.
+  static const AppThemeOption _blueDark = AppThemeOption(
+    id: 'blue_dark',
+    family: 'blue',
+    label: 'Calm Blue Dark',
+    description: 'Calm Blue after hours — cool blue on a deep slate ground.',
+    isDark: true,
     palette: AppPalette(
-      primary: Color.fromARGB(255, 155, 17, 30),
-      primarydark: Color.fromARGB(255, 109, 9, 19),
-      background: Color.fromARGB(255, 250, 243, 243),
-      surface: Color.fromARGB(255, 255, 251, 251),
-      textdark: Color.fromARGB(255, 32, 16, 18),
-      textmedium: Color.fromARGB(255, 122, 100, 103),
-      textlight: Color.fromARGB(255, 253, 245, 245),
-      info: Color.fromARGB(255, 21, 118, 186),
-      success: Color.fromARGB(255, 0, 138, 43),
-      warning: Color.fromARGB(255, 219, 145, 0),
-      error: Color.fromARGB(255, 198, 24, 24),
+      primary: Color.fromARGB(255, 59, 123, 221),
+      primarydark: Color.fromARGB(255, 34, 88, 168),
+      background: Color.fromARGB(255, 15, 18, 26),
+      surface: Color.fromARGB(255, 26, 31, 43),
+      textdark: Color.fromARGB(255, 236, 240, 247),
+      textmedium: Color.fromARGB(255, 148, 158, 176),
+      textlight: Color.fromARGB(255, 248, 250, 252),
+      info: Color.fromARGB(255, 56, 176, 233),
+      success: Color.fromARGB(255, 46, 196, 130),
+      warning: Color.fromARGB(255, 245, 176, 65),
+      error: Color.fromARGB(255, 240, 90, 90),
+    ),
+  );
+
+  /// Ember in light mode: the same orange as [_ember], on the warm off-white
+  /// its dark sibling's greys are tinted towards.
+  static const AppThemeOption _emberLight = AppThemeOption(
+    id: 'ember_light',
+    family: 'ember',
+    label: 'Ember Light',
+    description: 'Ember by daylight — vivid orange on a warm off-white.',
+    palette: AppPalette(
+      primary: Color.fromARGB(255, 240, 78, 20),
+      primarydark: Color.fromARGB(255, 186, 52, 8),
+      background: Color.fromARGB(255, 250, 246, 243),
+      surface: Color.fromARGB(255, 255, 253, 251),
+      textdark: Color.fromARGB(255, 26, 22, 20),
+      textmedium: Color.fromARGB(255, 120, 110, 104),
+      textlight: Color.fromARGB(255, 255, 250, 247),
+      info: Color.fromARGB(255, 33, 118, 214),
+      success: Color.fromARGB(255, 24, 150, 82),
+      warning: Color.fromARGB(255, 214, 146, 0),
+      error: Color.fromARGB(255, 214, 45, 35),
     ),
   );
 
   static const AppThemeOption _ember = AppThemeOption(
     id: 'ember',
+    family: 'ember',
     label: 'Ember',
     description: 'Vivid orange on near-black, with warm off-white text.',
     isDark: true,
@@ -193,8 +229,16 @@ class AppThemes {
     ),
   );
 
-  /// Every selectable theme, in the order the Themes screen lists them.
-  static const List<AppThemeOption> all = [_default, _dark, _blue, _red, _ember];
+  /// Every selectable theme, in the order the Themes screen lists them —
+  /// each family's light mode followed by its dark mode.
+  static const List<AppThemeOption> all = [
+    _default,
+    _dark,
+    _blue,
+    _blueDark,
+    _emberLight,
+    _ember,
+  ];
 
   /// The theme registered under [id], or the Default theme if there is none.
   static AppThemeOption byId(String? id) {
@@ -202,5 +246,23 @@ class AppThemes {
       if (option.id == id) return option;
     }
     return _default;
+  }
+
+  /// Every theme of one brightness, in registry order — what the Themes screen
+  /// offers while Dark Mode is off (light) or on (dark).
+  static List<AppThemeOption> forBrightness({required bool dark}) =>
+      all.where((option) => option.isDark == dark).toList(growable: false);
+
+  /// [option]'s counterpart in the requested brightness — the same visual
+  /// identity in its other mode. Returns [option] unchanged if its family has
+  /// no member of that brightness.
+  static AppThemeOption variantOf(AppThemeOption option, {required bool dark}) {
+    if (option.isDark == dark) return option;
+    for (final candidate in all) {
+      if (candidate.family == option.family && candidate.isDark == dark) {
+        return candidate;
+      }
+    }
+    return option;
   }
 }
