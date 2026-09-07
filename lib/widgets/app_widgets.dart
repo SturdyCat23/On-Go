@@ -113,23 +113,28 @@ class NotificationBell extends StatelessWidget {
           Positioned(
             right: 8,
             top: 10,
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-              decoration: BoxDecoration(
-                color: badgeColor ?? AppColors.primary,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(color: AppColors.textdark.withValues(alpha: 0.12), blurRadius: 2, offset: Offset(0, 1)),
-                ],
-              ),
-              child: Text(
-                '$count',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.surface,
+            // The badge sits over the middle of the icon, and an opaque
+            // Container would swallow a tap there instead of letting the
+            // IconButton behind it fire. It is decoration, not a target.
+            child: IgnorePointer(
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                decoration: BoxDecoration(
+                  color: badgeColor ?? AppColors.primary,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: AppColors.textdark.withValues(alpha: 0.12), blurRadius: 2, offset: Offset(0, 1)),
+                  ],
+                ),
+                child: Text(
+                  '$count',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.surface,
+                  ),
                 ),
               ),
             ),

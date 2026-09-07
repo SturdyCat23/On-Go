@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../data/app_session.dart';
+import '../../../data/mechanic_notification_store.dart';
 import '../../../data/quote_store.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/app_widgets.dart';
@@ -30,8 +31,10 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
 
   void _goToTab(int index) => setState(() => _currentIndex = index);
 
+  /// Opening the list is what counts as "viewing" them, so the badge clears
+  /// here — same as the Client bell.
   Future<void> _openNotifications() async {
-    QuoteNotificationStore.instance.markMechanicNotificationsSeen();
+    MechanicNotificationStore.instance.markSeenFor(QuoteNotificationStore.currentMechanicName);
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const MechanicNotificationsScreen()),
@@ -52,9 +55,10 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: OnGoAppBar(
         notificationAction: AnimatedBuilder(
-          animation: QuoteNotificationStore.instance,
+          animation: MechanicNotificationStore.instance,
           builder: (context, _) => NotificationBell(
-            count: QuoteNotificationStore.instance.mechanicNotificationCount,
+            count: MechanicNotificationStore.instance
+                .unreadCountFor(QuoteNotificationStore.currentMechanicName),
             onTap: _openNotifications,
             badgeColor: AppColors.warning,
           ),

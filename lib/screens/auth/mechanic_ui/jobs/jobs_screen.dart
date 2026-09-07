@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../../../../data/mechanic_account_store.dart';
+import '../../../../data/mechanic_settings_store.dart';
 import '../../../../data/moderator_data.dart';
 import '../../../../data/quote_store.dart';
 import '../../../../data/review_store.dart';
@@ -54,6 +55,15 @@ class _JobsScreenState extends State<JobsScreen> {
     if (!mounted) return;
     final counting = store.matchedJobsFor(_mechanicName).any((r) => r.timeRemaining() != null);
     if (counting) setState(() {});
+  }
+
+  /// Opening the Emergency tab is what "viewing the Emergency Jobs list"
+  /// means, so that is where the pulse stops.
+  void _onTabChanged(int index) {
+    if (index == _JobTabBar.emergencyIndex) {
+      QuoteNotificationStore.instance.markEmergencyJobsSeen();
+    }
+    setState(() => _tabIndex = index);
   }
 
   void _onAccountChange() {
@@ -224,11 +234,29 @@ class _JobsScreenState extends State<JobsScreen> {
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: Listenable.merge([QuoteNotificationStore.instance, MechanicAccountStore.instance]),
+      animation: Listenable.merge([
+        QuoteNotificationStore.instance,
+        MechanicAccountStore.instance,
+        MechanicSettingsStore.instance,
+      ]),
       builder: (context, _) {
         final store = QuoteNotificationStore.instance;
         final account = MechanicAccountStore.instance;
         final canAct = account.canPerformJobActions;
+
+        // Sitting on the Emergency tab counts as viewing the list, so a job
+        // that arrives while it is open is already seen and never pulses.
+        // Deferred to after the frame — this notifies, and we are in build.
+        if (_tabIndex == _JobTabBar.emergencyIndex && store.hasUnseenEmergencyJobs) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) QuoteNotificationStore.instance.markEmergencyJobsSeen();
+          });
+        }
+
+        // The toggle wins outright: off means never pulse.
+        final pulseEmergency = MechanicSettingsStore.instance.emergencyPulseEnabled &&
+            _tabIndex != _JobTabBar.emergencyIndex &&
+            store.hasUnseenEmergencyJobs;
 
         final allAvailable = store.availableJobs;
         final available = allAvailable.where((r) => !r.isEmergency).toList();
@@ -243,8 +271,9 @@ class _JobsScreenState extends State<JobsScreen> {
               _ApprovalBanner(status: account.status),
             _JobTabBar(
               currentIndex: _tabIndex,
-              onChanged: (i) => setState(() => _tabIndex = i),
+              onChanged: _onTabChanged,
               counts: [available.length, emergency.length, accepted.length],
+              pulseEmergency: pulseEmergency,
             ),
             Expanded(
               child: IndexedStack(
@@ -405,14 +434,90 @@ _ProblemText _splitProblem(String problem) {
 // Tab bar
 // ---------------------------------------------------------------------
 
-class _JobTabBar extends StatelessWidget {
+class _JobTabBar extends StatefulWidget {
   final int currentIndex;
   final ValueChanged<int> onChanged;
   final List<int> counts;
 
-  const _JobTabBar({required this.currentIndex, required this.onChanged, required this.counts});
+  /// Whether the Emergency pill should be pulsing right now. The screen works
+  /// this out from unviewed emergency jobs AND the mechanic's alert toggle, so
+  /// this widget just plays or stops the animation.
+  final bool pulseEmergency;
+
+  const _JobTabBar({
+    required this.currentIndex,
+    required this.onChanged,
+    required this.counts,
+    this.pulseEmergency = false,
+  });
 
   static const _labels = ['Available', 'Emergency', 'Accepted'];
+
+  /// The index of the Emergency pill in [_labels].
+  static const int emergencyIndex = 1;
+
+  @override
+  State<_JobTabBar> createState() => _JobTabBarState();
+}
+
+class _JobTabBarState extends State<_JobTabBar> with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
+    if (widget.pulseEmergency) _pulse.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(covariant _JobTabBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.pulseEmergency == oldWidget.pulseEmergency) return;
+    if (widget.pulseEmergency) {
+      _pulse.repeat(reverse: true);
+    } else {
+      // Back to the pill's normal, unanimated look.
+      _pulse.stop();
+      _pulse.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  /// The pill exactly as it has always looked. [glow] is 0 when nothing is
+  /// pulsing, which leaves the original decoration untouched.
+  Widget _pill(int i, {double glow = 0}) {
+    final selected = i == widget.currentIndex;
+    return Container(
+      margin: EdgeInsets.only(right: i < 2 ? 8 : 0),
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: selected ? AppColors.primary : AppColors.surface,
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: selected ? AppColors.primary : AppColors.textdark.withValues(alpha: 0.2)),
+        boxShadow: glow == 0
+            ? null
+            : [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.45 * glow),
+                  blurRadius: 14 * glow,
+                  spreadRadius: 2 * glow,
+                ),
+              ],
+      ),
+      child: Text('${_JobTabBar._labels[i]} ${widget.counts[i]}',
+          style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: selected ? AppColors.textlight : AppColors.textmedium)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -420,25 +525,29 @@ class _JobTabBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Row(
         children: List.generate(3, (i) {
-          final selected = i == currentIndex;
+          final pulsing = widget.pulseEmergency && i == _JobTabBar.emergencyIndex;
+
           return Expanded(
             child: GestureDetector(
-              onTap: () => onChanged(i),
-              child: Container(
-                margin: EdgeInsets.only(right: i < 2 ? 8 : 0),
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: selected ? AppColors.primary : AppColors.surface,
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: selected ? AppColors.primary : AppColors.textdark.withValues(alpha: 0.2)),
-                ),
-                child: Text('${_labels[i]} ${counts[i]}',
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: selected ? AppColors.textlight : AppColors.textmedium)),
-              ),
+              onTap: () => widget.onChanged(i),
+              child: pulsing
+                  ? AnimatedBuilder(
+                      // Present only while the pill is actually pulsing.
+                      key: const ValueKey('emergencyPulse'),
+                      animation: _pulse,
+                      builder: (context, _) {
+                        // Curved so the pill swells and settles rather than
+                        // ticking linearly between the two extremes.
+                        final t = Curves.easeInOut.transform(_pulse.value);
+                        // Transform, not layout — the row never reflows, so
+                        // the other two pills stay exactly where they are.
+                        return Transform.scale(
+                          scale: 1 + 0.05 * t,
+                          child: _pill(i, glow: t),
+                        );
+                      },
+                    )
+                  : _pill(i),
             ),
           );
         }),

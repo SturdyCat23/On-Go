@@ -1,47 +1,41 @@
 import 'package:flutter/material.dart';
 
-import '../../../../data/mechanic_notification_store.dart';
 import '../../../../data/quote_store.dart';
 import '../../../../theme/app_theme.dart';
 
-/// What the mechanic's bell opens — the mechanic-side twin of
-/// `ClientNotificationsScreen`, using the same card, icon and timestamp
-/// treatment so both shells read the same way.
+/// What the client's bell opens: quotes that arrived and the progress the
+/// mechanic reported on their job.
 ///
-/// The list comes from [MechanicNotificationStore], which records an entry at
-/// each of the five moments the mechanic cares about. Opening this screen is
-/// what marks them read and clears the badge — see
-/// `MechanicHomeScreen._openNotifications`.
-class MechanicNotificationsScreen extends StatelessWidget {
-  const MechanicNotificationsScreen({super.key});
+/// The list comes straight from [QuoteNotificationStore], which records an
+/// entry at each of the four moments the client cares about. Opening this
+/// screen is what marks them read and clears the badge — see
+/// `ClientHomeScreen._openNotifications`.
+class ClientNotificationsScreen extends StatelessWidget {
+  const ClientNotificationsScreen({super.key});
 
-  IconData _iconFor(MechanicNotificationKind kind) {
+  IconData _iconFor(ClientNotificationKind kind) {
     switch (kind) {
-      case MechanicNotificationKind.quoteAccepted:
+      case ClientNotificationKind.quoteReceived:
+        return Icons.request_quote_outlined;
+      case ClientNotificationKind.jobAccepted:
         return Icons.handshake_outlined;
-      case MechanicNotificationKind.rated:
-        return Icons.star_outline;
-      case MechanicNotificationKind.paymentReceived:
+      case ClientNotificationKind.workStarted:
+        return Icons.build_outlined;
+      case ClientNotificationKind.awaitingPayment:
         return Icons.payments_outlined;
-      case MechanicNotificationKind.emergencyPosted:
-        return Icons.warning_amber_rounded;
-      case MechanicNotificationKind.accountApproved:
-        return Icons.verified_outlined;
     }
   }
 
-  Color _accentFor(MechanicNotificationKind kind) {
+  Color _accentFor(ClientNotificationKind kind) {
     switch (kind) {
-      case MechanicNotificationKind.quoteAccepted:
-        return AppColors.success;
-      case MechanicNotificationKind.rated:
+      case ClientNotificationKind.quoteReceived:
         return AppColors.info;
-      case MechanicNotificationKind.paymentReceived:
-        return AppColors.warning;
-      case MechanicNotificationKind.emergencyPosted:
-        return AppColors.primary;
-      case MechanicNotificationKind.accountApproved:
+      case ClientNotificationKind.jobAccepted:
         return AppColors.success;
+      case ClientNotificationKind.workStarted:
+        return AppColors.primary;
+      case ClientNotificationKind.awaitingPayment:
+        return AppColors.warning;
     }
   }
 
@@ -63,10 +57,9 @@ class MechanicNotificationsScreen extends StatelessWidget {
         title: const Text('Notifications'),
       ),
       body: AnimatedBuilder(
-        animation: MechanicNotificationStore.instance,
+        animation: QuoteNotificationStore.instance,
         builder: (context, _) {
-          final notifications = MechanicNotificationStore.instance
-              .notificationsFor(QuoteNotificationStore.currentMechanicName);
+          final notifications = QuoteNotificationStore.instance.clientNotifications;
 
           if (notifications.isEmpty) {
             return Padding(
@@ -82,7 +75,7 @@ class MechanicNotificationsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Accepted quotes, ratings, payments and emergency jobs will appear here.',
+                    'Quotes and updates on your job will appear here once a mechanic responds.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55)),
                   ),
@@ -144,7 +137,7 @@ class MechanicNotificationsScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            n.detail,
+                            n.problem,
                             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                           ),
                         ],

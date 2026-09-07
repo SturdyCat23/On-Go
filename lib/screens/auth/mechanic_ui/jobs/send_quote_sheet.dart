@@ -71,7 +71,7 @@ class _SendQuoteSheetState extends State<SendQuoteSheet> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.background,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           border: Border(top: BorderSide(color: AppColors.primary, width: 1.5)),
         ),
@@ -102,19 +102,6 @@ class _SendQuoteSheetState extends State<SendQuoteSheet> {
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context, null),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      side: BorderSide(color: AppColors.primary),
-                      minimumSize: const Size(double.infinity, 48),
-                      shape: const StadiumBorder(),
-                    ),
-                    child: const Text('Cancel'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
                   child: ElevatedButton(
                     onPressed: _send,
                     style: ElevatedButton.styleFrom(
@@ -122,6 +109,20 @@ class _SendQuoteSheetState extends State<SendQuoteSheet> {
                       shape: const StadiumBorder(),
                     ),
                     child: const Text('Send Quote'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context, null),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.textmedium,
+                      backgroundColor: AppColors.surface.withValues(alpha: 0.55),
+                      side: BorderSide(color: AppColors.textmedium.withValues(alpha: 0.55)),
+                      minimumSize: const Size(double.infinity, 48),
+                      shape: const StadiumBorder(),
+                    ),
+                    child: const Text('Cancel'),
                   ),
                 ),
               ],
@@ -158,9 +159,22 @@ class _QuoteField extends StatelessWidget {
           keyboardType: keyboardType,
           onChanged: onChanged,
           decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.surface.withValues(alpha: 0.55),
             prefixText: keyboardType == TextInputType.number ? '₱ ' : null,
             isDense: true,
-            border: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.textdark.withValues(alpha: 0.2))),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.textmedium.withValues(alpha: 0.55)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.textmedium.withValues(alpha: 0.55)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+            ),
           ),
         ),
       ],

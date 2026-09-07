@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'mechanic_notification_store.dart';
 import 'moderator_data.dart';
 
 enum MechanicAccountMode { none, demo, registered }
@@ -8,9 +9,34 @@ enum MechanicAccountMode { none, demo, registered }
 /// Settings and Profile can offer the same flows the client side has.
 class MechanicAccountStore extends ChangeNotifier {
   MechanicAccountStore._internal() {
-    ModerationStore.instance.addListener(notifyListeners);
+    ModerationStore.instance.addListener(_onModerationChange);
   }
   static final MechanicAccountStore instance = MechanicAccountStore._internal();
+
+  /// The approval status this store last saw, so a moderator's decision can be
+  /// spotted as a *transition* rather than re-fired on every moderation change.
+  ApprovalStatus? _lastSeenStatus;
+
+  /// Watches this mechanic's own account request. Crossing into approved is
+  /// what puts "Account approved" on their bell; every other moderation change
+  /// just repaints, as before.
+  void _onModerationChange() {
+    final current = status;
+    if (current != _lastSeenStatus) {
+      if (current == ApprovalStatus.approved) {
+        MechanicNotificationStore.instance.add(
+          kind: MechanicNotificationKind.accountApproved,
+          mechanicName: name,
+          clientName: '',
+          detail: accountRequest?.reviewerName == null
+              ? 'Reviewed by a moderator'
+              : 'Reviewed by ${accountRequest!.reviewerName}',
+        );
+      }
+      _lastSeenStatus = current;
+    }
+    notifyListeners();
+  }
 
   static const Duration photoChangeCooldown = Duration(days: 30);
 
@@ -57,6 +83,7 @@ class MechanicAccountStore extends ChangeNotifier {
     photoIsNetwork = false;
     photoLastChangedAt = null;
     _accountRequestId = null;
+    _lastSeenStatus = null;
     notifyListeners();
   }
 
@@ -88,6 +115,9 @@ class MechanicAccountStore extends ChangeNotifier {
       role: AccountRole.mechanic,
       documents: documents,
     );
+    // Start from this request's own status, so the moderator's decision on it
+    // reads as a transition rather than inheriting a previous account's state.
+    _lastSeenStatus = status;
     notifyListeners();
   }
 
@@ -128,6 +158,7 @@ class MechanicAccountStore extends ChangeNotifier {
     photoIsNetwork = false;
     photoLastChangedAt = null;
     _accountRequestId = null;
+    _lastSeenStatus = null;
     notifyListeners();
   }
 }

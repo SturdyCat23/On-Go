@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../data/app_session.dart';
+import '../../../data/quote_store.dart';
 import '../../../data/review_store.dart';
+import '../../../theme/app_theme.dart';
 import '../../../widgets/app_widgets.dart';
 import '../../../widgets/on_go_bottom_nav.dart';
 import 'home/need_help_screen.dart';
+import 'notifications/client_notifications_screen.dart';
 import 'jobs/client_jobs_screen.dart';
 import 'history/service_history_screen.dart';
 import 'rank/leaderboard_screen.dart';
@@ -27,6 +30,16 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
 
   void _goToTab(int index) => setState(() => _currentIndex = index);
 
+  /// Opening the list is what counts as "viewing" them, so the badge clears
+  /// here — same as the Mechanic and Admin bells.
+  Future<void> _openNotifications() async {
+    QuoteNotificationStore.instance.markClientNotificationsSeen();
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ClientNotificationsScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final tabs = [
@@ -38,9 +51,15 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: const OnGoAppBar(
-        // Bell has no function yet — kept in place for a future use.
-        notificationAction: NotificationBell(count: 0, onTap: null),
+      appBar: OnGoAppBar(
+        notificationAction: AnimatedBuilder(
+          animation: QuoteNotificationStore.instance,
+          builder: (context, _) => NotificationBell(
+            count: QuoteNotificationStore.instance.clientUnreadNotificationCount,
+            onTap: _openNotifications,
+            badgeColor: AppColors.warning,
+          ),
+        ),
       ),
       drawer: const ClientMenuDrawer(),
       body: IndexedStack(index: _currentIndex, children: tabs),

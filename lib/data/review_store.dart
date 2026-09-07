@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'app_session.dart';
 import 'client_account_store.dart';
+import 'mechanic_notification_store.dart';
 
 class MechanicReview {
   final String id;
@@ -110,6 +111,14 @@ class ReviewStore extends ChangeNotifier {
         date: DateTime.now(),
       ));
     }
+    // Editing an existing review counts too — the mechanic's rating changed
+    // either way, and that is what they are being told about.
+    MechanicNotificationStore.instance.add(
+      kind: MechanicNotificationKind.rated,
+      mechanicName: mechanicName,
+      clientName: currentClientName,
+      detail: '$rating★${comment.trim().isEmpty ? '' : ' · ${comment.trim()}'}',
+    );
     notifyListeners();
   }
 

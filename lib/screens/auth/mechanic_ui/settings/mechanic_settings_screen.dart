@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../data/mechanic_account_store.dart';
+import '../../../../data/mechanic_settings_store.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/password_strength.dart';
 import '../../../shared/theme_screen.dart';
@@ -75,6 +76,37 @@ class _MechanicSettingsScreenState extends State<MechanicSettingsScreen> {
         children: [
           Text('APPEARANCE', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w600)),
           const ThemesSettingsTile(),
+          const SizedBox(height: 8),
+          const Divider(),
+          const SizedBox(height: 16),
+          Text('NOTIFICATIONS', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          AnimatedBuilder(
+            animation: MechanicSettingsStore.instance,
+            builder: (context, _) => Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Emergency job alerts', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Pulse the Emergency button when new emergency jobs are posted',
+                        style: TextStyle(fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55)),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: MechanicSettingsStore.instance.emergencyPulseEnabled,
+                  onChanged: MechanicSettingsStore.instance.setEmergencyPulseEnabled,
+                  activeTrackColor: AppColors.primary,
+                  activeThumbColor: AppColors.surface,
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 8),
           const Divider(),
           const SizedBox(height: 16),

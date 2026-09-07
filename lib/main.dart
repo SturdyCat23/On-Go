@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'data/mechanic_settings_store.dart';
 import 'screens/auth/sign_in_screen.dart';
 import 'theme/app_theme.dart';
 
@@ -10,6 +11,9 @@ void main() async {
   // Same for the admin's background photo, so the Sign In screen paints it on
   // the first frame instead of flashing the background color first.
   await AuthBackgroundController.instance.load();
+  // And the mechanic's own preferences, so the Emergency pulse toggle is
+  // whatever they last set it to.
+  await MechanicSettingsStore.instance.load();
   runApp(const MyApp());
 }
 

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'admin_data.dart';
 import 'app_session.dart';
 import 'chat_store.dart';
+import 'mechanic_notification_store.dart';
 import 'mechanic_account_store.dart';
 
 enum RequestStatus { pending, matched, completed }
@@ -281,6 +282,78 @@ double? clientTotalPaymentAmount(HelpRequest request, MechanicQuote? acceptedQuo
   return mechanicAmount == null ? null : mechanicAmount + request.platformFee;
 }
 
+/// What a client's bell can tell them about. Each value is raised from the
+/// one store method that performs it, so a notification can never be recorded
+/// for something that didn't actually happen.
+enum ClientNotificationKind {
+  /// A mechanic sent a quote for one of the client's requests.
+  quoteReceived,
+
+  /// A mechanic took the job on. Emergency jobs only — for Normal and Urgent
+  /// ones the CLIENT is the one who accepts a quote, so there is no
+  /// mechanic-side acceptance to report.
+  jobAccepted,
+
+  /// The mechanic started working on the job.
+  workStarted,
+
+  /// The service is finished and the mechanic is waiting to be paid.
+  awaitingPayment,
+}
+
+/// One entry in the client's notification list.
+class ClientNotification {
+  final String id;
+  final ClientNotificationKind kind;
+  final String requestId;
+  final String mechanicName;
+
+  /// The problem text as it read when the notification was raised, so the
+  /// list still makes sense if the request is gone.
+  final String problem;
+  final DateTime createdAt;
+
+  /// Cleared by [QuoteNotificationStore.markClientNotificationsSeen] — this is
+  /// what the bell's badge counts.
+  bool read;
+
+  ClientNotification({
+    required this.id,
+    required this.kind,
+    required this.requestId,
+    required this.mechanicName,
+    required this.problem,
+    required this.createdAt,
+    this.read = false,
+  });
+
+  String get title {
+    switch (kind) {
+      case ClientNotificationKind.quoteReceived:
+        return 'New quote received';
+      case ClientNotificationKind.jobAccepted:
+        return 'Mechanic accepted your job';
+      case ClientNotificationKind.workStarted:
+        return 'Mechanic started the job';
+      case ClientNotificationKind.awaitingPayment:
+        return 'Waiting for your payment';
+    }
+  }
+
+  String get message {
+    switch (kind) {
+      case ClientNotificationKind.quoteReceived:
+        return '$mechanicName sent you a quote.';
+      case ClientNotificationKind.jobAccepted:
+        return '$mechanicName accepted your job and is on the way.';
+      case ClientNotificationKind.workStarted:
+        return '$mechanicName has started working on your job.';
+      case ClientNotificationKind.awaitingPayment:
+        return '$mechanicName finished the service and is waiting for payment.';
+    }
+  }
+}
+
 class QuoteNotificationStore extends ChangeNotifier {
   QuoteNotificationStore._internal();
   static final QuoteNotificationStore instance = QuoteNotificationStore._internal();
@@ -293,8 +366,45 @@ class QuoteNotificationStore extends ChangeNotifier {
   final List<HelpRequest> _requests = [];
   final List<MechanicQuote> _allQuotes = [];
   int _unseenCount = 0;
-  final Set<String> _seenMechanicQuoteIds = {};
   final Set<String> _seenClientQuoteIds = {};
+  final Set<String> _seenEmergencyRequestIds = {};
+  final List<ClientNotification> _clientNotifications = [];
+
+  // ---------------------------------------------------------------------
+  // Client notification bell
+  // ---------------------------------------------------------------------
+
+  /// Everything the client's bell has to show, newest first.
+  List<ClientNotification> get clientNotifications => List.unmodifiable(_clientNotifications);
+
+  /// What the bell's badge displays. Zero hides the badge.
+  int get clientUnreadNotificationCount => _clientNotifications.where((n) => !n.read).length;
+
+  /// Called when the client opens the notifications list — this is what makes
+  /// the badge go away.
+  void markClientNotificationsSeen() {
+    if (clientUnreadNotificationCount == 0) return;
+    for (final n in _clientNotifications) {
+      n.read = true;
+    }
+    notifyListeners();
+  }
+
+  /// Records one event for the client. Callers notify listeners themselves —
+  /// every one of them already does at the end of the action.
+  void _addClientNotification(ClientNotificationKind kind, HelpRequest request, String mechanicName) {
+    _clientNotifications.insert(
+      0,
+      ClientNotification(
+        id: '${DateTime.now().microsecondsSinceEpoch}_${_clientNotifications.length}',
+        kind: kind,
+        requestId: request.id,
+        mechanicName: mechanicName,
+        problem: request.problem,
+        createdAt: DateTime.now(),
+      ),
+    );
+  }
 
   // ---------------------------------------------------------------------
   // Client-facing API
@@ -348,18 +458,6 @@ class QuoteNotificationStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  List<MechanicQuote> get mechanicNotifications => _allQuotes
-      .where((q) => q.accepted && q.mechanicName == currentMechanicName)
-      .toList();
-
-  int get mechanicNotificationCount =>
-      mechanicNotifications.where((q) => !_seenMechanicQuoteIds.contains(q.id)).length;
-
-  void markMechanicNotificationsSeen() {
-    _seenMechanicQuoteIds.addAll(mechanicNotifications.map((q) => q.id));
-    notifyListeners();
-  }
-
   HelpRequest? requestFor(String requestId) {
     try {
       return _requests.firstWhere((r) => r.id == requestId);
@@ -378,6 +476,17 @@ class QuoteNotificationStore extends ChangeNotifier {
 
   void submitRequest(HelpRequest request) {
     _requests.add(request);
+    // Emergencies go out to every mechanic — nobody owns one until a mechanic
+    // accepts it, so this is the one broadcast notification.
+    if (request.isEmergency) {
+      MechanicNotificationStore.instance.add(
+        kind: MechanicNotificationKind.emergencyPosted,
+        mechanicName: null,
+        clientName: request.clientName,
+        detail: '${request.problem} · ${request.location}',
+        requestId: request.id,
+      );
+    }
     notifyListeners();
   }
 
@@ -405,6 +514,13 @@ class QuoteNotificationStore extends ChangeNotifier {
     // about the previous mechanic running out of time.
     req.expiredAt = null;
     req.expiredByMechanic = null;
+    MechanicNotificationStore.instance.add(
+      kind: MechanicNotificationKind.quoteAccepted,
+      mechanicName: quote.mechanicName,
+      clientName: req.clientName,
+      detail: '${req.problem} · ${quote.price}',
+      requestId: req.id,
+    );
     notifyListeners();
   }
 
@@ -446,6 +562,8 @@ class QuoteNotificationStore extends ChangeNotifier {
     if (req == null || req.paymentCompleted) return false;
     _requests.removeWhere((r) => r.id == requestId);
     _allQuotes.removeWhere((q) => q.requestId == requestId);
+    _clientNotifications.removeWhere((n) => n.requestId == requestId);
+    MechanicNotificationStore.instance.removeForRequest(requestId);
     ChatStore.instance.clearChat(requestId);
     notifyListeners();
     return true;
@@ -457,6 +575,27 @@ class QuoteNotificationStore extends ChangeNotifier {
 
   List<HelpRequest> get availableJobs =>
       _requests.where((r) => r.status == RequestStatus.pending).toList();
+
+  /// Emergency jobs still open that the mechanic hasn't looked at in the
+  /// Emergency tab yet — what makes the Emergency filter button pulse.
+  ///
+  /// Only jobs still in [availableJobs] count, so one that gets accepted or
+  /// expires stops raising the alert on its own. Tracked by id, so a newly
+  /// posted emergency is unseen again even after an earlier one was viewed.
+  List<HelpRequest> get unseenEmergencyJobs => availableJobs
+      .where((r) => r.isEmergency && !_seenEmergencyRequestIds.contains(r.id))
+      .toList();
+
+  bool get hasUnseenEmergencyJobs => unseenEmergencyJobs.isNotEmpty;
+
+  /// Called when the mechanic opens the Emergency Jobs list — this is what
+  /// stops the pulse.
+  void markEmergencyJobsSeen() {
+    final unseen = unseenEmergencyJobs;
+    if (unseen.isEmpty) return;
+    _seenEmergencyRequestIds.addAll(unseen.map((r) => r.id));
+    notifyListeners();
+  }
 
   bool mechanicHasQuoted(String requestId, String mechanicName) =>
       _allQuotes.any((q) => q.requestId == requestId && q.mechanicName == mechanicName);
@@ -483,6 +622,10 @@ class QuoteNotificationStore extends ChangeNotifier {
       rating: rating,
     ));
     _unseenCount++;
+    final req = requestFor(requestId);
+    if (req != null) {
+      _addClientNotification(ClientNotificationKind.quoteReceived, req, mechanicName);
+    }
     notifyListeners();
   }
 
@@ -522,6 +665,7 @@ class QuoteNotificationStore extends ChangeNotifier {
     req.expiredAt = null;
     req.expiredByMechanic = null;
     _unseenCount++;
+    _addClientNotification(ClientNotificationKind.jobAccepted, req, mechanicName);
     notifyListeners();
     return true;
   }
@@ -588,6 +732,11 @@ class QuoteNotificationStore extends ChangeNotifier {
     if (req == null || req.workStarted) return;
     req.workStarted = true;
     req.workStartedAt = DateTime.now();
+    _addClientNotification(
+      ClientNotificationKind.workStarted,
+      req,
+      acceptedQuoteFor(requestId)?.mechanicName ?? 'Your mechanic',
+    );
     notifyListeners();
   }
 
@@ -599,6 +748,12 @@ class QuoteNotificationStore extends ChangeNotifier {
     if (req == null || req.serviceCompleted) return;
     req.serviceCompleted = true;
     req.serviceCompletedAt = DateTime.now();
+    // Service done means the mechanic is now waiting to be paid.
+    _addClientNotification(
+      ClientNotificationKind.awaitingPayment,
+      req,
+      acceptedQuoteFor(requestId)?.mechanicName ?? 'Your mechanic',
+    );
     notifyListeners();
   }
 
@@ -766,6 +921,18 @@ class QuoteNotificationStore extends ChangeNotifier {
     // revenue, and the payment itself is one Admin transaction either way.
     AdminStore.instance.recordCompletedPayment(platformFee: fee, at: req.paymentCompletedAt);
 
+    if (quote != null) {
+      MechanicNotificationStore.instance.add(
+        kind: MechanicNotificationKind.paymentReceived,
+        mechanicName: quote.mechanicName,
+        clientName: req.clientName,
+        // The mechanic's payout, not the client's total — the priority fee is
+        // ONGO's cut and never reaches them.
+        detail: '${req.problem} · ₱${amount.toStringAsFixed(0)}',
+        requestId: req.id,
+      );
+    }
+
     // Chat intentionally NOT cleared — see clientDeleteRequest.
 
     notifyListeners();
@@ -800,8 +967,10 @@ class QuoteNotificationStore extends ChangeNotifier {
     _requests.clear();
     _allQuotes.clear();
     _unseenCount = 0;
-    _seenMechanicQuoteIds.clear();
     _seenClientQuoteIds.clear();
+    _seenEmergencyRequestIds.clear();
+    _clientNotifications.clear();
+    MechanicNotificationStore.instance.clear();
     notifyListeners();
   }
 }

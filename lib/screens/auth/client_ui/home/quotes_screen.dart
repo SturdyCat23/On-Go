@@ -136,6 +136,7 @@ class _RequestQuoteCard extends StatelessWidget {
 
     return AppCard(
       padding: const EdgeInsets.all(14),
+      color: AppColors.surface.withValues(alpha: 0.55),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
