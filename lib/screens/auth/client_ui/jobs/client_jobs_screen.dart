@@ -205,8 +205,9 @@ class _JobTabBar extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: selected ? AppColors.primarydark : AppColors.surface,
+                  color: selected ? AppColors.primary : AppColors.surface,
                   borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: selected ? AppColors.primary : AppColors.textdark.withValues(alpha: 0.2)),
                 ),
                 child: Text('${_labels[i]} ${counts[i]}',
                     style: TextStyle(

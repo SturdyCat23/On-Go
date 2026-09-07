@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../theme/app_theme.dart';
 import '../../../shared/theme_screen.dart';
+import '../../../shared/change_background_screen.dart';
 
 /// Admin settings. The admin shell had no Settings screen before, so this one
 /// starts with Appearance and is where later admin-wide preferences belong.
@@ -25,6 +26,7 @@ class AdminSettingsScreen extends StatelessWidget {
             style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w600),
           ),
           const ThemesSettingsTile(),
+          const ChangeBackgroundSettingsTile(),
         ],
       ),
     );

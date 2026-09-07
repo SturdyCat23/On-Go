@@ -7,6 +7,9 @@ void main() async {
   // Restore the saved theme before the first frame so the app never flashes
   // the Default palette on startup.
   await ThemeController.instance.load();
+  // Same for the admin's background photo, so the Sign In screen paints it on
+  // the first frame instead of flashing the background color first.
+  await AuthBackgroundController.instance.load();
   runApp(const MyApp());
 }
 

@@ -98,7 +98,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         padding: const EdgeInsets.symmetric(vertical: 10),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.background,
+          color: selected ? AppColors.primary : AppColors.surface,
+          border: Border.all(color: AppColors.textmedium.withValues(alpha: 0.55)),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.textlight : AppColors.textdark)),
@@ -150,6 +151,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
+                    color: AppColors.surface,
                     border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -191,9 +193,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: AppColors.background,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
+                border: Border.all(color: AppColors.textmedium.withValues(alpha: 0.55)),
                 boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 12, offset: const Offset(0, 4))],
               ),
               child: Column(

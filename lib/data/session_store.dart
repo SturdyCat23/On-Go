@@ -20,7 +20,12 @@ class SessionStore extends ChangeNotifier {
 
   ModeratorPermissions get currentPermissions =>
       _current?.permissions ??
-      const ModeratorPermissions(canApprove: false, canReject: false, canEscalate: false);
+      const ModeratorPermissions(
+        canApprove: false,
+        canReject: false,
+        canEscalate: false,
+        canChangeBackground: false,
+      );
 
   /// Returns true and switches the session if [password] matches the
   /// target moderator's password; returns false (session unchanged) otherwise.

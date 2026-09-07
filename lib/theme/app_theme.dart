@@ -6,6 +6,7 @@ import 'theme_controller.dart';
 
 export 'app_palette.dart';
 export 'design_tokens.dart';
+export 'auth_background_controller.dart';
 export 'theme_controller.dart';
 
 class AppColors {

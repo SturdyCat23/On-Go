@@ -51,7 +51,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           OnGoNavItem(icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Home'),
           OnGoNavItem(icon: Icons.work_outline, activeIcon: Icons.work, label: 'Jobs'),
           OnGoNavItem(icon: Icons.history, label: 'History'),
-          OnGoNavItem(icon: Icons.emoji_events_outlined, activeIcon: Icons.emoji_events, label: 'Rank'),
+          OnGoNavItem(icon: Icons.emoji_events_outlined, activeIcon: Icons.emoji_events, label: 'Leaderboard'),
         ],
       ),
     );

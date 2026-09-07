@@ -53,6 +53,7 @@ class _ModsTabState extends State<ModsTab> {
     bool canApprove = mod.permissions.canApprove;
     bool canReject = mod.permissions.canReject;
     bool canEscalate = mod.permissions.canEscalate;
+    bool canChangeBackground = mod.permissions.canChangeBackground;
 
     await showModalBottomSheet(
       context: context,
@@ -108,6 +109,13 @@ class _ModsTabState extends State<ModsTab> {
                     value: canEscalate,
                     onChanged: (v) => setSheetState(() => canEscalate = v),
                   ),
+                  Divider(height: 1, color: AppColors.textdark.withValues(alpha: 0.2)),
+                  _permissionRow(
+                    title: 'Can change background',
+                    subtitle: 'Set the Sign In / Welcome photo',
+                    value: canChangeBackground,
+                    onChanged: (v) => setSheetState(() => canChangeBackground = v),
+                  ),
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
@@ -120,7 +128,12 @@ class _ModsTabState extends State<ModsTab> {
                       onPressed: () {
                         _admin.updateModeratorPermissions(
                           mod.id,
-                          ModeratorPermissions(canApprove: canApprove, canReject: canReject, canEscalate: canEscalate),
+                          ModeratorPermissions(
+                            canApprove: canApprove,
+                            canReject: canReject,
+                            canEscalate: canEscalate,
+                            canChangeBackground: canChangeBackground,
+                          ),
                         );
                         Navigator.pop(sheetCtx);
                       },
@@ -250,6 +263,7 @@ class _ModsTabState extends State<ModsTab> {
                                 _permLabel(Icons.check, 'Approve', m.permissions.canApprove, AppColors.success),
                                 _permLabel(Icons.close, 'Reject', m.permissions.canReject, AppColors.primary),
                                 _permLabel(Icons.flag, 'Escalate', m.permissions.canEscalate, AppColors.warning),
+                                _permLabel(Icons.image, 'Background', m.permissions.canChangeBackground, AppColors.info),
                               ],
                             ),
                             const SizedBox(height: 8),

@@ -7,10 +7,16 @@ class ModeratorPermissions {
   final bool canReject;
   final bool canEscalate;
 
+  /// Whether this moderator may set the Sign In / Welcome background photo
+  /// from their Settings. Off by default, like [canEscalate] — the admin
+  /// grants it deliberately. The admin's own access never depends on it.
+  final bool canChangeBackground;
+
   const ModeratorPermissions({
     this.canApprove = true,
     this.canReject = true,
     this.canEscalate = false,
+    this.canChangeBackground = false,
   });
 }
 
@@ -25,6 +31,10 @@ class ModeratorAccount {
   int actionsHandled;
   ModeratorPermissions permissions;
 
+  /// Local file path of the profile photo the moderator picked, or null while
+  /// they are still on the default avatar.
+  String? photoPath;
+
   ModeratorAccount({
     required this.id,
     required this.name,
@@ -35,6 +45,7 @@ class ModeratorAccount {
     this.status = ModStatus.active,
     this.actionsHandled = 0,
     this.permissions = const ModeratorPermissions(),
+    this.photoPath,
   });
 
   String get initials => name
@@ -242,11 +253,16 @@ class AdminStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Lets a moderator edit their own display name from Settings.
-  void updateModeratorProfile(String id, {String? name}) {
+  /// Lets a moderator edit their own display name and profile photo from
+  /// their Profile screen. [email] and [role] stay admin-owned, so they are
+  /// deliberately not editable here.
+  void updateModeratorProfile(String id, {String? name, String? photoPath}) {
     final mod = _moderators.firstWhere((m) => m.id == id);
     if (name != null && name.trim().isNotEmpty) {
       mod.name = name.trim();
+    }
+    if (photoPath != null) {
+      mod.photoPath = photoPath;
     }
     notifyListeners();
   }

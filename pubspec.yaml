@@ -14,6 +14,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   file_picker: ^8.1.4
   image_picker: ^1.1.2
+  path_provider: ^2.1.6
   google_sign_in: ^6.2.1
   shared_preferences: ^2.3.2
   livelyness_detection: ^0.0.1+5

@@ -215,7 +215,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                               children: [
                                 CircleAvatar(
                                   radius: 24,
-                                  backgroundColor: AppColors.background,
+                                  backgroundColor: AppColors.surface,
                                   child: Icon(Icons.person, color: AppColors.textdark.withValues(alpha: 0.55)),
                                 ),
                                 const SizedBox(width: 12),
@@ -277,6 +277,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                       if (request.isEmergency) ...[
                         _StatusStep(title: 'Navigate', done: request.navigating, isFirst: true),
                         _StatusStep(title: 'Mechanic En Route', done: request.enRoute),
+                        _StatusStep(title: 'Mechanic Arrived', done: request.arrived),
                         _StatusStep(title: 'Work in Progress', done: request.workStarted),
                         _StatusStep(title: 'Service Complete', done: request.serviceCompleted),
                         _StatusStep(title: 'Payment Complete', done: request.paymentCompleted, isLast: true),
@@ -382,7 +383,10 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)), borderRadius: BorderRadius.circular(16)),
+              decoration: BoxDecoration(
+                color: AppColors.textlight,
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: QrImageView(data: qrData, size: 200),
             ),
             const SizedBox(height: 10),
@@ -448,7 +452,11 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)), borderRadius: BorderRadius.circular(16)),
+            decoration: BoxDecoration(
+              color: AppColors.textlight,
+              border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: QrImageView(data: qrData, size: 200),
           ),
           const SizedBox(height: 10),
@@ -514,11 +522,11 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
       if (!request.hasClientCoordinates) {
         return SizedBox(
           width: double.infinity,
-          child: OutlinedButton(
+          child: ElevatedButton(
             onPressed: () => _confirmArrivalManually(request),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.textdark,
-              side: BorderSide(color: AppColors.textdark.withValues(alpha: 0.2)),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.success,
+                foregroundColor: AppColors.textlight,
               minimumSize: const Size(double.infinity, 46),
               shape: const StadiumBorder(),
             ),

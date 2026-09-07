@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../data/app_session.dart';
 import '../../../data/quote_store.dart';
+import '../../../theme/app_theme.dart';
 import '../../../widgets/app_widgets.dart';
 import '../../../widgets/on_go_bottom_nav.dart';
 import 'jobs/jobs_screen.dart';
@@ -55,6 +56,7 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
           builder: (context, _) => NotificationBell(
             count: QuoteNotificationStore.instance.mechanicNotificationCount,
             onTap: _openNotifications,
+            badgeColor: AppColors.warning,
           ),
         ),
       ),
@@ -67,7 +69,7 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
           OnGoNavItem(icon: Icons.work_outline, activeIcon: Icons.work, label: 'Jobs'),
           OnGoNavItem(icon: Icons.payments_outlined, activeIcon: Icons.payments, label: 'Earning'),
           OnGoNavItem(icon: Icons.qr_code_scanner, label: 'QR'),
-          OnGoNavItem(icon: Icons.emoji_events_outlined, activeIcon: Icons.emoji_events, label: 'Rank'),
+          OnGoNavItem(icon: Icons.emoji_events_outlined, activeIcon: Icons.emoji_events, label: 'Leaderboard'),
           OnGoNavItem(icon: Icons.person_outline, activeIcon: Icons.person, label: 'Profile'),
         ],
       ),

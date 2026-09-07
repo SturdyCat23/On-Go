@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
@@ -26,10 +28,7 @@ class OnGoHeader extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             subtitle,
-            style: TextStyle(
-              color: AppColors.textmedium,
-              fontSize: 13,
-            ),
+            style: TextStyle(color: AppColors.textmedium, fontSize: 13),
           ),
         ],
       ),
@@ -114,7 +113,7 @@ class RegistrationStepper extends StatelessWidget {
       'Personal',
       'ID Details',
       'Documents',
-      'Verification'
+      'Verification',
     ],
     this.highestCompletedStep = 0,
     this.onStepTapped,
@@ -132,25 +131,29 @@ class RegistrationStepper extends StatelessWidget {
             children: List.generate(totalSteps * 2 - 1, (i) {
               if (i.isOdd) {
                 final stepBefore = (i ~/ 2) + 1;
-                final stepAfter  = stepBefore + 1;
+                final stepAfter = stepBefore + 1;
                 // Green if both the step before AND after are completed
-                final active = stepBefore <= highestCompletedStep &&
-                               stepAfter  <= highestCompletedStep;
+                final active =
+                    stepBefore <= highestCompletedStep &&
+                    stepAfter <= highestCompletedStep;
                 return Expanded(
                   child: Container(
                     height: 3,
-                    color: active ? AppColors.success : AppColors.textdark.withValues(alpha: 0.2),
+                    color: active
+                        ? AppColors.success
+                        : AppColors.textdark.withValues(alpha: 0.2),
                   ),
                 );
               }
 
-              final step    = i ~/ 2 + 1;
-              final done    = step < currentStep;
+              final step = i ~/ 2 + 1;
+              final done = step < currentStep;
               final current = step == currentStep;
               // A step is tappable if it has been completed (done) but is not
               // Any completed step is tappable, including steps ahead of current.
               // Current step itself is excluded (already there).
-              final tappable = step <= highestCompletedStep && step != currentStep;
+              final tappable =
+                  step <= highestCompletedStep && step != currentStep;
 
               final circle = Container(
                 width: 28,
@@ -163,13 +166,12 @@ class RegistrationStepper extends StatelessWidget {
                 ),
                 child: Center(
                   child: done || (step <= highestCompletedStep && !current)
-                      ? Icon(Icons.check,
-                          color: AppColors.textlight, size: 14)
+                      ? Icon(Icons.check, color: AppColors.textlight, size: 14)
                       : Text(
                           '$step',
                           style: TextStyle(
                             color: current
-                              ? AppColors.textlight
+                                ? AppColors.textlight
                                 : AppColors.textdark.withValues(alpha: 0.55),
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -194,8 +196,8 @@ class RegistrationStepper extends StatelessWidget {
           Row(
             children: List.generate(totalSteps * 2 - 1, (i) {
               if (i.isOdd) return Expanded(child: Container());
-              final step    = i ~/ 2 + 1;
-              final done    = step < currentStep;
+              final step = i ~/ 2 + 1;
+              final done = step < currentStep;
               final current = step == currentStep;
               return SizedBox(
                 width: 45,
@@ -207,8 +209,7 @@ class RegistrationStepper extends StatelessWidget {
                     color: (done || current)
                         ? AppColors.success
                         : AppColors.textdark.withValues(alpha: 0.55),
-                    fontWeight:
-                        current ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight: current ? FontWeight.w600 : FontWeight.normal,
                   ),
                 ),
               );
@@ -240,10 +241,7 @@ class StepNavButtons extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: ElevatedButton(
-            onPressed: onNext,
-            child: Text(nextLabel),
-          ),
+          child: ElevatedButton(onPressed: onNext, child: Text(nextLabel)),
         ),
       ],
     );
@@ -255,19 +253,13 @@ class AuthBottomCard extends StatelessWidget {
   final List<Widget> children;
   final Widget? topContent;
 
-  const AuthBottomCard({
-    super.key,
-    required this.children,
-    this.topContent,
-  });
+  const AuthBottomCard({super.key, required this.children, this.topContent});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Expanded(
-          child: Center(child: topContent ?? const SizedBox.shrink()),
-        ),
+        Expanded(child: Center(child: topContent ?? const SizedBox.shrink())),
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
@@ -311,7 +303,7 @@ class AuthTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide.none,
+      borderSide: BorderSide(color: AppColors.textmedium.withValues(alpha: 0.2), width: 1.5),
     );
 
     return TextFormField(
@@ -325,8 +317,10 @@ class AuthTextField extends StatelessWidget {
         filled: true,
         fillColor: AppColors.surface,
         suffixIcon: suffixIcon,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: border,
         enabledBorder: border,
         focusedBorder: border,
@@ -405,6 +399,40 @@ class AuthRoleButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The backdrop the Sign In and Welcome screens sit on.
+///
+/// Paints the photo the admin uploaded under Admin > Settings > Change
+/// Background, or [AppColors.surface] — the default background color — when
+/// there is none. It listens to [AuthBackgroundController], so uploading or
+/// removing the photo swaps both screens over without them doing anything.
+class AuthBackground extends StatelessWidget {
+  final Widget child;
+
+  const AuthBackground({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: AuthBackgroundController.instance,
+      child: child,
+      builder: (context, child) {
+        final photo = AuthBackgroundController.instance.photoPath;
+        return Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            image: photo == null
+                ? null
+                : DecorationImage(image: FileImage(File(photo)), fit: BoxFit.cover),
+          ),
+          child: child,
+        );
+      },
     );
   }
 }

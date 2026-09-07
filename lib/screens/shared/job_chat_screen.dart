@@ -175,7 +175,7 @@ class _JobChatScreenState extends State<JobChatScreen> {
                             margin: const EdgeInsets.only(bottom: 10),
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                             decoration: BoxDecoration(
-                              color: isMe ? AppColors.primary.withValues(alpha: 0.1) : AppColors.background,
+                              color: isMe ? AppColors.surface.withValues(alpha: 0.55) : AppColors.surface.withValues(alpha: 0.55),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Column(

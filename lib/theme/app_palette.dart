@@ -101,7 +101,7 @@ class AppThemes {
     label: 'Default',
     description: 'The original On Go red on a light background.',
     palette: AppPalette(
-      primary: Color.fromRGBO(209, 29, 40, 1),
+      primary: Color(0xffd11d28),
       primarydark: Color.fromARGB(255, 168, 0, 17),
       background: Color.fromARGB(255, 247, 242, 236),
       surface: Color.fromARGB(255, 245, 244, 240),
@@ -111,7 +111,7 @@ class AppThemes {
       info: Color.fromARGB(255, 102, 155, 188),
       success: Color.fromARGB(255, 118, 151, 77),
       warning: Color.fromARGB(255, 254, 174, 1),
-      error: Color.fromRGBO(209, 29, 40, 1),
+      error: Color.fromARGB(255, 223, 0, 0),
     ),
   );
 
@@ -128,16 +128,16 @@ class AppThemes {
       textdark: Color.fromARGB(255, 240, 241, 243),
       textmedium: Color.fromARGB(255, 158, 163, 174),
       textlight: Color.fromARGB(255, 248, 249, 250),
-      info: Color.fromARGB(255, 96, 165, 250),
-      success: Color.fromARGB(255, 52, 199, 89),
-      warning: Color.fromARGB(255, 251, 191, 36),
-      error: Color.fromARGB(255, 248, 113, 113),
+      info: Color.fromARGB(255, 40, 190, 250),
+      success: Color.fromARGB(255, 46, 196, 171),
+      warning: Color.fromARGB(255, 255, 178, 63),
+      error: Color.fromARGB(255, 210, 47, 47),
     ),
   );
 
   static const AppThemeOption _blue = AppThemeOption(
     id: 'blue',
-    label: 'Blue',
+    label: 'Calm Blue',
     description: 'Calm blue accents on a cool light background.',
     palette: AppPalette(
       primary: Color.fromARGB(255, 21, 101, 192),
@@ -156,7 +156,7 @@ class AppThemes {
 
   static const AppThemeOption _red = AppThemeOption(
     id: 'red',
-    label: 'Red',
+    label: 'Crimson',
     description: 'Deeper crimson with a warm-tinted background.',
     palette: AppPalette(
       primary: Color.fromARGB(255, 155, 17, 30),

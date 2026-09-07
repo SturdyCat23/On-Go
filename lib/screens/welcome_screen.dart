@@ -56,42 +56,44 @@ class WelcomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
-      body: SafeArea(
-        child: AuthBottomCard(
-          children: [
-            Text(
-              'Welcome!',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textdark,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Please select how you want to register',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: AppColors.textdark),
-            ),
-            const SizedBox(height: 24),
-            AuthRoleButton(
-              icon: Icons.person_outline,
-              label: 'Register as Client',
-              onTap: () => _startClientRegistration(context),
-            ),
-            const SizedBox(height: 12),
-            AuthRoleButton(
-              icon: Icons.work_outline,
-              label: 'Register as Mechanic',
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const MechanicStep1Account(),
+      body: AuthBackground(
+        child: SafeArea(
+          child: AuthBottomCard(
+            children: [
+              Text(
+                'Welcome!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textdark,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                'Please select how you want to register',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: AppColors.textdark),
+              ),
+              const SizedBox(height: 24),
+              AuthRoleButton(
+                icon: Icons.person_outline,
+                label: 'Register as Client',
+                onTap: () => _startClientRegistration(context),
+              ),
+              const SizedBox(height: 12),
+              AuthRoleButton(
+                icon: Icons.work_outline,
+                label: 'Register as Mechanic',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const MechanicStep1Account(),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -19,6 +19,7 @@ class _AddModTabState extends State<AddModTab> {
   bool _canApprove = true;
   bool _canReject = true;
   bool _canEscalate = false;
+  bool _canChangeBackground = false;
 
   @override
   void dispose() {
@@ -39,6 +40,7 @@ class _AddModTabState extends State<AddModTab> {
         canApprove: _canApprove,
         canReject: _canReject,
         canEscalate: _canEscalate,
+        canChangeBackground: _canChangeBackground,
       ),
     );
     _nameController.clear();
@@ -48,6 +50,7 @@ class _AddModTabState extends State<AddModTab> {
       _canApprove = true;
       _canReject = true;
       _canEscalate = false;
+      _canChangeBackground = false;
     });
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Moderator added'), duration: AppDurations.snackBar));
   }
@@ -124,6 +127,13 @@ class _AddModTabState extends State<AddModTab> {
               subtitle: 'Flag for admin review',
               value: _canEscalate,
               onChanged: (v) => setState(() => _canEscalate = v),
+            ),
+            Divider(height: 1, color: AppColors.textdark.withValues(alpha: 0.2)),
+            _permissionRow(
+              title: 'Can change background',
+              subtitle: 'Set the Sign In / Welcome photo',
+              value: _canChangeBackground,
+              onChanged: (v) => setState(() => _canChangeBackground = v),
             ),
           ]),
           const SizedBox(height: 20),

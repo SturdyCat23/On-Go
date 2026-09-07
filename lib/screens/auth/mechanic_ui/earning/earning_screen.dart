@@ -140,7 +140,7 @@ class _EarningScreenState extends State<EarningScreen> {
                       padding: const EdgeInsets.only(right: 12),
                       child: CircleAvatar(
                         radius: 26,
-                        backgroundColor: AppColors.background,
+                        backgroundColor: AppColors.surface,
                         child: Icon(Icons.person, color: AppColors.textdark.withValues(alpha: 0.55)),
                       ),
                     ))
@@ -160,11 +160,16 @@ class _EarningScreenState extends State<EarningScreen> {
         else
           ...paidJobs.map((job) {
             final quote = _store.acceptedQuoteFor(job.id);
+            // What the mechanic was actually paid. Emergency jobs carry a
+            // placeholder price on their accept record — the real figure is
+            // the amount agreed in person — so this goes through the same
+            // rule the balance above is summed from, never quote.price.
+            final amount = effectivePaymentAmount(job, quote);
             final problem = _splitProblem(job.problem);
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)), borderRadius: BorderRadius.circular(16)),
+              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -189,13 +194,14 @@ class _EarningScreenState extends State<EarningScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(quote?.price ?? '—', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.success)),
+                      Text(amount == null ? '—' : '₱${amount.toStringAsFixed(0)}',
+                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.success)),
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          Icon(Icons.card_giftcard, size: 14, color: AppColors.primary),
+                          Icon(Icons.card_giftcard, size: 14, color: AppColors.warning),
                           const SizedBox(width: 2),
-                          Text('+${job.pointsAwarded ?? 0}', style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w700)),
+                          Text('+${job.pointsAwarded ?? 0}', style: TextStyle(fontSize: 12, color: AppColors.warning, fontWeight: FontWeight.w700)),
                         ],
                       ),
                     ],
