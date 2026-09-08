@@ -36,6 +36,10 @@ class _MechanicStep5VerificationState
   final _draft  = RegistrationDraft.instance;
   final ImagePicker _picker = ImagePicker();
 
+  /// Which registration step this screen is, for [RegistrationDraft
+  /// .markPickerLaunched].
+  static const int _stepNumber = 5;
+
   File? _profilePhoto;
   File? _faceScanPhoto;       // captured frame returned by liveness SDK
   bool _isScanning    = false;
@@ -48,6 +52,33 @@ class _MechanicStep5VerificationState
   void initState() {
     super.initState();
     _restoreFromDraft();
+    _recoverInterruptedPick();
+  }
+
+  /// Picks up a photo that Android took but never got to hand back.
+  ///
+  /// If the activity was destroyed while the camera or gallery was open, the
+  /// result is delivered to a process that no longer exists; the plugin holds
+  /// it until it is asked for. Without this the user would come back to an
+  /// empty photo slot and have to shoot it again.
+  Future<void> _recoverInterruptedPick() async {
+    // Consume the flag first. This launch has already done its job of getting
+    // the user back here, and a plugin call that never answers must not leave
+    // every future launch reopening registration.
+    await _draft.clearPendingPicker();
+    try {
+      final lost = await _picker.retrieveLostData();
+      final file = lost.file;
+      if (file != null && mounted) {
+        setState(() {
+          _profilePhoto = File(file.path);
+          _profilePhotoError = false;
+        });
+        _autosave();
+      }
+    } catch (_) {
+      // retrieveLostData is Android-only; anywhere else this is a no-op.
+    }
   }
 
   void _restoreFromDraft() {
@@ -67,29 +98,43 @@ class _MechanicStep5VerificationState
 
   // ── Profile photo ────────────────────────────────────────────────────────
 
+  // Both pickers hand the screen over to another Android activity, which is
+  // the moment this app can be killed. Recording the step first is what lets
+  // the next launch come back here instead of to Sign In.
+
   Future<void> _pickFromGallery() async {
-    final picked = await _picker.pickImage(
-        source: ImageSource.gallery, imageQuality: 85);
-    if (picked != null) {
-      setState(() {
-        _profilePhoto = File(picked.path);
-        _profilePhotoError = false;
-      });
-      _autosave();
+    await _draft.markPickerLaunched(_stepNumber);
+    try {
+      final picked = await _picker.pickImage(
+          source: ImageSource.gallery, imageQuality: 85);
+      if (picked != null) {
+        setState(() {
+          _profilePhoto = File(picked.path);
+          _profilePhotoError = false;
+        });
+        _autosave();
+      }
+    } finally {
+      await _draft.clearPendingPicker();
     }
   }
 
   Future<void> _takeSelfie() async {
-    final picked = await _picker.pickImage(
-        source: ImageSource.camera,
-        preferredCameraDevice: CameraDevice.front,
-        imageQuality: 85);
-    if (picked != null) {
-      setState(() {
-        _profilePhoto = File(picked.path);
-        _profilePhotoError = false;
-      });
-      _autosave();
+    await _draft.markPickerLaunched(_stepNumber);
+    try {
+      final picked = await _picker.pickImage(
+          source: ImageSource.camera,
+          preferredCameraDevice: CameraDevice.front,
+          imageQuality: 85);
+      if (picked != null) {
+        setState(() {
+          _profilePhoto = File(picked.path);
+          _profilePhotoError = false;
+        });
+        _autosave();
+      }
+    } finally {
+      await _draft.clearPendingPicker();
     }
   }
 
@@ -432,7 +477,11 @@ class _MechanicStep5VerificationState
                     onNext: () async {
                       if (!_validate()) return;
 
-                        MechanicAccountStore.instance.registerAccount(
+                      // Files the account's verification request with the
+                      // moderation queue — see MobileBackend. Awaited so the
+                      // uploads below are attached to an account that is
+                      // really in the queue.
+                      await MechanicAccountStore.instance.registerAccount(
                         firstName: _draft.firstName,
                         lastName: _draft.lastName,
                         email: _draft.email,

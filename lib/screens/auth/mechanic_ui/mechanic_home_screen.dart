@@ -3,8 +3,6 @@ import '../../../data/app_session.dart';
 import '../../../data/mechanic_notification_store.dart';
 import '../../../data/quote_store.dart';
 import '../../../theme/app_theme.dart';
-import '../../../widgets/app_widgets.dart';
-import '../../../widgets/on_go_bottom_nav.dart';
 import 'jobs/jobs_screen.dart';
 import 'notifications/mechanic_notifications_screen.dart';
 import 'earning/earning_screen.dart';

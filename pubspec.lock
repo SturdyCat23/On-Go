@@ -608,6 +608,20 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "9.4.1"
+  on_go_design:
+    dependency: "direct main"
+    description:
+      path: "packages/on_go_design"
+      relative: true
+    source: path
+    version: "0.1.0"
+  on_go_shared:
+    dependency: "direct main"
+    description:
+      path: "packages/on_go_shared"
+      relative: true
+    source: path
+    version: "0.1.0"
   package_config:
     dependency: transitive
     description:

@@ -51,6 +51,35 @@ class RegistrationDraft {
   // ── Highest completed step (0 = none yet) ───────────────────────────────
   int highestCompletedStep = 0;
 
+  // ── Picker in flight (0 = none) ─────────────────────────────────────────
+  /// The registration step that was on screen when a camera / gallery picker
+  /// was opened.
+  ///
+  /// Android may destroy this app's activity while the picker sits in front
+  /// of it — under memory pressure, or always when the "Don't keep
+  /// activities" developer option is on. The app is then relaunched from
+  /// scratch, which is why picking a photo could dump the user back on the
+  /// Sign In screen. Persisting the step here is what lets the next launch
+  /// tell "the user just picked a photo" apart from a normal cold start, so
+  /// it can put them back on the form they were filling in.
+  int pendingPickerStep = 0;
+
+  /// Called immediately before a picker is opened.
+  Future<void> markPickerLaunched(int step) async {
+    pendingPickerStep = step;
+    final p = await SharedPreferences.getInstance();
+    await p.setInt('reg_pendingPickerStep', step);
+  }
+
+  /// Called once the picker has returned, or once the interrupted step has
+  /// been restored and its result recovered.
+  Future<void> clearPendingPicker() async {
+    if (pendingPickerStep == 0) return;
+    pendingPickerStep = 0;
+    final p = await SharedPreferences.getInstance();
+    await p.remove('reg_pendingPickerStep');
+  }
+
   // ── Persistence ─────────────────────────────────────────────────────────
 
   Future<void> load() async {
@@ -83,6 +112,7 @@ class RegistrationDraft {
     profilePhotoPath     = p.getString('reg_profilePhotoPath') ?? '';
     faceScanPath         = p.getString('reg_faceScanPath')     ?? '';
     highestCompletedStep = p.getInt('reg_highestStep') ?? 0;
+    pendingPickerStep    = p.getInt('reg_pendingPickerStep') ?? 0;
   }
 
   Future<void> saveStep1() async {
@@ -175,5 +205,6 @@ class RegistrationDraft {
     certPaths = [];
     sex = idSex = 'Male';
     highestCompletedStep = 0;
+    pendingPickerStep = 0;
   }
 }

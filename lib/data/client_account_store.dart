@@ -107,6 +107,14 @@ class ClientAccountStore extends ChangeNotifier {
     return true;
   }
 
+  /// Sets a new password without knowing the old one. Only for the Forgot
+  /// Password flow, which proves ownership with a one-time code instead —
+  /// [changePassword] stays the path for a signed-in user.
+  void resetPassword(String newPassword) {
+    _password = newPassword;
+    notifyListeners();
+  }
+
   bool verifyPassword(String password) => _password == password;
 
   void clear() {

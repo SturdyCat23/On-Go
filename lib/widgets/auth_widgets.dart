@@ -290,6 +290,10 @@ class AuthTextField extends StatelessWidget {
   final TextInputType keyboardType;
   final Widget? suffixIcon;
 
+  /// Optional per-keystroke callback, for fields whose surroundings react as
+  /// the user types (the password match indicator, for one).
+  final ValueChanged<String>? onChanged;
+
   const AuthTextField({
     super.key,
     required this.hint,
@@ -297,6 +301,7 @@ class AuthTextField extends StatelessWidget {
     this.controller,
     this.keyboardType = TextInputType.text,
     this.suffixIcon,
+    this.onChanged,
   });
 
   @override
@@ -310,6 +315,7 @@ class AuthTextField extends StatelessWidget {
       controller: controller,
       obscureText: obscure,
       keyboardType: keyboardType,
+      onChanged: onChanged,
       style: TextStyle(color: AppColors.textdark),
       decoration: InputDecoration(
         hintText: hint,
@@ -405,10 +411,10 @@ class AuthRoleButton extends StatelessWidget {
 
 /// The backdrop the Sign In and Welcome screens sit on.
 ///
-/// Paints the photo the admin uploaded under Admin > Settings > Change
-/// Background, or [AppColors.surface] — the default background color — when
-/// there is none. It listens to [AuthBackgroundController], so uploading or
-/// removing the photo swaps both screens over without them doing anything.
+/// Paints the photo an admin published from the console website (Settings >
+/// Change Background), or [AppColors.surface] — the default background color
+/// — when there is none. It listens to [AuthBackgroundController], so a
+/// published or cleared photo swaps both screens over on its own.
 class AuthBackground extends StatelessWidget {
   final Widget child;
 

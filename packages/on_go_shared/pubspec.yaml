@@ -1,0 +1,17 @@
+name: on_go_shared
+description: >-
+  Domain models and API contracts shared by the On Go mobile app (Client +
+  Mechanic) and the On Go admin console website (Admin + Moderator).
+
+  Pure Dart on purpose: no Flutter, no dart:io, no HTTP client. It describes
+  WHAT the two front ends exchange, never HOW it travels. The transport lands
+  here later as one more implementation of the interfaces in lib/src/api.
+publish_to: 'none'
+
+version: 0.1.0
+
+environment:
+  sdk: ^3.5.0
+
+dev_dependencies:
+  flutter_lints: ^6.0.0

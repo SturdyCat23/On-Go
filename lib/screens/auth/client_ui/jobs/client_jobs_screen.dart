@@ -252,11 +252,11 @@ Color _urgencyColor(String urgency) {
 }
 
 String _paymentDisplay(HelpRequest request, MechanicQuote? quote) {
-  if (request.isEmergency) {
-    if (request.agreedPaymentAmount != null) return '₱${request.agreedPaymentAmount!.toStringAsFixed(0)}';
-    return 'To be agreed';
-  }
-  return quote?.price ?? '₱200';
+  // Once paid this is the recorded amount; before that it is the agreed
+  // Emergency price or the accepted quote. Never a fixed fallback figure.
+  final amount = settledPaymentAmount(request, quote);
+  if (amount != null) return '₱${amount.toStringAsFixed(0)}';
+  return request.isEmergency ? 'To be agreed' : 'To be quoted';
 }
 
 Widget _locationBlock(String location) {

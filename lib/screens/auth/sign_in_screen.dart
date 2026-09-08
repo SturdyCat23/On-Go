@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
-import '../../data/client_account_store.dart';
-import '../../data/mechanic_account_store.dart';
+
+import '../../services/backend/mobile_backend.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auth_widgets.dart';
 import '../welcome_screen.dart';
-import 'admin_ui/admin_home_screen.dart';
+import 'forgot_password_screen.dart';
 import 'client_ui/client_home_screen.dart';
 import 'mechanic_ui/mechanic_home_screen.dart';
-import 'moderator_ui/moderator_home_screen.dart';
 
+/// Sign In for the mobile app, which serves Clients and Mechanics.
+///
+/// Admin and Moderator are not roles here. They sign in to the On Go admin
+/// console, a separate web application; typing one of their usernames gets a
+/// pointer to it rather than a shell they should not be in on a phone.
+/// [MobileBackend.auth] is what decides all of that — this screen only routes
+/// whatever role comes back.
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
 
@@ -20,6 +26,7 @@ class _SignInScreenState extends State<SignInScreen> {
   final _usernameCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _obscurePassword = true;
+  bool _signingIn = false;
 
   @override
   void dispose() {
@@ -28,8 +35,6 @@ class _SignInScreenState extends State<SignInScreen> {
     super.dispose();
   }
 
-  // Todo: replace this whole method with real auth once the backend exists.
-  // These shortcuts keep local testing simple without forcing the full form flow.
   void _navigateToHome(Widget screen) {
     Navigator.pushAndRemoveUntil(
       context,
@@ -38,46 +43,70 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
-  void _handleSignIn() {
-    final username = _usernameCtrl.text.trim().toLowerCase();
-
-    if (username == 'admin') {
-      _navigateToHome(const AdminHomeScreen());
-      return;
-    }
-
-    if (username == 'moderator') {
-      _navigateToHome(const ModeratorHomeScreen());
-      return;
-    }
-
-    if (username == 'client' || username == 'demo-client') {
-      // If a real client account was already registered this session, sign
-      // into THAT account instead of overwriting it with a throwaway "Demo
-      // Client" identity. Only fall back to true demo mode when nothing's
-      // been registered yet — mirrors the mechanic branch below exactly.
-      if (!ClientAccountStore.instance.hasAccount) {
-        ClientAccountStore.instance.enterDemoMode();
-      }
-      _navigateToHome(const ClientHomeScreen());
-      return;
-    }
-
-    if (username == 'mechanic' || username == 'demo-mechanic') {
-      // If a real mechanic account was already registered this session,
-      // sign into THAT account (preserving its approval status) instead of
-      // overwriting it with a throwaway "Demo Mechanic" identity. Only fall
-      // back to true demo mode when nothing's been registered yet.
-      if (!MechanicAccountStore.instance.hasAccount) {
-        MechanicAccountStore.instance.enterDemoMode();
-      }
-      _navigateToHome(const MechanicHomeScreen());
-      return;
-    }
-
+  void _showMessage(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Use admin, moderator, client, or mechanic as the demo username'), duration: AppDurations.snackBar),
+      SnackBar(content: Text(message), duration: AppDurations.snackBar),
     );
+  }
+
+  Future<void> _handleSignIn() async {
+    if (_signingIn) return;
+    setState(() => _signingIn = true);
+
+    try {
+      final result = await MobileBackend.instance.auth.signIn(
+        SignInRequest(
+          identifier: _usernameCtrl.text,
+          password: _passwordCtrl.text,
+          surface: AppSurface.mobile,
+        ),
+      );
+      if (!mounted) return;
+
+      final user = result.user;
+      if (user != null) {
+        _routeTo(user);
+        return;
+      }
+      _showMessage(_messageFor(result.failure));
+    } on ApiException catch (error) {
+      _showMessage(error.message);
+    } finally {
+      if (mounted) setState(() => _signingIn = false);
+    }
+  }
+
+  /// Opens the shell for whichever role signed in. The console roles never
+  /// reach here — [MobileBackend.auth] turns them away first — but they are
+  /// answered explicitly so adding a role can't silently fall through.
+  void _routeTo(AuthenticatedUser user) {
+    switch (user.role) {
+      case UserRole.client:
+        _navigateToHome(const ClientHomeScreen());
+      case UserRole.mechanic:
+        _navigateToHome(const MechanicHomeScreen());
+      case UserRole.admin:
+      case UserRole.moderator:
+        _showMessage(_consoleMessage);
+    }
+  }
+
+  static const String _consoleMessage =
+      'Admin and Moderator sign in on the On Go admin console website, not in the app.';
+
+  String _messageFor(SignInFailure? failure) {
+    switch (failure) {
+      case SignInFailure.wrongSurface:
+        return _consoleMessage;
+      case SignInFailure.accountInactive:
+        return 'That account has been deactivated.';
+      case SignInFailure.wrongPassword:
+      case SignInFailure.unknownAccount:
+      case null:
+        return 'Use client or mechanic as the demo username, or sign in with '
+            'your registered email and password.';
+    }
   }
 
   @override
@@ -113,7 +142,10 @@ class _SignInScreenState extends State<SignInScreen> {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () {},
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                  ),
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.zero,
                     minimumSize: const Size(0, 0),
@@ -126,10 +158,10 @@ class _SignInScreenState extends State<SignInScreen> {
               ),
               const SizedBox(height: 20),
               AuthWhiteButton(
-                label: 'Sign In',
-                onPressed: _handleSignIn,
+                label: _signingIn ? 'Signing In…' : 'Sign In',
+                onPressed: _signingIn ? null : _handleSignIn,
               ),
-              
+
               const SizedBox(height: 16),
               // Wrap, not Row: at a large system text scale the prompt and the
               // link no longer fit side by side, and the link drops to its own

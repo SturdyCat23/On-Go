@@ -478,6 +478,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                           obscure: _obscureConfirm,
                           controller: _confirmPassCtrl,
                           errorText: _err['confirmPassword'],
+                          onChanged: (_) => setState(() {}),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscureConfirm
@@ -489,6 +490,10 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                             onPressed: () =>
                                 setState(() => _obscureConfirm = !_obscureConfirm),
                           ),
+                        ),
+                        PasswordMatchIndicator(
+                          password: _passCtrl.text,
+                          confirmPassword: _confirmPassCtrl.text,
                         ),
                       ] else ...[
                         // ── Provider note ─────────────────────────────────────

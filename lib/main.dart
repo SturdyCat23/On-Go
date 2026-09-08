@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'data/mechanic_settings_store.dart';
+import 'data/registration_draft.dart';
+import 'screens/auth/mechanic_registration/mechanic_step4_documents.dart';
+import 'screens/auth/mechanic_registration/mechanic_step5_verification.dart';
 import 'screens/auth/sign_in_screen.dart';
 import 'theme/app_theme.dart';
 
@@ -8,17 +11,29 @@ void main() async {
   // Restore the saved theme before the first frame so the app never flashes
   // the Default palette on startup.
   await ThemeController.instance.load();
-  // Same for the admin's background photo, so the Sign In screen paints it on
-  // the first frame instead of flashing the background color first.
+  // Same for the background photo published from the admin console, so the
+  // Sign In screen paints it on the first frame instead of flashing the
+  // background color first.
   await AuthBackgroundController.instance.load();
   // And the mechanic's own preferences, so the Emergency pulse toggle is
   // whatever they last set it to.
   await MechanicSettingsStore.instance.load();
-  runApp(const MyApp());
+  // The registration draft, so a launch that is really Android restarting us
+  // mid-photo-pick can put the user back on the form rather than Sign In.
+  await RegistrationDraft.instance.load();
+  runApp(MyApp(resumeRegistrationStep: RegistrationDraft.instance.pendingPickerStep));
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  /// The mechanic registration step to reopen on this launch, or 0 for a
+  /// normal start at Sign In.
+  ///
+  /// Non-zero means the previous run was killed by Android while a photo
+  /// picker was in front of it (see [RegistrationDraft.pendingPickerStep]) —
+  /// the user is mid-registration, not starting the app.
+  final int resumeRegistrationStep;
+
+  const MyApp({super.key, this.resumeRegistrationStep = 0});
 
   // This widget is the root of your application.
   @override
@@ -28,10 +43,29 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final _themeController = ThemeController.instance;
 
+  /// The palette last repainted for, so [_onThemeChanged] can tell a real
+  /// theme switch from a Warm Filter drag.
+  String _lastThemeId = ThemeController.instance.selectedId;
+  final _navigatorKey = GlobalKey<NavigatorState>();
+
   @override
   void initState() {
     super.initState();
     _themeController.addListener(_onThemeChanged);
+    if (widget.resumeRegistrationStep > 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _resumeRegistration());
+    }
+  }
+
+  /// Puts the interrupted registration back on screen. Step 4 goes underneath
+  /// so Back still walks the form in order; every step rebuilds itself from
+  /// the saved draft, so nothing the user typed is lost. The step clears the
+  /// pending-picker flag once it has recovered the photo.
+  void _resumeRegistration() {
+    final navigator = _navigatorKey.currentState;
+    if (navigator == null) return;
+    navigator.push(MaterialPageRoute(builder: (_) => const MechanicStep4Documents()));
+    navigator.push(MaterialPageRoute(builder: (_) => const MechanicStep5Verification()));
   }
 
   @override
@@ -43,13 +77,24 @@ class _MyAppState extends State<MyApp> {
   void _onThemeChanged() {
     if (!mounted) return;
     setState(() {});
+
     // Screens read their colors from `AppColors`, a plain static lookup rather
     // than an InheritedWidget dependency. Routes already on the Navigator
     // stack cache their subtree, so rebuilding MaterialApp on its own would
     // not repaint the screens sitting behind the Themes screen. Marking the
     // whole tree dirty (what a hot reload does) repaints every open screen
     // without disturbing navigation or screen state.
-    _rebuildEverything(context as Element);
+    //
+    // Only worth doing when the palette actually changed, though. The Warm
+    // Filter is continuous, so a single drag notifies on every frame, and it
+    // needs nothing but the tint above — which the builder below applies from
+    // this state's own rebuild. Walking the whole tree sixty times a second
+    // for it would make dragging crawl.
+    final themeId = _themeController.selectedId;
+    if (themeId != _lastThemeId) {
+      _lastThemeId = themeId;
+      _rebuildEverything(context as Element);
+    }
   }
 
   void _rebuildEverything(Element element) {
@@ -61,6 +106,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
+      navigatorKey: _navigatorKey,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.themeFor(_themeController.selected),
       // The Warm Filter tints everything below MaterialApp — routes, sheets

@@ -3,8 +3,6 @@ import '../../../data/app_session.dart';
 import '../../../data/quote_store.dart';
 import '../../../data/review_store.dart';
 import '../../../theme/app_theme.dart';
-import '../../../widgets/app_widgets.dart';
-import '../../../widgets/on_go_bottom_nav.dart';
 import 'home/need_help_screen.dart';
 import 'notifications/client_notifications_screen.dart';
 import 'jobs/client_jobs_screen.dart';
@@ -31,7 +29,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   void _goToTab(int index) => setState(() => _currentIndex = index);
 
   /// Opening the list is what counts as "viewing" them, so the badge clears
-  /// here — same as the Mechanic and Admin bells.
+  /// here — same as the Mechanic bell.
   Future<void> _openNotifications() async {
     QuoteNotificationStore.instance.markClientNotificationsSeen();
     await Navigator.push(

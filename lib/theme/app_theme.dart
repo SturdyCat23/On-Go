@@ -1,65 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:on_go_design/on_go_design.dart';
 
-import 'app_palette.dart';
-import 'design_tokens.dart';
-import 'theme_controller.dart';
+/// The design system itself — the palettes, the theme registry, the tokens and
+/// [ThemeController] — lives in `package:on_go_design`, shared with the admin
+/// console website so both front ends are the same theme system rather than
+/// two that resemble each other.
+///
+/// Re-exported here so every screen keeps importing one file, exactly as
+/// before.
+export 'package:on_go_design/on_go_design.dart';
 
-export 'app_palette.dart';
-export 'design_tokens.dart';
 export 'auth_background_controller.dart';
-export 'theme_controller.dart';
 
-class AppColors {
-
-  // Theme palette colors — use these for all surfaces, borders, dividers and text.
-  //
-  // These forward to whichever palette the user picked in Settings > Themes
-  // (see [ThemeController]). They are getters rather than constants so a theme
-  // change reaches every screen; that also means they can't be used inside
-  // `const` expressions.
-
-  // Primary and secondary colors
-  static Color get primary => _palette.primary;
-  static Color get primarydark => _palette.primarydark;
-
-  // Background and surface colors
-  static Color get background => _palette.background;
-  static Color get surface => _palette.surface;
-
-  // Text colors
-  static Color get textdark => _palette.textdark;
-  static Color get textmedium => _palette.textmedium;
-  static Color get textlight => _palette.textlight;
-
-  // Utility colors for specific use cases
-  static Color get info => _palette.info;
-  static Color get success => _palette.success;
-  static Color get warning => _palette.warning;
-  static Color get error => _palette.error;
-
-  static AppPalette get _palette => ThemeController.instance.palette;
-}
-
-class AppDurations {
-  static const Duration snackBar = Duration(seconds: 1);
-}
-
+/// The mobile app's [ThemeData].
+///
+/// This is the half the app owns: the colours are shared, the density is not.
+/// A phone gets full-width pill buttons and 48-point targets because it is
+/// tapped at arm's length; the console builds its own [ThemeData] from the
+/// same palettes for a mouse. See `admin_web/lib/src/theme/console_theme.dart`.
 class AppTheme {
-  /// The warmest tint the Warm Filter applies, at the top of its range.
-  static const Color _warmestTint = Color(0xFFFFC080);
-
-  /// The tint to multiply the whole app by for a Warm Filter [level]
-  /// (0..[ThemeController.maxWarmFilter]), or null at 0 where the filter is
-  /// off and the extra compositing layer isn't worth paying for.
+  /// The tint to multiply the whole app by for a Warm Filter level.
   ///
-  /// Multiplying rather than overlaying is what makes this safe on every
-  /// theme: white goes warm, black stays black, so a dark palette gets warmer
-  /// without its blacks washing out to orange.
-  static Color? warmFilterTint(int level) {
-    if (level <= 0) return null;
-    final t = (level / ThemeController.maxWarmFilter).clamp(0.0, 1.0);
-    return Color.lerp(const Color(0xFFFFFFFF), _warmestTint, t);
-  }
+  /// Kept here as the app's entry point into the shared implementation, which
+  /// the console uses too — the filter has to behave identically on both.
+  static Color? warmFilterTint(double level) => AppWarmFilter.tintFor(level);
 
   /// The [ThemeData] for the currently selected theme.
   static ThemeData get theme => themeFor(ThemeController.instance.selected);
@@ -204,6 +168,35 @@ class AppTheme {
           labelColor: c.textdark,
           unselectedLabelColor: c.textmedium,
           dividerColor: c.textmedium.withValues(alpha: 0.2),
+        ),
+        // Every Switch in the app, in every shell: an outlined pill with a
+        // solid circle inside — textmedium when off, primary when on. Set
+        // here rather than screen by screen so a toggle anywhere (settings,
+        // forms, dialogs, management screens) looks identical without
+        // repeating the colors, and any new one is styled by default.
+        switchTheme: SwitchThemeData(
+          thumbColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.disabled)) {
+              return c.textmedium.withValues(alpha: 0.3);
+            }
+            if (states.contains(WidgetState.selected)) return c.primary;
+            return c.textmedium.withValues(alpha: 0.55);
+          }),
+          // No fill in either state — the pill reads as an outline over
+          // whatever it sits on, so it looks right on cards and dialogs as
+          // well as on the page background.
+          trackColor: const WidgetStatePropertyAll(Colors.transparent),
+          trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.disabled)) {
+              return c.textmedium.withValues(alpha: 0.3);
+            }
+            if (states.contains(WidgetState.selected)) return c.primary;
+            return c.textmedium;
+          }),
+          // Material 3 drops the outline once a switch is on, because its
+          // track is normally filled. Ours never is, so the outline has to be
+          // held at the same weight in both states.
+          trackOutlineWidth: const WidgetStatePropertyAll(AppBorders.regular),
         ),
         checkboxTheme: CheckboxThemeData(
           shape: RoundedRectangleBorder(borderRadius: AppRadii.borderXs),

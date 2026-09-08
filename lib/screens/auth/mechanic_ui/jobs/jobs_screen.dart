@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../../data/mechanic_account_store.dart';
 import '../../../../data/mechanic_settings_store.dart';
-import '../../../../data/moderator_data.dart';
+import '../../../../services/backend/mobile_backend.dart';
 import '../../../../data/quote_store.dart';
 import '../../../../data/review_store.dart';
 import '../../../../theme/app_theme.dart';
@@ -161,8 +161,9 @@ class _JobsScreenState extends State<JobsScreen> {
     final won = store.mechanicAcceptEmergency(
       request.id,
       mechanicName: _mechanicName,
-      // Todo: pull a real emergency callout rate from the mechanic's profile.
-      price: '₱200',
+      // No price on purpose — an emergency's amount is agreed with the client
+      // in person and set via Set Payment Amount, so there is nothing to
+      // record here yet.
       eta: '15 mins',
       rating: ReviewStore.instance.averageRatingFor(_mechanicName),
     );
@@ -400,11 +401,11 @@ Color _urgencyColor(String urgency) {
 }
 
 String _paymentDisplay(HelpRequest request, MechanicQuote? quote) {
-  if (request.isEmergency) {
-    if (request.agreedPaymentAmount != null) return '₱${request.agreedPaymentAmount!.toStringAsFixed(0)}';
-    return 'To be agreed';
-  }
-  return quote?.price ?? '₱200';
+  // Once paid this is the recorded amount; before that it is the agreed
+  // Emergency price or the accepted quote. Never a fixed fallback figure.
+  final amount = settledPaymentAmount(request, quote);
+  if (amount != null) return '₱${amount.toStringAsFixed(0)}';
+  return request.isEmergency ? 'To be agreed' : 'To be quoted';
 }
 
 String _timeAgo(DateTime time) {

@@ -2,9 +2,14 @@
 /// ReviewStore and QuoteNotificationStore) can enforce who's allowed to
 /// call which methods at runtime — not just by what buttons exist on screen.
 ///
+/// Only the two roles this app runs. Admin and Moderator moved to the On Go
+/// admin console website, so a mobile store can no longer be asked to trust a
+/// caller claiming one — see `UserRole` in `package:on_go_shared` for the full
+/// set across both applications.
+///
 /// Todo: replace with real auth/role claims once login exists. Until then,
 /// ClientHomeScreen / MechanicHomeScreen set this the moment they mount.
-enum AppRole { none, client, mechanic, moderator, admin }
+enum AppRole { none, client, mechanic }
 
 class AppSession {
   AppSession._internal();

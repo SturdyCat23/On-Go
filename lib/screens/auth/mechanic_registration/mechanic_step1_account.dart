@@ -240,9 +240,9 @@ class _MechanicStep1AccountState extends State<MechanicStep1Account> {
                       controller: _confirmPassCtrl,
                       onChanged: (_) {
                         _autosave();
-                        if (_confirmPassError != null) {
-                          setState(() => _confirmPassError = null);
-                        }
+                        // Rebuild on every keystroke so the match indicator
+                        // keeps up, clearing the error if one was showing.
+                        setState(() => _confirmPassError = null);
                       },
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -256,6 +256,10 @@ class _MechanicStep1AccountState extends State<MechanicStep1Account> {
                             () => _obscureConfirm = !_obscureConfirm),
                       ),
                     ),
+                  ),
+                  PasswordMatchIndicator(
+                    password: _passCtrl.text,
+                    confirmPassword: _confirmPassCtrl.text,
                   ),
                   const SizedBox(height: 24),
 

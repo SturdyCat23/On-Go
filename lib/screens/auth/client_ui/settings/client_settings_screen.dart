@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../data/client_account_store.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../widgets/change_password_dialog.dart';
 import '../../../../widgets/password_strength.dart';
 import '../../../shared/theme_screen.dart';
 
@@ -13,50 +14,32 @@ class ClientSettingsScreen extends StatefulWidget {
 
 class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
   final _store = ClientAccountStore.instance;
-  final _currentCtrl = TextEditingController();
-  final _newCtrl = TextEditingController();
-  final _confirmCtrl = TextEditingController();
 
-  bool _obscureCurrent = true;
-  bool _obscureNew = true;
-  bool _obscureConfirm = true;
-  String? _error;
+  /// Opens the Change Password dialog the Mechanic screen uses too.
+  /// The rules below are this screen's own and are unchanged — only where
+  /// they run has moved.
+  Future<void> _changePassword() async {
+    final changed = await showChangePasswordDialog(
+      context: context,
+      onSubmit: (current, next, confirm) {
+        if (current.isEmpty || next.isEmpty || confirm.isEmpty) {
+          return 'Please fill in all fields.';
+        }
+        if (evaluatePasswordStrength(next) == PasswordStrength.weak) {
+          return 'Please choose a stronger password.';
+        }
+        if (next != confirm) return 'New passwords do not match.';
+        final ok = _store.changePassword(currentPassword: current, newPassword: next);
+        if (!ok) return 'Current password is incorrect.';
+        return null;
+      },
+    );
 
-  @override
-  void dispose() {
-    _currentCtrl.dispose();
-    _newCtrl.dispose();
-    _confirmCtrl.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    setState(() => _error = null);
-
-    if (_currentCtrl.text.isEmpty || _newCtrl.text.isEmpty || _confirmCtrl.text.isEmpty) {
-      setState(() => _error = 'Please fill in all fields.');
-      return;
+    if (changed && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password updated'), duration: AppDurations.snackBar),
+      );
     }
-    final strength = evaluatePasswordStrength(_newCtrl.text);
-    if (strength == PasswordStrength.weak) {
-      setState(() => _error = 'Please choose a stronger password.');
-      return;
-    }
-    if (_newCtrl.text != _confirmCtrl.text) {
-      setState(() => _error = 'New passwords do not match.');
-      return;
-    }
-
-    final ok = _store.changePassword(currentPassword: _currentCtrl.text, newPassword: _newCtrl.text);
-    if (!ok) {
-      setState(() => _error = 'Current password is incorrect.');
-      return;
-    }
-
-    _currentCtrl.clear();
-    _newCtrl.clear();
-    _confirmCtrl.clear();
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password updated'), duration: AppDurations.snackBar));
   }
 
   @override
@@ -100,89 +83,13 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
               ),
             ),
           ] else ...[
-            const Text('Change Password', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 14),
-            _PasswordField(
-              label: 'Current Password',
-              controller: _currentCtrl,
-              obscure: _obscureCurrent,
-              onToggleObscure: () => setState(() => _obscureCurrent = !_obscureCurrent),
-            ),
-            const SizedBox(height: 14),
-            _PasswordField(
-              label: 'New Password',
-              controller: _newCtrl,
-              obscure: _obscureNew,
-              onToggleObscure: () => setState(() => _obscureNew = !_obscureNew),
-              onChanged: (_) => setState(() {}),
-            ),
-            PasswordStrengthMeter(password: _newCtrl.text),
-            const SizedBox(height: 14),
-            _PasswordField(
-              label: 'Confirm New Password',
-              controller: _confirmCtrl,
-              obscure: _obscureConfirm,
-              onToggleObscure: () => setState(() => _obscureConfirm = !_obscureConfirm),
-            ),
-            if (_error != null) ...[
-              const SizedBox(height: 10),
-              Text(_error!, style: TextStyle(color: AppColors.primary, fontSize: 12)),
-            ],
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: const StadiumBorder(),
-                ),
-                child: Text('Update Password', style: TextStyle(color: AppColors.textmedium, fontWeight: FontWeight.w700)),
-              ),
+            ChangePasswordSettingsTile(
+              subtitle: 'Update the password for this account',
+              onTap: _changePassword,
             ),
           ],
         ],
       ),
-    );
-  }
-}
-
-class _PasswordField extends StatelessWidget {
-  final String label;
-  final TextEditingController controller;
-  final bool obscure;
-  final VoidCallback onToggleObscure;
-  final ValueChanged<String>? onChanged;
-
-  const _PasswordField({
-    required this.label,
-    required this.controller,
-    required this.obscure,
-    required this.onToggleObscure,
-    this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          obscureText: obscure,
-          onChanged: onChanged,
-          decoration: InputDecoration(
-            hintText: '••••••••',
-            suffixIcon: IconButton(
-              icon: Icon(obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20, color: AppColors.textdark.withValues(alpha: 0.55)),
-              onPressed: onToggleObscure,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

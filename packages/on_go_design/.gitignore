@@ -1,0 +1,7 @@
+# Flutter/Dart build artifacts.
+.dart_tool/
+build/
+
+# A library, not an application: its lockfile is not the source of truth for
+# either app that depends on it.
+pubspec.lock

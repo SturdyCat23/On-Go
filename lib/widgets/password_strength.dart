@@ -68,6 +68,45 @@ extension PasswordStrengthDisplay on PasswordStrength {
   }
 }
 
+/// Live "do these two match?" feedback — drop under any Confirm Password
+/// field, alongside [PasswordStrengthMeter] under the password itself.
+///
+/// It says nothing until the confirmation has something in it, so a form the
+/// user has not reached yet is never pre-emptively marked wrong. It is purely
+/// an indicator: submitting is still gated by each form's own validation.
+class PasswordMatchIndicator extends StatelessWidget {
+  final String password;
+  final String confirmPassword;
+
+  const PasswordMatchIndicator({
+    super.key,
+    required this.password,
+    required this.confirmPassword,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (confirmPassword.isEmpty) return const SizedBox.shrink();
+
+    final matches = password == confirmPassword;
+    final color = matches ? AppColors.success : AppColors.error;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        children: [
+          Icon(matches ? Icons.check_circle : Icons.cancel, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(
+            matches ? 'Passwords match' : 'Passwords do not match',
+            style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// A labelled strength bar — drop under any password field.
 class PasswordStrengthMeter extends StatelessWidget {
   final String password;

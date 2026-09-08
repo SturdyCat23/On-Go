@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
-import 'admin_data.dart';
+
+import '../services/backend/mobile_backend.dart';
 import 'app_session.dart';
 import 'chat_store.dart';
 import 'mechanic_notification_store.dart';
@@ -173,11 +176,23 @@ class HelpRequest {
   double? agreedPaymentAmount;
   DateTime? agreedPaymentAmountSetAt;
 
+  /// THE PAYMENT RECORD for this job — the mechanic's amount as it was
+  /// actually charged, stamped once by
+  /// [QuoteNotificationStore.clientConfirmPayment] and never recomputed.
+  /// Mirrors `payments.amount` in the backend schema.
+  ///
+  /// This is what history must read. Re-deriving a finished job's amount from
+  /// its quote is what made emergency jobs show the placeholder price the
+  /// accept record carries instead of the amount the client and mechanic
+  /// actually agreed on.
+  double? amountPaid;
+
   /// The priority fee actually booked as ONGO revenue for this job. Stays
   /// null until the client pays — [QuoteNotificationStore.clientConfirmPayment]
-  /// sets it at the same moment it hands the fee to
-  /// [AdminStore.recordCompletedPayment], so it doubles as the record of
-  /// "this job's fee has already been counted".
+  /// sets it at the same moment it reports the payment to
+  /// [PlatformRevenueApi.reportCompletedPayment], so it doubles as the record
+  /// of "this job's fee has already been counted". Mirrors
+  /// `payments.platform_fee`.
   double? platformFeeCharged;
 
   HelpRequest({
@@ -214,8 +229,14 @@ class HelpRequest {
     this.expiredByMechanic,
     this.agreedPaymentAmount,
     this.agreedPaymentAmountSetAt,
+    this.amountPaid,
     this.platformFeeCharged,
   });
+
+  /// The full amount the client handed over — the mechanic's share plus the
+  /// priority fee. Null until the job has actually been paid.
+  double? get totalPaid =>
+      amountPaid == null ? null : amountPaid! + (platformFeeCharged ?? 0);
 
   bool get isEmergency => urgency == 'Emergency';
   bool get hasClientCoordinates => clientLat != null && clientLng != null;
@@ -281,6 +302,19 @@ double? clientTotalPaymentAmount(HelpRequest request, MechanicQuote? acceptedQuo
   final mechanicAmount = effectivePaymentAmount(request, acceptedQuote);
   return mechanicAmount == null ? null : mechanicAmount + request.platformFee;
 }
+
+/// THE single rule for "what did this job actually cost" — what every HISTORY
+/// view must use, on both the client and the mechanic side, so the two always
+/// quote the same figure for the same job.
+///
+/// Prefers [HelpRequest.amountPaid], the record stamped when the client paid.
+/// That matters most for Emergency jobs: their accept record carries no real
+/// price (the amount is agreed in person afterwards), so anything reading
+/// `quote.price` for a finished emergency reports a number that was never
+/// charged. Falls back to [effectivePaymentAmount] for jobs that aren't paid
+/// yet, and for any that completed before the amount was being recorded.
+double? settledPaymentAmount(HelpRequest request, MechanicQuote? acceptedQuote) =>
+    request.amountPaid ?? effectivePaymentAmount(request, acceptedQuote);
 
 /// What a client's bell can tell them about. Each value is raised from the
 /// one store method that performs it, so a notification can never be recorded
@@ -636,10 +670,15 @@ class QuoteNotificationStore extends ChangeNotifier {
         acceptedQuoteFor(r.id)?.mechanicName == mechanicName);
   }
 
+  /// An emergency accept record is NOT a quote — emergencies skip quoting
+  /// entirely and the amount is agreed in person afterwards, via
+  /// [mechanicSetPaymentAmount]. So [price] stays empty by design: writing a
+  /// placeholder figure here is what made finished emergency jobs report a
+  /// price nobody ever charged.
   bool mechanicAcceptEmergency(
     String requestId, {
     required String mechanicName,
-    required String price,
+    String price = '',
     required String eta,
     required double rating,
   }) {
@@ -888,9 +927,10 @@ class QuoteNotificationStore extends ChangeNotifier {
   ///
   /// The split is settled here and only here: the mechanic's
   /// [effectivePaymentAmount] drives their payout and the client's loyalty
-  /// points exactly as before, and the job's priority fee goes to
-  /// [AdminStore.recordCompletedPayment] as ONGO revenue. A job can only be
-  /// paid once (the paymentCompleted guard below), so the payment can never
+  /// points exactly as before, and the payment is reported to
+  /// [PlatformRevenueApi.reportCompletedPayment] as ONGO revenue — the Admin
+  /// income screens that read it live in the console website. A job can only
+  /// be paid once (the paymentCompleted guard below), so the payment can never
   /// be booked twice.
   int? clientConfirmPayment(String requestId) {
     if (AppSession.instance.currentRole != AppRole.client) {
@@ -912,14 +952,28 @@ class QuoteNotificationStore extends ChangeNotifier {
     req.paymentCompleted = true;
     req.paymentCompletedAt = DateTime.now();
     req.pointsAwarded = points;
+    // The payment record. Stamped once, here, from the amount actually
+    // charged — history reads this rather than re-deriving from the quote.
+    req.amountPaid = amount;
     req.status = RequestStatus.completed;
     req.completedAt = req.paymentCompletedAt;
 
     final fee = req.platformFee;
     if (fee > 0) req.platformFeeCharged = fee;
-    // Every successful payment is booked, fee or no fee: the fee is ONGO's
+    // Every successful payment is reported, fee or no fee: the fee is ONGO's
     // revenue, and the payment itself is one Admin transaction either way.
-    AdminStore.instance.recordCompletedPayment(platformFee: fee, at: req.paymentCompletedAt);
+    //
+    // Not awaited, and deliberately: the client has paid, the job is complete,
+    // and none of that is contingent on the console hearing about it. The
+    // report is idempotent on the request id, so the retry this will grow when
+    // it becomes a network call can safely re-send it.
+    unawaited(MobileBackend.instance.revenue.reportCompletedPayment(
+      CompletedPaymentReport(
+        requestId: req.id,
+        platformFee: fee,
+        paidAt: req.paymentCompletedAt!,
+      ),
+    ));
 
     if (quote != null) {
       MechanicNotificationStore.instance.add(
@@ -950,7 +1004,9 @@ class QuoteNotificationStore extends ChangeNotifier {
     double sum = 0;
     for (final req in completedJobsFor(mechanicName)) {
       final quote = acceptedQuoteFor(req.id);
-      sum += effectivePaymentAmount(req, quote) ?? 0;
+      // Same rule the client's history uses, so a job is worth the same
+      // figure on both sides.
+      sum += settledPaymentAmount(req, quote) ?? 0;
     }
     return sum;
   }

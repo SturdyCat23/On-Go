@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
 
-/// Theme picker, shared by the Client, Mechanic, Moderator and Admin shells.
+/// Theme picker, shared by the Client and Mechanic shells. The admin console
+/// has its own, built on the same palettes.
 ///
 /// The list is built from [AppThemes.all], so adding a theme there is all it
 /// takes for it to show up here.
@@ -172,30 +173,10 @@ class _SwitchRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Theme(
-            data: Theme.of(context).copyWith(
-              switchTheme: SwitchThemeData(
-                trackColor: WidgetStateProperty.resolveWith((states) {
-                  return Colors.transparent;
-                }),
-                trackOutlineColor: WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.selected)) {
-                    return AppColors.primary;
-                  }
-                  return AppColors.textmedium;
-                }),
-                thumbColor: WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.selected)) {
-                    return AppColors.primary;
-                  }
-                  return AppColors.textmedium;
-                }),
-              ),
-            ),
-            child: Switch(
-              value: value,
-              onChanged: onChanged,
-            ),
+          // Colors come from the app-wide switchTheme.
+          Switch(
+            value: value,
+            onChanged: onChanged,
           ),
         ],
       ),
@@ -210,8 +191,6 @@ class _WarmFilterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final level = controller.warmFilter;
-
     return Padding(
       padding: const EdgeInsets.only(top: 10, bottom: 6),
       child: Column(
@@ -224,10 +203,6 @@ class _WarmFilterRow extends StatelessWidget {
                   'Warm Filter',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textdark),
                 ),
-              ),
-              Text(
-                level == 0 ? 'Off' : '$level',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.primary),
               ),
             ],
           ),
@@ -244,14 +219,7 @@ class _WarmFilterRow extends StatelessWidget {
               overlayColor: AppColors.primary.withValues(alpha: 0.12),
               valueIndicatorColor: AppColors.primary,
             ),
-            child: Slider(
-              value: level.toDouble(),
-              min: 0,
-              max: ThemeController.maxWarmFilter.toDouble(),
-              divisions: ThemeController.maxWarmFilter,
-              label: '$level',
-              onChanged: (v) => controller.setWarmFilter(v.round()),
-            ),
+            child: WarmFilterSlider(controller: controller),
           ),
         ],
       ),

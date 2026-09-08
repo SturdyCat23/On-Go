@@ -1,0 +1,34 @@
+name: on_go_design
+description: >-
+  The On Go design system: the theme registry, the palettes, the design tokens,
+  and the controller that decides which theme is in force.
+
+  Shared by both front ends so the mobile app (Client + Mechanic) and the admin
+  console website (Admin + Moderator) are literally the same theme system —
+  same theme names, same colours, same Dark Mode, Dynamic Themes and Warm
+  Filter — rather than two sets of definitions that drift apart. Each app still
+  builds its own ThemeData from these palettes, because a phone and a desktop
+  want different densities and control shapes.
+publish_to: 'none'
+
+version: 0.1.0
+
+environment:
+  sdk: ^3.8.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Remembers the chosen theme, the switches and the Warm Filter level between
+  # runs. Works on mobile and on the web.
+  shared_preferences: ^2.3.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

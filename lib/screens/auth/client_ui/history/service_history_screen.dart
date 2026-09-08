@@ -64,11 +64,15 @@ class _ServiceHistoryScreenState extends State<ServiceHistoryScreen> {
             final quote = _store.acceptedQuoteFor(request.id);
             final mechanicName = quote?.mechanicName ?? 'Mechanic';
             final myReview = _reviews.reviewByCurrentClientFor(mechanicName);
+            // What was actually paid for THIS job, from its payment record —
+            // never the quote's price, which for an Emergency job is only a
+            // placeholder on the accept record.
+            final paid = settledPaymentAmount(request, quote);
             return _HistoryCard(
               mechanicName: mechanicName,
               location: request.location,
               date: _formatDate(request.paymentCompletedAt ?? request.completedAt),
-              price: quote?.price ?? '—',
+              price: paid == null ? '—' : '₱${paid.toStringAsFixed(0)}',
               rating: myReview?.rating,
             );
           }),
@@ -100,12 +104,18 @@ class _HistoryCard extends StatelessWidget {
         MaterialPageRoute(builder: (_) => MechanicProfileViewScreen(name: mechanicName)),
       ),
       borderRadius: BorderRadius.circular(16),
+      overlayColor: WidgetStateProperty.all(Colors.transparent),
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      hoverColor: Colors.transparent,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
+          color: AppColors.surface.withValues(alpha: 0.55),
           border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
           borderRadius: BorderRadius.circular(16),
+          boxShadow: const [],
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,

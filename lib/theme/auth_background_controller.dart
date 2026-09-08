@@ -4,8 +4,16 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Holds the background photo the admin uploaded for the Sign In and Welcome
+/// Holds the background photo an admin published for the Sign In and Welcome
 /// screens, and remembers it across restarts.
+///
+/// The photo is chosen in the On Go admin console, a separate web application
+/// — this app only paints it. [setPhoto] and [removePhoto] are therefore the
+/// *inbound* side of that: the sink a fetched background is written to, called
+/// by whatever implements `PlatformAppearanceApi` once the backend exists
+/// (today that is `LocalAppearanceService`, which has nothing to fetch). No
+/// mobile screen calls them, and none should — a phone setting the platform's
+/// branding is exactly what moving Admin out was meant to stop.
 ///
 /// Same singleton-[ChangeNotifier] shape as [ThemeController]: screens read
 /// `AuthBackgroundController.instance` and listen to it when they need to

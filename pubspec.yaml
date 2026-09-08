@@ -12,6 +12,17 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
+
+  # The shared design system: palettes, theme registry, tokens and the theme
+  # controller. The admin console website uses the same package, so both front
+  # ends are literally one theme system.
+  on_go_design:
+    path: packages/on_go_design
+
+  # Domain models and API contracts shared with the admin console website.
+  # See packages/on_go_shared and ARCHITECTURE.md.
+  on_go_shared:
+    path: packages/on_go_shared
   file_picker: ^8.1.4
   image_picker: ^1.1.2
   path_provider: ^2.1.6

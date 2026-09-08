@@ -267,6 +267,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                 right: 16,
                 bottom: -46,
                 child: AppCard(
+                  color: AppColors.surface,
                   padding: const EdgeInsets.all(12),
                   child: Column(
                     children: [

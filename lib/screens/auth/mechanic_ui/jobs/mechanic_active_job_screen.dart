@@ -208,6 +208,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                       right: 16,
                       bottom: -46,
                       child: AppCard(
+                        color: AppColors.surface,
                         padding: const EdgeInsets.all(12),
                         child: Column(
                           children: [
@@ -215,7 +216,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                               children: [
                                 CircleAvatar(
                                   radius: 24,
-                                  backgroundColor: AppColors.surface,
+                                  backgroundColor: AppColors.background,
                                   child: Icon(Icons.person, color: AppColors.textdark.withValues(alpha: 0.55)),
                                 ),
                                 const SizedBox(width: 12),
@@ -257,7 +258,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                                         const _VerticalDivider(),
                                         const _InfoColumn(label: 'Distance', value: '20 km'),
                                         const _VerticalDivider(),
-                                        _InfoColumn(label: 'Quote', value: quote?.price ?? '₱200', valueColor: AppColors.success),
+                                        _InfoColumn(label: 'Quote', value: quote?.price ?? '—', valueColor: AppColors.success),
                                       ],
                                     ),
                             ),
