@@ -1,6 +1,7 @@
 import 'package:on_go_shared/on_go_shared.dart';
 
 import 'local/local_appearance_service.dart';
+import 'local/local_client_ip_service.dart';
 import 'local/local_console_auth_service.dart';
 import 'local/local_moderator_directory_service.dart';
 import 'local/local_revenue_service.dart';
@@ -38,7 +39,7 @@ class ConsoleBackend {
   /// instance, because deciding a request has to be able to credit the
   /// moderator who decided it.
   factory ConsoleBackend._local() {
-    final directory = LocalModeratorDirectoryService();
+    final directory = LocalModeratorDirectoryService(clientIp: _clientIp);
     return ConsoleBackend._(
       auth: LocalConsoleAuthService(directory),
       verification: LocalVerificationService(directory),
@@ -47,6 +48,15 @@ class ConsoleBackend {
       appearance: LocalAppearanceService(),
     );
   }
+
+  /// The address stamped onto audit entries written locally.
+  ///
+  /// One instance for the whole console, so every entry agrees on where this
+  /// session is working from. The server takes this over per request once the
+  /// API client is installed — see [LocalClientIpService].
+  static final LocalClientIpService _clientIp = LocalClientIpService();
+
+  static LocalClientIpService get clientIp => _clientIp;
 
   static ConsoleBackend _instance = ConsoleBackend._local();
 

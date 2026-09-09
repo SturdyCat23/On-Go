@@ -41,9 +41,9 @@ class ConsoleColors {
   /// so it is mixed here rather than invented as a new palette entry, which
   /// would mean editing six palettes for one console detail.
   static Color get surfaceMuted => Color.alphaBlend(
-        _p.textmedium.withValues(alpha: AppColors.isDark ? 0.10 : 0.05),
-        _p.background,
-      );
+    _p.textmedium.withValues(alpha: AppColors.isDark ? 0.10 : 0.05),
+    _p.background,
+  );
 
   /// Hairlines, outlines and dividers. The same weight the app's dividers use.
   static Color get border => _p.textmedium.withValues(alpha: 0.3);
@@ -159,13 +159,13 @@ class ConsoleTheme {
     final scheme =
         (option.isDark ? const ColorScheme.dark() : const ColorScheme.light())
             .copyWith(
-      primary: c.primary,
-      onPrimary: c.textlight,
-      secondary: c.info,
-      surface: c.surface,
-      onSurface: c.textdark,
-      error: c.error,
-    );
+              primary: c.primary,
+              onPrimary: c.textlight,
+              secondary: c.info,
+              surface: c.surface,
+              onSurface: c.textdark,
+              error: c.error,
+            );
 
     return ThemeData(
       useMaterial3: true,
@@ -191,16 +191,31 @@ class ConsoleTheme {
         iconTheme: IconThemeData(color: c.textlight),
       ),
       textTheme: TextTheme(
-        displaySmall:
-            TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: c.textdark),
-        headlineSmall:
-            TextStyle(fontSize: 21, fontWeight: FontWeight.w700, color: c.textdark),
-        titleLarge:
-            TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: c.textdark),
-        titleMedium:
-            TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: c.textdark),
-        titleSmall:
-            TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: c.textdark),
+        displaySmall: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.w700,
+          color: c.textdark,
+        ),
+        headlineSmall: TextStyle(
+          fontSize: 21,
+          fontWeight: FontWeight.w700,
+          color: c.textdark,
+        ),
+        titleLarge: TextStyle(
+          fontSize: 17,
+          fontWeight: FontWeight.w700,
+          color: c.textdark,
+        ),
+        titleMedium: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: c.textdark,
+        ),
+        titleSmall: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: c.textdark,
+        ),
         bodyLarge: TextStyle(fontSize: 14, color: c.textdark),
         bodyMedium: TextStyle(fontSize: 13, color: c.textdark),
         bodySmall: TextStyle(fontSize: 12, color: c.textmedium),
@@ -249,7 +264,10 @@ class ConsoleTheme {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
           side: BorderSide(color: border),
           shape: AppRadii.pill,
-          textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -269,7 +287,10 @@ class ConsoleTheme {
         // the console does the same, so a form reads identically.
         fillColor: muted,
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 13,
+        ),
         hintStyle: TextStyle(color: c.textmedium, fontSize: 13.5),
         labelStyle: TextStyle(color: c.textmedium, fontSize: 13.5),
         border: OutlineInputBorder(
@@ -299,8 +320,11 @@ class ConsoleTheme {
         surfaceTintColor: Colors.transparent,
         elevation: AppElevation.modal,
         shape: RoundedRectangleBorder(borderRadius: AppRadii.borderXl),
-        titleTextStyle:
-            TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: c.textdark),
+        titleTextStyle: TextStyle(
+          fontSize: 17,
+          fontWeight: FontWeight.w700,
+          color: c.textdark,
+        ),
         contentTextStyle: TextStyle(fontSize: 13.5, color: c.textdark),
       ),
       snackBarTheme: SnackBarThemeData(
@@ -319,11 +343,17 @@ class ConsoleTheme {
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith(
-          (states) =>
-              states.contains(WidgetState.selected) ? c.textlight : c.surface,
+          (states) => states.contains(WidgetState.selected)
+              ? c.textlight
+              : c.textmedium.withValues(alpha: 0.55),
         ),
         trackColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected) ? c.primary : border,
+          (states) =>
+              states.contains(WidgetState.selected) ? c.primary : c.background,
+        ),
+        trackOutlineColor: WidgetStateProperty.resolveWith(
+          (states) =>
+              states.contains(WidgetState.selected) ? c.primary : c.textmedium,
         ),
       ),
       sliderTheme: SliderThemeData(
@@ -343,7 +373,9 @@ class ConsoleTheme {
         borderRadius: AppRadii.borderXs,
       ),
       scrollbarTheme: ScrollbarThemeData(
-        thumbColor: WidgetStateProperty.all(c.textmedium.withValues(alpha: 0.4)),
+        thumbColor: WidgetStateProperty.all(
+          c.textmedium.withValues(alpha: 0.4),
+        ),
         radius: const Radius.circular(AppRadii.sm),
         thickness: WidgetStateProperty.all(8),
       ),

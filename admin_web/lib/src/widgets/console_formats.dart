@@ -59,12 +59,20 @@ Color colorForAuditAction(AuditAction action) => switch (action) {
       AuditAction.added => ConsoleColors.success,
       AuditAction.removed => ConsoleColors.danger,
       AuditAction.promoted => ConsoleColors.warning,
+      // Queue decisions keep the colours they wear in the activity feed and
+      // on the queue itself, so one action reads the same everywhere.
+      AuditAction.approved => ConsoleColors.success,
+      AuditAction.rejected => ConsoleColors.danger,
+      AuditAction.escalated => ConsoleColors.warning,
     };
 
 IconData iconForAuditAction(AuditAction action) => switch (action) {
       AuditAction.added => Icons.person_add_alt,
       AuditAction.removed => Icons.person_remove_alt_1,
       AuditAction.promoted => Icons.trending_up,
+      AuditAction.approved => Icons.check_circle_outline,
+      AuditAction.rejected => Icons.cancel_outlined,
+      AuditAction.escalated => Icons.flag_outlined,
     };
 
 /// Business accounts read as informational, mechanics as brand — the same

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:on_go_shared/on_go_shared.dart';
 
 import 'live_value.dart';
+import 'local_client_ip_service.dart';
 
 /// The moderator roster and its audit trail, held in this browser session.
 ///
@@ -21,6 +22,13 @@ import 'live_value.dart';
 ///   reference naming them. When uploads are hosted, that becomes an https URL
 ///   and [photoBytesFor] goes away with this class.
 class LocalModeratorDirectoryService implements ModeratorDirectoryApi {
+  LocalModeratorDirectoryService({LocalClientIpService? clientIp})
+      : _clientIp = clientIp ?? LocalClientIpService();
+
+  /// Where the address on each audit entry comes from. The server owns this
+  /// once the backend lands; see [LocalClientIpService].
+  final LocalClientIpService _clientIp;
+
   final List<_ModeratorRecord> _records = [];
   final List<AuditEntry> _audit = [];
 
@@ -216,19 +224,50 @@ class LocalModeratorDirectoryService implements ModeratorDirectoryApi {
     required String role,
     String? reason,
   }) {
+    // Roster changes are admin-only, so these are always admin activity.
+    writeAudit(
+      subjectName: moderatorName,
+      action: action,
+      subjectRole: role,
+      actorName: adminActorName,
+      actorRole: UserRole.admin,
+      reason: reason,
+    );
+  }
+
+  /// Records one entry in the audit log.
+  ///
+  /// Public because the audit trail covers the whole console, not just this
+  /// service: queue decisions are made in
+  /// [LocalVerificationService] and are recorded here too, so the Audit Log
+  /// can be read as one list and filtered by who acted.
+  ///
+  /// The address is stamped from [LocalClientIpService] rather than passed in,
+  /// so no caller can claim to have acted from somewhere it did not.
+  void writeAudit({
+    required String subjectName,
+    required AuditAction action,
+    required String subjectRole,
+    required String actorName,
+    required UserRole actorRole,
+    String? reason,
+  }) {
     final now = DateTime.now();
     _audit.insert(
       0,
       AuditEntry(
         id: 'audit_${now.microsecondsSinceEpoch}',
-        moderatorName: moderatorName,
+        moderatorName: subjectName,
         action: action,
-        role: role,
-        actorName: adminActorName,
+        role: subjectRole,
+        actorName: actorName,
+        actorRole: actorRole.wireName,
+        ipAddress: _clientIp.address,
         occurredAt: now,
         reason: reason,
       ),
     );
+    _auditLog.set(_auditSnapshot);
   }
 }
 

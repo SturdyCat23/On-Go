@@ -78,11 +78,20 @@ enum ModeratorStatus {
       );
 }
 
-/// What an admin did to the moderator roster.
+/// What was done, in the console's audit trail.
+///
+/// The first three are roster changes, which only an admin can make. The rest
+/// are queue decisions, made by a moderator or by an admin resolving an
+/// escalation — those used to live only in the moderator activity feed, and
+/// are recorded here as well so the audit log is the one place every console
+/// action can be read from.
 enum AuditAction {
   added('added', 'added'),
   removed('removed', 'removed'),
-  promoted('promoted', 'promoted');
+  promoted('promoted', 'promoted'),
+  approved('approved', 'approved'),
+  rejected('rejected', 'rejected'),
+  escalated('escalated', 'escalated');
 
   const AuditAction(this.wireName, this.label);
 

@@ -125,7 +125,7 @@ class AppThemes {
   static const AppThemeOption _dark = AppThemeOption(
     id: 'dark',
     family: 'classic',
-    label: 'Dark',
+    label: 'Dark Default',
     description: 'Low-light palette for night driving and roadside work.',
     isDark: true,
     palette: AppPalette(
@@ -168,7 +168,7 @@ class AppThemes {
   static const AppThemeOption _blueDark = AppThemeOption(
     id: 'blue_dark',
     family: 'blue',
-    label: 'Calm Blue Dark',
+    label: 'Cold Blue',
     description: 'Calm Blue after hours — cool blue on a deep slate ground.',
     isDark: true,
     palette: AppPalette(
@@ -229,6 +229,48 @@ class AppThemes {
     ),
   );
 
+  static const AppThemeOption _forestLight = AppThemeOption(
+    id: 'forest',
+    family: 'forest',
+    label: 'Forest',
+    description: 'Deep forest green on a pale green ground.',
+    palette: AppPalette(
+      primary: Color.fromARGB(255, 52, 172, 22),
+      primarydark: Color.fromARGB(255, 26, 106, 9),
+      background: Color.fromARGB(255, 253, 255, 250),
+      surface: Color.fromARGB(255, 254, 255, 252),
+      textdark: Color(0xFF031C04),
+      textmedium: Color(0xFF435559),
+      textlight: Color(0xFFF4F9EA),
+      info: Color.fromARGB(255, 64, 171, 193),
+      success: Color.fromARGB(255, 52, 172, 22),
+      warning: Color.fromARGB(255, 230, 205, 40),
+      error: Color.fromARGB(255, 220, 30, 20),
+    ),
+  );
+
+  /// Forest after dark: the same colours, with the deep green
+  static const AppThemeOption _forestDark = AppThemeOption(
+    id: 'forest_dark',
+    family: 'forest',
+    label: 'Forest Night',
+    description: 'The same greens after dark, on deep forest shadow.',
+    isDark: true,
+    palette: AppPalette(
+      primary: Color.fromARGB(255, 52, 172, 22),
+      primarydark: Color.fromARGB(255, 26, 106, 9),
+      background: Color.fromARGB(255, 6, 7, 7),
+      surface: Color.fromARGB(255, 14, 15, 14),
+      textdark: Color(0xFFE9F2E2),
+      textmedium: Color(0xFF93ABAB),
+      textlight: Color(0xFFF4F9EA),
+      info: Color.fromARGB(255, 77, 168, 191),
+      success: Color.fromARGB(255, 52, 172, 22),
+      warning: Color.fromARGB(255, 230, 205, 40),
+      error: Color.fromARGB(255, 214, 53, 41),
+    ),
+  );
+
   /// Every selectable theme, in the order the Themes screen lists them —
   /// each family's light mode followed by its dark mode.
   static const List<AppThemeOption> all = [
@@ -238,6 +280,8 @@ class AppThemes {
     _blueDark,
     _emberLight,
     _ember,
+    _forestLight,
+    _forestDark,
   ];
 
   /// The theme registered under [id], or the Default theme if there is none.

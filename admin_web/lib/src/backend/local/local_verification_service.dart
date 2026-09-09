@@ -46,6 +46,18 @@ class LocalVerificationService implements AccountVerificationApi {
 
   int _indexOf(String requestId) => _requests.indexWhere((r) => r.id == requestId);
 
+  /// Puts a request straight into the queue.
+  ///
+  /// Tests only. [submit] is the real door and is refused here on purpose, so
+  /// without this there is no way to exercise [decide] — and therefore no way
+  /// to check what a decision writes to the audit trail — until the backend
+  /// connects the mobile app to the console. It does not appear on
+  /// [AccountVerificationApi] and no screen calls it.
+  void debugSeedRequest(AccountVerificationRequest request) {
+    _requests.add(request);
+    _publish();
+  }
+
   // ------------------------------------------------------------- read side ---
 
   @override
@@ -193,6 +205,23 @@ class LocalVerificationService implements AccountVerificationApi {
     ));
 
     final actorId = decision.actorId;
+
+    // The same decision, in the audit log. No actor id means an admin
+    // resolved it — that is the one thing that tells the two apart here, and
+    // it is what the Audit Log's role filter reads.
+    _directory.writeAudit(
+      subjectName: updated.name,
+      action: switch (decision.action) {
+        ModerationAction.approved => AuditAction.approved,
+        ModerationAction.rejected => AuditAction.rejected,
+        ModerationAction.escalated => AuditAction.escalated,
+      },
+      subjectRole: updated.role.label,
+      actorName: decision.actorName,
+      actorRole: actorId == null ? UserRole.admin : UserRole.moderator,
+      reason: activityReason,
+    );
+
     if (actorId != null) _directory.recordHandledAction(actorId);
 
     _publish();

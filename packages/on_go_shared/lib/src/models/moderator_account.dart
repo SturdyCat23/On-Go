@@ -212,8 +212,19 @@ class AuditEntry {
   final AuditAction action;
   final String role;
 
-  /// Who made the change — the admin's display name.
+  /// Who performed it — the actor's display name.
   final String actorName;
+
+  /// Which kind of account performed it: [UserRole.admin] or
+  /// [UserRole.moderator]. This is what the Audit Log's role filter reads.
+  final String actorRole;
+
+  /// The address the actor was working from, as the server saw it.
+  ///
+  /// Null on entries written before addresses were recorded, and on any the
+  /// server could not attribute — the field is shown as unknown rather than
+  /// guessed at.
+  final String? ipAddress;
 
   final DateTime occurredAt;
   final String? reason;
@@ -225,8 +236,19 @@ class AuditEntry {
     required this.role,
     required this.actorName,
     required this.occurredAt,
+    this.actorRole = _adminRole,
+    this.ipAddress,
     this.reason,
   });
+
+  /// What an entry with no recorded actor role is taken to be.
+  ///
+  /// Every entry written before the role was recorded is a roster change, and
+  /// only an admin can make one — so reading them back as admin activity is
+  /// the truth about them, not a guess.
+  static const String _adminRole = 'admin';
+
+  bool get isAdminActivity => actorRole == _adminRole;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -234,6 +256,8 @@ class AuditEntry {
         'action': action.wireName,
         'role': role,
         'actorName': actorName,
+        'actorRole': actorRole,
+        'ipAddress': ipAddress,
         'occurredAt': writeDate(occurredAt),
         'reason': reason,
       };
@@ -244,6 +268,8 @@ class AuditEntry {
         action: AuditAction.fromWire(readString(json['action'])),
         role: readString(json['role']),
         actorName: readString(json['actorName']),
+        actorRole: readStringOrNull(json['actorRole']) ?? _adminRole,
+        ipAddress: readStringOrNull(json['ipAddress']),
         occurredAt: readDate(json['occurredAt']),
         reason: readStringOrNull(json['reason']),
       );

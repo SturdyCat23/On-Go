@@ -89,7 +89,7 @@ class AdminOverviewPage extends StatelessWidget {
             ),
             ConsoleStatTile(
               icon: Icons.check_circle_outline,
-              accent: ConsoleColors.brand,
+              accent: ConsoleColors.danger,
               value: '$approved',
               label: 'Accounts',
             ),

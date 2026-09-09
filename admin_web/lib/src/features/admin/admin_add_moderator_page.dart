@@ -74,7 +74,7 @@ class _AdminAddModeratorPageState extends State<AdminAddModeratorPage> {
             context,
             ConsoleRoutes.adminModerators,
           ),
-          child: const Text('View roster'),
+          child: const Text('View Moderators'),
         ),
       ],
       child: Form(

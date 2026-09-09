@@ -233,19 +233,25 @@ class _Bell extends StatelessWidget {
 
     if (role == UserRole.admin) {
       final destination = ConsoleNavigation.bellFor(role);
-      return StreamBuilder<int>(
-        stream: backend.localVerification?.watchUnseenActivityCount() ??
-            const Stream<int>.empty(),
-        initialData: 0,
-        builder: (context, snapshot) => NotificationBell(
-          count: snapshot.data ?? 0,
-          onTap: destination == null
-              ? null
-              : () {
-                  backend.localVerification?.markActivitySeen();
-                  Navigator.pushNamed(context, destination.route);
-                },
-        ),
+      // Escalations only. Routine moderator activity is recorded in the Audit
+      // Log and no longer counted here — a badge that ticks up on every
+      // approval is a badge an admin learns to ignore. This counts the one
+      // thing that actually needs them, and clears itself when those requests
+      // are settled rather than when the screen is opened.
+      return StreamBuilder<List<AccountVerificationRequest>>(
+        stream: backend.verification.watchRequests(),
+        initialData: const <AccountVerificationRequest>[],
+        builder: (context, snapshot) {
+          final waiting = (snapshot.data ?? const <AccountVerificationRequest>[])
+              .where((r) => r.escalated && r.isPending)
+              .length;
+          return NotificationBell(
+            count: waiting,
+            onTap: destination == null
+                ? null
+                : () => Navigator.pushNamed(context, destination.route),
+          );
+        },
       );
     }
 

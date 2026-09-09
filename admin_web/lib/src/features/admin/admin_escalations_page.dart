@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import '../../app/console_routes.dart';
 import '../../app/console_shell.dart';
 import '../../backend/console_backend.dart';
 import '../../theme/console_theme.dart';
@@ -7,11 +10,16 @@ import '../../widgets/console_formats.dart';
 import '../../widgets/console_widgets.dart';
 import '../shared/request_review_dialog.dart';
 
-/// What the moderators have been doing, and what they have handed back.
+/// What is waiting on the admin.
 ///
-/// This is the admin panel's Notifications screen, given the name it always
-/// deserved. Two things live here: the activity feed, and — the reason an
-/// admin opens it — the requests a moderator escalated and is waiting on.
+/// This is the admin panel's Notifications screen. It used to carry the
+/// moderator activity feed as well, but every approval, rejection and
+/// escalation is now written to the Audit Log — where it can be filtered by
+/// who acted and opened for its full detail — so repeating it here left the
+/// bell counting routine work that needed nobody's attention.
+///
+/// What stays is the part that genuinely needs an admin: the requests a
+/// moderator escalated and cannot settle themselves.
 class AdminEscalationsPage extends StatefulWidget {
   const AdminEscalationsPage({super.key});
 
@@ -20,104 +28,86 @@ class AdminEscalationsPage extends StatefulWidget {
 }
 
 class _AdminEscalationsPageState extends State<AdminEscalationsPage> {
+  /// Held here rather than built in [build]: the shell swaps arrangements when
+  /// the window crosses a breakpoint, and a `StreamBuilder` created in a build
+  /// that does not re-run would be re-inflated onto a stream it is already
+  /// listening to. Same reason as the Audit Log page.
+  StreamSubscription<List<AccountVerificationRequest>>? _subscription;
+
+  List<AccountVerificationRequest> _requests =
+      const <AccountVerificationRequest>[];
+
   @override
   void initState() {
     super.initState();
-    // Opening the page is what marks the feed read, which is what the bell in
-    // the rail counts against.
-    ConsoleBackend.instance.localVerification?.markActivitySeen();
+    _subscription =
+        ConsoleBackend.instance.verification.watchRequests().listen((requests) {
+      if (!mounted) return;
+      setState(() => _requests = requests);
+    });
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final backend = ConsoleBackend.instance;
-    final local = backend.localVerification;
+    final escalated =
+        _requests.where((r) => r.escalated && r.isPending).toList(growable: false);
 
     return ConsoleShell(
-      child: StreamBuilder<List<AccountVerificationRequest>>(
-        stream: backend.verification.watchRequests(),
-        builder: (context, requestSnapshot) {
-          final requests =
-              requestSnapshot.data ?? const <AccountVerificationRequest>[];
-          final escalated = requests
-              .where((r) => r.escalated && r.isPending)
-              .toList(growable: false);
-
-          return StreamBuilder<List<ModerationActivity>>(
-            stream: local?.watchActivity() ?? const Stream.empty(),
-            initialData: const <ModerationActivity>[],
-            builder: (context, activitySnapshot) {
-              final activity =
-                  activitySnapshot.data ?? const <ModerationActivity>[];
-
-              return ListView(
-                padding: consolePagePadding(context),
-                children: [
-                  ConsoleCard(
-                    title: 'Waiting on you',
-                    subtitle: escalated.isEmpty
-                        ? 'Requests a moderator flagged for an admin decision'
-                        : '${escalated.length} escalated ${escalated.length == 1 ? 'request' : 'requests'}',
-                    padding: escalated.isEmpty
-                        ? EdgeInsets.zero
-                        : EdgeInsets.all(context.layout.cardPadding),
-                    child: escalated.isEmpty
-                        ? const ConsoleEmptyState(
-                            icon: Icons.flag_outlined,
-                            title: 'Nothing escalated',
-                            message:
-                                'A moderator who is unsure about a registration can '
-                                'flag it here for you to settle.',
-                          )
-                        : Column(
-                            children: [
-                              for (final request in escalated)
-                                _EscalatedRow(request: request),
-                            ],
-                          ),
+      child: Builder(
+        builder: (context) => ListView(
+          padding: consolePagePadding(context),
+          children: [
+            ConsoleCard(
+              title: 'Waiting on you',
+              subtitle: escalated.isEmpty
+                  ? 'Requests a moderator flagged for an admin decision'
+                  : '${escalated.length} escalated ${escalated.length == 1 ? 'request' : 'requests'}',
+              padding: escalated.isEmpty
+                  ? EdgeInsets.zero
+                  : EdgeInsets.all(context.layout.cardPadding),
+              child: escalated.isEmpty
+                  ? const ConsoleEmptyState(
+                      icon: Icons.flag_outlined,
+                      title: 'Nothing escalated',
+                      message:
+                          'A moderator who is unsure about a registration can '
+                          'flag it here for you to settle.',
+                    )
+                  : Column(
+                      children: [
+                        for (final request in escalated)
+                          _EscalatedRow(request: request),
+                      ],
+                    ),
+            ),
+            SizedBox(height: context.layout.sectionSpacing),
+            ConsoleCard(
+              title: 'Everything else is in the Audit Log',
+              subtitle:
+                  'Approvals, rejections and escalations, filterable by who acted',
+              padding: EdgeInsets.all(context.layout.cardPadding),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: () => Navigator.pushReplacementNamed(
+                    context,
+                    ConsoleRoutes.adminAudit,
                   ),
-                  SizedBox(height: context.layout.sectionSpacing),
-                  ConsoleCard(
-                    title: 'Moderator activity',
-                    subtitle: 'Every approval, rejection and escalation',
-                    padding: activity.isEmpty
-                        ? EdgeInsets.zero
-                        : const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-                    child: activity.isEmpty
-                        ? const ConsoleEmptyState(
-                            icon: Icons.notifications_none,
-                            title: 'No activity yet',
-                            message:
-                                'Decisions made on the queue are recorded here, with '
-                                'who made them and when.',
-                          )
-                        : Column(
-                            children: [
-                              for (final entry in activity)
-                                _ActivityRow(
-                                  entry: entry,
-                                  request: _findRequest(requests, entry.requestId),
-                                ),
-                            ],
-                          ),
-                  ),
-                ],
-              );
-            },
-          );
-        },
+                  icon: const Icon(Icons.history, size: 17),
+                  label: const Text('Open Audit Log'),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
-  }
-
-  AccountVerificationRequest? _findRequest(
-    List<AccountVerificationRequest> requests,
-    String id,
-  ) {
-    for (final request in requests) {
-      if (request.id == id) return request;
-    }
-    return null;
   }
 }
 
@@ -193,83 +183,3 @@ class _EscalatedRow extends StatelessWidget {
   }
 }
 
-class _ActivityRow extends StatelessWidget {
-  const _ActivityRow({required this.entry, required this.request});
-
-  final ModerationActivity entry;
-  final AccountVerificationRequest? request;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final color = colorForModerationAction(entry.action);
-    final resolved = entry.action == ModerationAction.escalated &&
-        request != null &&
-        !request!.isPending;
-
-    return InkWell(
-      onTap: request == null ? null : () => showRequestReviewDialog(context, request!),
-      borderRadius: ConsoleMetrics.borderRadius,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(iconForModerationAction(entry.action), size: 14, color: color),
-            ),
-            const SizedBox(width: 13),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          entry.accountName,
-                          overflow: TextOverflow.ellipsis,
-                          style: text.titleSmall,
-                        ),
-                      ),
-                      ConsoleBadge(label: entry.action.label, color: color),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${entry.role.label} · by ${entry.moderatorName} · '
-                    '${formatConsoleDateTime(entry.occurredAt)}',
-                    style: text.bodySmall,
-                  ),
-                  if (entry.reason != null) ...[
-                    const SizedBox(height: 3),
-                    Text(
-                      entry.reason!,
-                      style: text.bodySmall?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                  if (resolved) ...[
-                    const SizedBox(height: 3),
-                    Text(
-                      'Resolved · ${request!.status.label.toLowerCase()} by '
-                      '${request!.reviewerName ?? '—'}',
-                      style: text.bodySmall?.copyWith(fontStyle: FontStyle.italic),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

@@ -21,7 +21,16 @@ void main() {
     test('the console offers exactly the themes the app does', () {
       expect(
         AppThemes.all.map((option) => option.label).toList(),
-        ['Default', 'Dark', 'Calm Blue', 'Calm Blue Dark', 'Ember Light', 'Ember'],
+        [
+          'Default',
+          'Dark Default',
+          'Calm Blue',
+          'Cold Blue',
+          'Ember Light',
+          'Ember',
+          'Forest',
+          'Forest Night',
+        ],
       );
     });
 

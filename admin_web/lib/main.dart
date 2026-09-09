@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'src/app/console_app.dart';
+import 'src/dev_mock/dev_mock.dart';
 import 'src/theme/console_theme.dart';
 
 /// The On Go admin console — the Admin and Moderator web application.
@@ -20,6 +21,11 @@ void main() async {
   // Restore the saved appearance before the first frame, so the console never
   // flashes light before painting dark.
   await ThemeController.instance.load();
+
+  // FAKE DATA — UI testing only. Fills the Admin revenue ledger so the
+  // Overview and Income charts have something to draw. Delete this line and
+  // the import above with `src/dev_mock/` to remove it — see its README.
+  installDevMocks();
 
   runApp(const ConsoleApp());
 }
