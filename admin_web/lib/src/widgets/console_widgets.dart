@@ -473,7 +473,13 @@ class ConsolePermissionRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Text(label, style: Theme.of(context).textTheme.bodyLarge),
+          // Expanded, so the label wraps inside the row rather than demanding
+          // its full intrinsic width. Without it the longest permission —
+          // "Change the app's background photo" — makes this row want ~541
+          // points whatever the window is, which overflows every phone.
+          Expanded(
+            child: Text(label, style: Theme.of(context).textTheme.bodyLarge),
+          ),
         ],
       ),
     );

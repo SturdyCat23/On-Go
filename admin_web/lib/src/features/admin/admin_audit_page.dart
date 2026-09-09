@@ -108,9 +108,7 @@ class _AdminAuditPageState extends State<AdminAuditPage> {
               ConsoleCard(
                 title: entries.length == 1 ? '1 entry' : '${entries.length} entries',
                 subtitle: 'Newest first',
-                padding: entries.isEmpty
-                    ? EdgeInsets.zero
-                    : const EdgeInsets.symmetric(vertical: 6),
+                padding: EdgeInsets.zero,
                 child: entries.isEmpty
                     ? ConsoleEmptyState(
                         icon: Icons.history,
@@ -120,9 +118,29 @@ class _AdminAuditPageState extends State<AdminAuditPage> {
                                   'with who did it, from where, and why.'
                             : 'No activity from those accounts. Try a different filter.',
                       )
-                    : Column(
-                        children: [for (final entry in entries) _AuditRow(entry: entry)],
-                      ),
+                    // A phone gets one card per entry carrying the same
+                    // fields. Five columns on 390 points is either unreadable
+                    // or a sideways scroll nobody finds.
+                    : context.layout.stacksTableRows
+                        ? Padding(
+                            padding: EdgeInsets.all(context.layout.cardPadding),
+                            child: Column(
+                              children: [
+                                for (final entry in entries)
+                                  _AuditCard(entry: entry),
+                              ],
+                            ),
+                          )
+                        : ConsoleHorizontalScroll(
+                            minWidth: 940,
+                            child: Column(
+                              children: [
+                                const _AuditHeader(),
+                                for (final entry in entries)
+                                  _AuditRow(entry: entry),
+                              ],
+                            ),
+                          ),
               ),
             ],
           );
@@ -132,6 +150,61 @@ class _AdminAuditPageState extends State<AdminAuditPage> {
   }
 }
 
+/// The column widths, declared once so the header and every row line up.
+class _Columns {
+  const _Columns._();
+
+  static const int when = 17;
+  static const int actor = 20;
+  static const int action = 20;
+  static const int detail = 29;
+  static const int ip = 14;
+}
+
+/// How an action reads in the ACTION column.
+///
+/// Derived, never stored: the log records the action, and this says what kind
+/// of thing it was done to — the difference between `moderator.added` and an
+/// `added` that could mean anything.
+String _actionToken(AuditAction action) => switch (action) {
+  AuditAction.added => 'moderator.added',
+  AuditAction.removed => 'moderator.removed',
+  AuditAction.promoted => 'moderator.promoted',
+  AuditAction.approved => 'account.approved',
+  AuditAction.rejected => 'account.rejected',
+  AuditAction.escalated => 'account.escalated',
+};
+
+/// Monospace, so a column of addresses lines up digit for digit — which is the
+/// only way a reader spots that two entries share one.
+const List<String> _monoFallback = ['Courier New', 'monospace'];
+
+class _AuditHeader extends StatelessWidget {
+  const _AuditHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.labelSmall;
+    return Container(
+      color: ConsoleColors.surfaceMuted,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+      child: Row(
+        children: [
+          Expanded(flex: _Columns.when, child: Text('WHEN', style: style)),
+          Expanded(flex: _Columns.actor, child: Text('ACTOR', style: style)),
+          Expanded(flex: _Columns.action, child: Text('ACTION', style: style)),
+          Expanded(flex: _Columns.detail, child: Text('DETAIL', style: style)),
+          Expanded(flex: _Columns.ip, child: Text('IP', style: style)),
+        ],
+      ),
+    );
+  }
+}
+
+/// One entry, with everything it holds on the row.
+///
+/// Nothing here opens: an audit log is read by scanning it, and a detail worth
+/// recording is a detail worth showing without a click.
 class _AuditRow extends StatelessWidget {
   const _AuditRow({required this.entry});
 
@@ -142,157 +215,198 @@ class _AuditRow extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final color = colorForAuditAction(entry.action);
 
-    return InkWell(
-      onTap: () => showAuditEntryDetails(context, entry),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(iconForAuditAction(entry.action), size: 15, color: color),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: ConsoleColors.border)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: _Columns.when,
+            child: Text(
+              formatConsoleDateTime(entry.occurredAt),
+              style: text.bodySmall,
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          entry.moderatorName,
-                          overflow: TextOverflow.ellipsis,
-                          style: text.titleSmall,
-                        ),
-                      ),
-                      ConsoleBadge(label: entry.action.label, color: color),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${entry.role} · by ${entry.actorName} · '
-                    '${formatConsoleDateTime(entry.occurredAt)}',
-                    style: text.bodySmall,
-                  ),
-                  if (entry.reason != null) ...[
-                    const SizedBox(height: 3),
-                    Text(
-                      entry.reason!,
-                      style: text.bodySmall?.copyWith(
-                        color: ConsoleColors.text,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+          Expanded(flex: _Columns.actor, child: _Actor(entry: entry)),
+          Expanded(
+            flex: _Columns.action,
+            child: _ActionToken(action: entry.action, color: color),
+          ),
+          Expanded(flex: _Columns.detail, child: _Detail(entry: entry)),
+          Expanded(
+            flex: _Columns.ip,
+            child: _IpAddress(address: entry.ipAddress),
+          ),
+        ],
       ),
     );
   }
 }
 
-/// The Activity Detail view for one audit entry.
-///
-/// Everything the log holds about an action, including the address it was
-/// performed from — which the list has no room for and which is the point of
-/// opening an entry in the first place.
-Future<void> showAuditEntryDetails(BuildContext context, AuditEntry entry) {
-  return showDialog<void>(
-    context: context,
-    builder: (ctx) {
-      final color = colorForAuditAction(entry.action);
-      final actorRole = UserRole.fromWire(entry.actorRole);
+/// Who did it, and which kind of account they hold.
+class _Actor extends StatelessWidget {
+  const _Actor({required this.entry});
 
-      return AlertDialog(
-        insetPadding: consoleDialogInsets(ctx),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(iconForAuditAction(entry.action), size: 16, color: color),
-            ),
-            const SizedBox(width: 12),
-            Expanded(child: Text(entry.moderatorName)),
-            ConsoleBadge(label: entry.action.label, color: color),
-          ],
-        ),
-        content: ConsoleDialogBody(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _DetailField(label: 'Action', value: entry.action.label),
-              _DetailField(label: 'Subject', value: entry.moderatorName),
-              _DetailField(label: 'Subject role', value: entry.role),
-              const Divider(height: 24),
-              _DetailField(label: 'Performed by', value: entry.actorName),
-              _DetailField(label: 'Account role', value: actorRole.label),
-              _DetailField(
-                label: 'IP address',
-                // Never invented: an entry written before addresses were
-                // recorded says so rather than showing a plausible-looking
-                // number nobody actually connected from.
-                value: entry.ipAddress ?? 'Not recorded',
-                muted: entry.ipAddress == null,
-              ),
-              _DetailField(label: 'When', value: formatConsoleDateTime(entry.occurredAt)),
-              if (entry.reason != null) ...[
-                const Divider(height: 24),
-                _DetailField(label: 'Reason', value: entry.reason!),
-              ],
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
-        ],
-      );
-    },
-  );
-}
-
-/// One labelled line in the detail view.
-class _DetailField extends StatelessWidget {
-  const _DetailField({required this.label, required this.value, this.muted = false});
-
-  final String label;
-  final String value;
-
-  /// Dims the value where there is nothing recorded to show.
-  final bool muted;
+  final AuditEntry entry;
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          entry.actorName,
+          overflow: TextOverflow.ellipsis,
+          style: text.titleSmall,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          UserRole.fromWire(entry.actorRole).label,
+          overflow: TextOverflow.ellipsis,
+          style: text.bodySmall,
+        ),
+      ],
+    );
+  }
+}
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
+/// The action, in the log's own vocabulary rather than a sentence about it.
+class _ActionToken extends StatelessWidget {
+  const _ActionToken({required this.action, required this.color});
+
+  final AuditAction action;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 1),
+          child: Icon(iconForAuditAction(action), size: 14, color: color),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            _actionToken(action),
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontFamilyFallback: _monoFallback,
+              fontSize: 12.5,
+              color: ConsoleColors.text,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// What was affected, and anything recorded about the change.
+class _Detail extends StatelessWidget {
+  const _Detail({required this.entry});
+
+  final AuditEntry entry;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final reason = entry.reason;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          entry.moderatorName,
+          overflow: TextOverflow.ellipsis,
+          style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          reason == null ? entry.role : '${entry.role} · $reason',
+          style: text.bodySmall,
+        ),
+      ],
+    );
+  }
+}
+
+/// The address the action came from.
+class _IpAddress extends StatelessWidget {
+  const _IpAddress({required this.address});
+
+  final String? address;
+
+  @override
+  Widget build(BuildContext context) {
+    final recorded = address != null;
+    return Text(
+      address ?? 'Not recorded',
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        fontFamily: recorded ? 'monospace' : null,
+        fontFamilyFallback: recorded ? _monoFallback : null,
+        fontSize: 12.5,
+        color: recorded ? ConsoleColors.text : ConsoleColors.textMuted,
+      ),
+    );
+  }
+}
+
+/// The same entry on a phone, where five columns do not fit.
+///
+/// Every field the table shows is here too — nothing is dropped for being on a
+/// small screen, because the reason to open the log is the same either way.
+class _AuditCard extends StatelessWidget {
+  const _AuditCard({required this.entry});
+
+  final AuditEntry entry;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final color = colorForAuditAction(entry.action);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        border: Border.all(color: ConsoleColors.border),
+        borderRadius: ConsoleMetrics.borderRadius,
+      ),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 118, child: Text(label, style: text.bodySmall)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              value,
-              style: text.bodyMedium?.copyWith(
-                fontWeight: muted ? FontWeight.w400 : FontWeight.w600,
-                color: muted ? ConsoleColors.textMuted : ConsoleColors.text,
+          _ActionToken(action: entry.action, color: color),
+          const SizedBox(height: 10),
+          _Detail(entry: entry),
+          const Divider(height: 18),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: _Actor(entry: entry)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      formatConsoleDateTime(entry.occurredAt),
+                      textAlign: TextAlign.right,
+                      style: text.bodySmall,
+                    ),
+                    const SizedBox(height: 2),
+                    _IpAddress(address: entry.ipAddress),
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),

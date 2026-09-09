@@ -1,4 +1,3 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../app/console_shell.dart';
@@ -8,13 +7,15 @@ import '../../theme/console_theme.dart';
 import '../../widgets/console_formats.dart';
 import '../../widgets/console_widgets.dart';
 
-/// The moderator's own account.
+/// The moderator's own account, to read.
 ///
-/// Name and photo belong to them. Email, role, join date and permissions were
-/// set by the admin who created the account, so they are shown but not
-/// editable — which is the point of showing them at all: a moderator who
-/// cannot escalate should be able to see that, not discover it from a missing
-/// button.
+/// Nothing here is editable by the moderator — name and photo included. The
+/// account is the admin's record of who this person is, and an audit trail
+/// that names them is worth less if the name on it can be changed by the
+/// person being audited.
+///
+/// It is still worth showing in full: a moderator who cannot escalate should
+/// be able to see that, not discover it from a missing button.
 class ModeratorProfilePage extends StatelessWidget {
   const ModeratorProfilePage({super.key});
 
@@ -112,173 +113,56 @@ class ModeratorProfilePage extends StatelessWidget {
   }
 }
 
-class _ProfileHeader extends StatefulWidget {
+class _ProfileHeader extends StatelessWidget {
   const _ProfileHeader({required this.moderator});
 
   final ModeratorAccount moderator;
 
   @override
-  State<_ProfileHeader> createState() => _ProfileHeaderState();
-}
-
-class _ProfileHeaderState extends State<_ProfileHeader> {
-  bool _busy = false;
-
-  Future<void> _changePhoto() async {
-    final directory = ConsoleBackend.instance.localModerators;
-    if (directory == null) {
-      showConsoleMessage(
-        context,
-        'Profile photo uploads need the API.',
-        isError: true,
-      );
-      return;
-    }
-
-    setState(() => _busy = true);
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        withData: true,
-      );
-      final bytes = result?.files.singleOrNull?.bytes;
-      if (bytes == null) return;
-
-      await directory.setProfilePhoto(widget.moderator.id, bytes);
-      if (mounted) showConsoleMessage(context, 'Profile photo updated');
-    } on ApiException catch (error) {
-      if (mounted) showConsoleMessage(context, error.message, isError: true);
-    } catch (error) {
-      if (mounted) {
-        showConsoleMessage(context, 'Could not read that file: $error', isError: true);
-      }
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  Future<void> _editName() async {
-    final controller = TextEditingController(text: widget.moderator.name);
-    final name = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        insetPadding: consoleDialogInsets(ctx),
-        title: const Text('Edit your name'),
-        content: SizedBox(
-          width: ConsoleLayout.of(ctx).dialogWidth(380),
-          child: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: const InputDecoration(labelText: 'Full name'),
-            onSubmitted: (value) => Navigator.pop(ctx, value.trim()),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: TextStyle(color: ConsoleColors.textMuted)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
-
-    if (name == null || name.isEmpty || name == widget.moderator.name) return;
-    if (!mounted) return;
-
-    try {
-      await ConsoleBackend.instance.moderators
-          .updateProfile(widget.moderator.id, name: name);
-      if (mounted) showConsoleMessage(context, 'Name updated');
-    } on ApiException catch (error) {
-      if (mounted) showConsoleMessage(context, error.message, isError: true);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final bytes = ConsoleBackend.instance.localModerators
-        ?.photoBytesFor(widget.moderator.id);
+    final bytes =
+        ConsoleBackend.instance.localModerators?.photoBytesFor(moderator.id);
 
     final layout = context.layout;
 
-    final avatar = Stack(
-      clipBehavior: Clip.none,
-      children: [
-        ConsoleAvatar(
-          initials: widget.moderator.initials,
-          radius: layout.profileAvatarRadius,
-          image: bytes == null ? null : MemoryImage(bytes),
-        ),
-        Positioned(
-          right: -2,
-          bottom: -2,
-          child: Material(
-            color: ConsoleColors.brand,
-            shape: const CircleBorder(),
-            child: InkWell(
-              customBorder: const CircleBorder(),
-              onTap: _busy ? null : _changePhoto,
-              child: Padding(
-                padding: const EdgeInsets.all(7),
-                child: Icon(
-                  Icons.photo_camera_outlined,
-                  size: 15,
-                  color: ConsoleColors.textInverse,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+    // Shown, not set: a photo can still arrive with the account, but the
+    // moderator has no way to change it from here.
+    final avatar = ConsoleAvatar(
+      initials: moderator.initials,
+      radius: layout.profileAvatarRadius,
+      image: bytes == null ? null : MemoryImage(bytes),
     );
 
     final details = Column(
-      crossAxisAlignment:
-          layout.isPhone ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(
-              child: Text(
-                widget.moderator.name,
-                overflow: TextOverflow.ellipsis,
-                textAlign: layout.isPhone ? TextAlign.center : TextAlign.start,
-                style: text.headlineSmall,
-              ),
-            ),
-            IconButton(
-              tooltip: 'Edit your name',
-              onPressed: _editName,
-              icon: const Icon(Icons.edit_outlined, size: 17),
-            ),
-          ],
+        Text(
+          moderator.name,
+          overflow: TextOverflow.ellipsis,
+          // One size down on a phone: headlineSmall beside a 68-point avatar
+          // leaves a name of any length nothing but an ellipsis.
+          style: layout.isPhone ? text.titleLarge : text.headlineSmall,
         ),
         const SizedBox(height: 2),
         Text(
-          widget.moderator.email,
-          textAlign: layout.isPhone ? TextAlign.center : TextAlign.start,
+          moderator.email,
+          overflow: TextOverflow.ellipsis,
           style: text.bodyMedium,
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: layout.isPhone ? 8 : 10),
         Wrap(
           spacing: 8,
           runSpacing: 6,
-          alignment: WrapAlignment.center,
           children: [
             ConsoleBadge(
-              label: widget.moderator.role,
+              label: moderator.role,
               color: ConsoleColors.info,
             ),
             ConsoleBadge(
-              label: widget.moderator.status.label,
-              color: widget.moderator.isActive
+              label: moderator.status.label,
+              color: moderator.isActive
                   ? ConsoleColors.success
                   : ConsoleColors.textMuted,
             ),
@@ -287,29 +171,18 @@ class _ProfileHeaderState extends State<_ProfileHeader> {
       ],
     );
 
-    // A phone stacks the avatar over the details and centres them; there is no
-    // room for a 44-point avatar, a name and an edit button on one line.
-    if (layout.isPhone) {
-      return ConsoleCard(
-        boxedOnPhone: true,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(child: avatar),
-            const SizedBox(height: 18),
-            details,
-          ],
-        ),
-      );
-    }
-
+    // The same arrangement at every width — avatar, then the identity beside
+    // it — because it is the same information in the same order, and a phone
+    // reading differently from a desktop is a second design to keep in step.
+    // What changes is the scale: a smaller avatar, a tighter gap and one step
+    // down in type, all from [ConsoleLayout].
     return ConsoleCard(
       boxedOnPhone: true,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           avatar,
-          const SizedBox(width: 26),
+          SizedBox(width: layout.isPhone ? 16 : 26),
           Expanded(child: details),
         ],
       ),
