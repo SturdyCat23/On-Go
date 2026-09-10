@@ -290,9 +290,9 @@ class AppTextStyles {
   //  Size 28 · Weight ExtraBold · Font default
   //  One per screen at most — this is the thing the eye lands on first.
   static AppTextSpec display = const AppTextSpec(
-    size: 28,
-    weight: AppFontWeight.extraBold,
-    // fontFamily: 'Roboto Mono',   // ← this category only
+    size: 30,
+    weight: AppFontWeight.semiBold,
+    //fontFamily: 'Roboto Mono',   // ← this category only
   );
 
   // ── HEADLINE ─────────────────────────────────────────────────────────────
@@ -302,7 +302,7 @@ class AppTextStyles {
   static AppTextSpec headline = const AppTextSpec(
     size: 20,
     weight: AppFontWeight.extraBold,
-    // fontFamily: 'Poppins',       // ← this category only
+    //fontFamily: 'Poppins',       // ← this category only
   );
 
   // ── TITLE ────────────────────────────────────────────────────────────────
@@ -311,8 +311,8 @@ class AppTextStyles {
   //  Size 18 · Weight ExtraBold · Font default
   static AppTextSpec title = const AppTextSpec(
     size: 18,
-    weight: AppFontWeight.extraBold,
-    // fontFamily: 'Poppins',       // ← this category only
+    weight: AppFontWeight.semiBold,
+    //fontFamily: 'Poppins',       // ← this category only
   );
 
   // ── SECTION TITLE ────────────────────────────────────────────────────────
@@ -322,8 +322,8 @@ class AppTextStyles {
   //  The heading over a group of cards, inside a scrolling screen.
   static AppTextSpec sectionTitle = const AppTextSpec(
     size: 16,
-    weight: AppFontWeight.extraBold,
-    // fontFamily: 'Poppins',       // ← this category only
+    weight: AppFontWeight.semiBold,
+    //fontFamily: 'Poppins',       // ← this category only
   );
 
   // ── SUBTITLE ─────────────────────────────────────────────────────────────
@@ -333,7 +333,7 @@ class AppTextStyles {
   static AppTextSpec subtitle = const AppTextSpec(
     size: 15,
     weight: AppFontWeight.semiBold,
-    // fontFamily: 'Inter',         // ← this category only
+    //fontFamily: 'Inter',         // ← this category only
   );
 
   // ── LABEL ────────────────────────────────────────────────────────────────
@@ -344,7 +344,7 @@ class AppTextStyles {
   static AppTextSpec label = const AppTextSpec(
     size: 14,
     weight: AppFontWeight.semiBold,
-    // fontFamily: 'Inter',         // ← this category only
+    //fontFamily: 'Inter',         // ← this category only
   );
 
   // ── BODY ─────────────────────────────────────────────────────────────────
@@ -356,7 +356,7 @@ class AppTextStyles {
   static AppTextSpec body = const AppTextSpec(
     size: 13,
     weight: AppFontWeight.regular,
-    // fontFamily: 'Inter',         // ← this category only
+    //fontFamily: 'Inter',         // ← this category only
   );
 
   // ── BODY SMALL ───────────────────────────────────────────────────────────
@@ -369,7 +369,7 @@ class AppTextStyles {
   static AppTextSpec bodySmall = const AppTextSpec(
     size: 12,
     weight: AppFontWeight.regular,
-    // fontFamily: 'Inter',         // ← this category only
+    //fontFamily: 'Inter',         // ← this category only
   );
 
   // ── CAPTION ──────────────────────────────────────────────────────────────
@@ -380,7 +380,7 @@ class AppTextStyles {
   static AppTextSpec caption = const AppTextSpec(
     size: 11,
     weight: AppFontWeight.regular,
-    // fontFamily: 'Inter',         // ← this category only
+    //fontFamily: 'Inter',         // ← this category only
   );
 
   // ── OVERLINE ─────────────────────────────────────────────────────────────
@@ -394,7 +394,7 @@ class AppTextStyles {
     size: 11,
     weight: AppFontWeight.semiBold,
     letterSpacing: 0.6,
-    // fontFamily: 'Inter',         // ← this category only
+    //fontFamily: 'Inter',         // ← this category only
   );
 
   // ── MICRO ────────────────────────────────────────────────────────────────
@@ -405,7 +405,7 @@ class AppTextStyles {
   static AppTextSpec micro = const AppTextSpec(
     size: 10,
     weight: AppFontWeight.semiBold,
-    // fontFamily: 'Inter',         // ← this category only
+    //fontFamily: 'Inter',         // ← this category only
   );
 
   // ═════════════════════════════════════════════════════════════════════════

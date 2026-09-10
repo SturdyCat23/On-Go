@@ -23,6 +23,10 @@ class ClientNotificationsScreen extends StatelessWidget {
         return Icons.build_outlined;
       case ClientNotificationKind.awaitingPayment:
         return Icons.payments_outlined;
+      case ClientNotificationKind.etaPassed:
+        return Icons.schedule_outlined;
+      case ClientNotificationKind.jobCancelled:
+        return Icons.cancel_outlined;
     }
   }
 
@@ -36,6 +40,10 @@ class ClientNotificationsScreen extends StatelessWidget {
         return AppColors.primary;
       case ClientNotificationKind.awaitingPayment:
         return AppColors.warning;
+      case ClientNotificationKind.etaPassed:
+        return AppColors.error;
+      case ClientNotificationKind.jobCancelled:
+        return AppColors.error;
     }
   }
 

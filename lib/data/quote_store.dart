@@ -12,24 +12,98 @@ import 'mechanic_account_store.dart';
 
 enum RequestStatus { pending, matched, completed }
 
+/// The units a mechanic can quote an ETA in.
+enum EtaUnit { minutes, hours, days }
+
+extension EtaUnitDisplay on EtaUnit {
+  /// The dropdown label, singular or plural to match [value].
+  String labelFor(int value) {
+    final plural = value == 1 ? '' : 's';
+    switch (this) {
+      case EtaUnit.minutes:
+        return 'Minute$plural';
+      case EtaUnit.hours:
+        return 'Hour$plural';
+      case EtaUnit.days:
+        return 'Day$plural';
+    }
+  }
+
+  Duration toDuration(int value) {
+    switch (this) {
+      case EtaUnit.minutes:
+        return Duration(minutes: value);
+      case EtaUnit.hours:
+        return Duration(hours: value);
+      case EtaUnit.days:
+        return Duration(days: value);
+    }
+  }
+}
+
+/// How an ETA reads on screen. A mechanic picks a whole number of one unit,
+/// so this prints back exactly what they chose — "30 mins", "1 hour", "2 days".
+String formatEtaDuration(Duration eta) {
+  final minutes = eta.inMinutes;
+  if (minutes <= 0) return 'now';
+  if (minutes % (24 * 60) == 0) {
+    final days = minutes ~/ (24 * 60);
+    return '$days day${days == 1 ? '' : 's'}';
+  }
+  if (minutes % 60 == 0) {
+    final hours = minutes ~/ 60;
+    return '$hours hour${hours == 1 ? '' : 's'}';
+  }
+  return '$minutes min${minutes == 1 ? '' : 's'}';
+}
+
 class MechanicQuote {
   final String id;
   final String requestId;
   final String mechanicName;
   final String price;
-  final String eta;
+
+  /// How long the mechanic says it will take them to REACH the client — a
+  /// real duration, not free text, because the client's job details count
+  /// down against it and the client is told when it runs out. See
+  /// [expectedArrivalAt].
+  final Duration etaDuration;
+
   final double rating;
   bool accepted;
+
+  /// Set when the MECHANIC took their own offer back, before it was accepted.
+  /// See [QuoteNotificationStore.mechanicWithdrawQuote].
+  DateTime? withdrawnAt;
+
+  /// Set when the CLIENT turned this offer down. See
+  /// [QuoteNotificationStore.clientRejectQuote].
+  DateTime? rejectedAt;
 
   MechanicQuote({
     required this.id,
     required this.requestId,
     required this.mechanicName,
     required this.price,
-    required this.eta,
+    required this.etaDuration,
     required this.rating,
     this.accepted = false,
+    this.withdrawnAt,
+    this.rejectedAt,
   });
+
+  bool get isWithdrawn => withdrawnAt != null;
+  bool get isRejected => rejectedAt != null;
+
+  /// Whether this quote is still on the table. A withdrawn or rejected quote
+  /// is kept as a record — the mechanic is told their quote was rejected, and
+  /// a rejected quote is what stops them re-sending the same offer — but it is
+  /// no longer an offer, so the client never sees it and it can never be
+  /// accepted. [QuoteNotificationStore.quotesForRequest] returns only these.
+  bool get isLive => withdrawnAt == null && rejectedAt == null;
+
+  /// The ETA as text, for anywhere that just displays it.
+  String get eta => formatEtaDuration(etaDuration);
 }
 
 double parsePesoAmount(String price) {
@@ -78,20 +152,35 @@ int urgencyPriority(String urgency) {
 /// How long a mechanic has to COMPLETE a job, counted from the moment they
 /// accepted it. These are the job's actual deadlines — there is no separate
 /// "start" timer — and they are the single source of truth for the Accepted
-/// tab's countdown, the "Time Remaining" sort and the auto-expiry sweep.
-/// Change a window here and all three follow.
+/// tab's countdown, the "Time Remaining" sort, the auto-expiry sweep and the
+/// longest ETA a mechanic may promise. Change a window here and all four
+/// follow.
+///
+/// NORMAL IS DELIBERATELY ABSENT. A normal job has no fixed completion
+/// deadline — its timing is whatever ETA the mechanic quotes, so there is
+/// nothing here to hold it to and nothing to cap the ETA against. Read this
+/// through [completionWindowFor] rather than indexing it, so the missing
+/// entry is handled as "no window" everywhere instead of falling back to a
+/// window that no longer exists.
 const Map<String, Duration> jobCompletionWindows = {
   'Emergency': Duration(hours: 12),
   'Urgent': Duration(days: 3),
-  'Normal': Duration(days: 5),
 };
 
+/// How long [urgency] gives the mechanic to finish, or null when that urgency
+/// sets no deadline of its own (Normal — see [jobCompletionWindows]).
+Duration? completionWindowFor(String urgency) => jobCompletionWindows[urgency];
+
 /// The completion promise for an urgency, in words — "Completed within 12
-/// hours" / "3 days" / "5 days". Read straight off [jobCompletionWindows], so
-/// the Urgency Level picker the client chooses from and the deadline their
-/// job is actually held to can never drift apart.
+/// hours" / "3 days". Read straight off [jobCompletionWindows], so the
+/// Urgency Level picker the client chooses from and the deadline their job is
+/// actually held to can never drift apart.
+///
+/// Normal has no window, so it promises what the mechanic promises: the ETA
+/// on the quote the client accepts.
 String completionWindowLabel(String urgency) {
-  final window = jobCompletionWindows[urgency] ?? jobCompletionWindows['Normal']!;
+  final window = completionWindowFor(urgency);
+  if (window == null) return 'Completed within the mechanic\'s quoted ETA';
   if (window.inHours < 24) {
     return 'Completed within ${window.inHours} hour${window.inHours == 1 ? '' : 's'}';
   }
@@ -166,6 +255,11 @@ class HelpRequest {
   String? lastCancelReason;
   String? lastCancelledBy;
   DateTime? lastCancelledAt;
+
+  /// Set once the client has been told the mechanic's ETA ran out, so the
+  /// notification is raised exactly once per acceptance. Cleared whenever the
+  /// job is accepted afresh, since that starts a new ETA.
+  DateTime? etaPassedNotifiedAt;
 
   /// Set when an accepted job was handed back to the pool because the
   /// mechanic didn't finish it inside [completionWindow] — see
@@ -256,15 +350,24 @@ class HelpRequest {
   double get platformFee => surcharge.toDouble();
 
   /// How long this job's mechanic has to finish it, from the urgency the
-  /// client chose. See [jobCompletionWindows].
-  Duration get completionWindow => jobCompletionWindows[urgency] ?? jobCompletionWindows['Normal']!;
+  /// client chose — null for Normal, which sets no deadline of its own and
+  /// runs on the mechanic's ETA instead. See [jobCompletionWindows].
+  Duration? get completionWindow => completionWindowFor(urgency);
 
   /// The moment this job must be finished by, anchored to [matchedAt] — the
   /// instant the mechanic accepted. Because it is derived from that stored
   /// timestamp rather than from when a widget was built, the countdown keeps
   /// running across rebuilds, navigation and reopening the app instead of
   /// restarting.
-  DateTime? get completionDeadline => matchedAt?.add(completionWindow);
+  ///
+  /// Null for a Normal job even once accepted: there is no completion
+  /// deadline to reach, so nothing counts down against one and the expiry
+  /// sweep passes it over. What the client is owed on a Normal job is the
+  /// arrival time on the quote they accepted — see [timeUntilArrival].
+  DateTime? get completionDeadline {
+    final window = completionWindow;
+    return window == null ? null : matchedAt?.add(window);
+  }
 
   /// Time left, never negative. Null when no deadline is running: the job
   /// isn't accepted, or the mechanic has reached Work in Progress — once they
@@ -297,6 +400,124 @@ class HelpRequest {
 ///   - Normal/Urgent: the accepted quote's price, always. Never negotiable,
 ///     never overridden — the client already agreed to this exact number
 ///     when they accepted the quote.
+/// When the mechanic is due at the client: the moment the job was matched
+/// (the client accepted the quote, or the mechanic claimed the emergency)
+/// plus the ETA quoted. Null until a quote is accepted.
+///
+/// This is what makes an ETA a commitment rather than a note: the client's
+/// job details count down to it, and [QuoteNotificationStore.notifyLateArrivals]
+/// tells the client when it passes.
+DateTime? expectedArrivalAt(HelpRequest request, MechanicQuote? acceptedQuote) {
+  final matchedAt = request.matchedAt;
+  if (matchedAt == null || acceptedQuote == null) return null;
+  return matchedAt.add(acceptedQuote.etaDuration);
+}
+
+/// Time left before the mechanic is due, never negative. Null when no
+/// countdown applies: the job isn't accepted, or the mechanic has arrived.
+Duration? timeUntilArrival(HelpRequest request, MechanicQuote? acceptedQuote, [DateTime? now]) {
+  final due = expectedArrivalAt(request, acceptedQuote);
+  if (due == null || request.arrived || request.status != RequestStatus.matched) return null;
+  final left = due.difference(now ?? DateTime.now());
+  return left.isNegative ? Duration.zero : left;
+}
+
+/// The ETA has run out and the mechanic still isn't there.
+bool arrivalIsOverdue(HelpRequest request, MechanicQuote? acceptedQuote, [DateTime? now]) {
+  final remaining = timeUntilArrival(request, acceptedQuote, now);
+  return remaining != null && remaining == Duration.zero;
+}
+
+/// True while the mechanic still has time left on the ETA they committed to —
+/// the window in which the client may NOT cancel.
+///
+/// The mechanic gave a time and is being held to it, so the client cannot pull
+/// the job out from under them mid-journey. It unlocks the instant the ETA runs
+/// out and stays unlocked from then on, and it is never locked once the
+/// mechanic has arrived, because [timeUntilArrival] stops the countdown there.
+bool clientCancelLockedByEta(HelpRequest request, MechanicQuote? acceptedQuote, [DateTime? now]) {
+  final remaining = timeUntilArrival(request, acceptedQuote, now);
+  return remaining != null && remaining > Duration.zero;
+}
+
+/// THE longest ETA a mechanic may promise on [request] — null when any ETA is
+/// allowed.
+///
+/// An Urgent or Emergency job must be FINISHED inside its completion window,
+/// so an arrival time longer than what is left of that window is a promise the
+/// job cannot keep: the mechanic would still be driving when the job was
+/// already due. The cap is therefore the window itself before the job is
+/// accepted (the clock starts on acceptance, so all of it is still ahead) and
+/// whatever is left of it afterwards.
+///
+/// Normal jobs have no window, so nothing caps them — their timing IS the
+/// mechanic's ETA.
+Duration? maxEtaFor(HelpRequest request, [DateTime? now]) {
+  final window = request.completionWindow;
+  if (window == null) return null;
+  // Null while the job is still pending — the window has not started, so the
+  // whole of it is available to quote against.
+  return request.timeRemaining(now) ?? window;
+}
+
+/// Whether [eta] is a promise [request] can keep. The one rule both the quote
+/// form and the store check, so a screen cannot send an ETA the store would
+/// have to reject.
+bool etaIsWithinCompletionWindow(HelpRequest request, Duration eta, [DateTime? now]) {
+  final max = maxEtaFor(request, now);
+  return max == null || eta <= max;
+}
+
+/// Why an over-long ETA was refused, in the words the mechanic needs: what
+/// they entered, what the job allows, and which urgency imposed it. Null when
+/// [eta] is fine.
+String? etaTooLongReason(HelpRequest request, Duration eta, [DateTime? now]) {
+  final max = maxEtaFor(request, now);
+  if (max == null || eta <= max) return null;
+  return 'A ${request.urgency} job must be completed within '
+      '${formatEtaDuration(request.completionWindow!)}, and '
+      '${formatTimeRemaining(max)} of that is left. Your ETA has to fit '
+      'inside it — enter ${formatEtaDuration(max)} or less.';
+}
+
+/// What a live job is counting down to, and how long is left.
+enum JobCountdownKind {
+  /// Urgent and Emergency: the job's own completion deadline.
+  completion,
+
+  /// Normal: the arrival time the mechanic quoted, because a Normal job has
+  /// no completion deadline of its own.
+  arrival,
+}
+
+class JobCountdown {
+  final JobCountdownKind kind;
+  final Duration remaining;
+  const JobCountdown(this.kind, this.remaining);
+
+  /// What the countdown is called on screen.
+  String get label => kind == JobCountdownKind.completion ? 'Time Remaining' : 'Arriving in';
+}
+
+/// THE single answer to "what is this job counting down to" — read by the
+/// Accepted tab's live row and by its Time Remaining sort, so the two can
+/// never disagree about which clock a job is on.
+///
+/// Urgent and Emergency count down to their completion deadline, exactly as
+/// before. Normal counts down to the mechanic's quoted arrival instead, since
+/// that is now the only timing a Normal job carries. Null when neither clock
+/// is running — the job isn't accepted, the mechanic has arrived (arrival), or
+/// work is under way (completion).
+JobCountdown? jobCountdown(HelpRequest request, MechanicQuote? acceptedQuote, [DateTime? now]) {
+  if (request.completionWindow != null) {
+    final remaining = request.timeRemaining(now);
+    return remaining == null ? null : JobCountdown(JobCountdownKind.completion, remaining);
+  }
+  if (request.workStarted || request.serviceCompleted) return null;
+  final remaining = timeUntilArrival(request, acceptedQuote, now);
+  return remaining == null ? null : JobCountdown(JobCountdownKind.arrival, remaining);
+}
+
 double? effectivePaymentAmount(HelpRequest request, MechanicQuote? acceptedQuote) {
   if (request.isEmergency) return request.agreedPaymentAmount;
   return acceptedQuote == null ? null : parsePesoAmount(acceptedQuote.price);
@@ -343,6 +564,16 @@ enum ClientNotificationKind {
 
   /// The service is finished and the mechanic is waiting to be paid.
   awaitingPayment,
+
+  /// The ETA the mechanic committed to has run out and they still haven't
+  /// arrived. Raised by [QuoteNotificationStore.notifyLateArrivals].
+  etaPassed,
+
+  /// The mechanic dropped a job they had accepted. Raised by
+  /// [QuoteNotificationStore.mechanicCancelJob] — the client is left waiting
+  /// on someone who is no longer coming, so this cannot be left to them
+  /// noticing the card changed.
+  jobCancelled,
 }
 
 /// One entry in the client's notification list.
@@ -357,6 +588,13 @@ class ClientNotification {
   final String problem;
   final DateTime createdAt;
 
+  /// Extra context captured when the entry was raised, for the kinds that
+  /// carry one — currently the mechanic's reason for cancelling. Stored on the
+  /// entry rather than read back off the request, so the notification still
+  /// says why even after the job is re-accepted by someone else and the
+  /// request's own `lastCancelReason` has moved on.
+  final String? detail;
+
   /// Cleared by [QuoteNotificationStore.markClientNotificationsSeen] — this is
   /// what the bell's badge counts.
   bool read;
@@ -368,6 +606,7 @@ class ClientNotification {
     required this.mechanicName,
     required this.problem,
     required this.createdAt,
+    this.detail,
     this.read = false,
   });
 
@@ -381,6 +620,10 @@ class ClientNotification {
         return 'Mechanic started the job';
       case ClientNotificationKind.awaitingPayment:
         return 'Waiting for your payment';
+      case ClientNotificationKind.etaPassed:
+        return 'Mechanic is late — you can now cancel';
+      case ClientNotificationKind.jobCancelled:
+        return 'Mechanic cancelled your job';
     }
   }
 
@@ -394,6 +637,20 @@ class ClientNotification {
         return '$mechanicName has started working on your job.';
       case ClientNotificationKind.awaitingPayment:
         return '$mechanicName finished the service and is waiting for payment.';
+      case ClientNotificationKind.etaPassed:
+        return '$mechanicName\'s ETA has passed and they haven\'t arrived yet. '
+            'You can now cancel this job if you want to.';
+      case ClientNotificationKind.jobCancelled:
+        // The reason is the mechanic's own words, typed into a box, so it is
+        // punctuated here before being read as part of a sentence. Without a
+        // reason the client is still told what happened and what happens next.
+        final reason = detail?.trim();
+        if (reason == null || reason.isEmpty) {
+          return '$mechanicName cancelled your job. Your request is open for quotes again.';
+        }
+        final ended = RegExp(r'[.!?]$').hasMatch(reason) ? reason : '$reason.';
+        return '$mechanicName cancelled your job: $ended '
+            'Your request is open for quotes again.';
     }
   }
 }
@@ -436,7 +693,12 @@ class QuoteNotificationStore extends ChangeNotifier {
 
   /// Records one event for the client. Callers notify listeners themselves —
   /// every one of them already does at the end of the action.
-  void _addClientNotification(ClientNotificationKind kind, HelpRequest request, String mechanicName) {
+  void _addClientNotification(
+    ClientNotificationKind kind,
+    HelpRequest request,
+    String mechanicName, {
+    String? detail,
+  }) {
     _clientNotifications.insert(
       0,
       ClientNotification(
@@ -446,6 +708,7 @@ class QuoteNotificationStore extends ChangeNotifier {
         mechanicName: mechanicName,
         problem: request.problem,
         createdAt: DateTime.now(),
+        detail: detail,
       ),
     );
   }
@@ -482,10 +745,19 @@ class QuoteNotificationStore extends ChangeNotifier {
   List<MechanicQuote> get quotes {
     final req = activeRequest;
     if (req == null) return const [];
-    return _allQuotes.where((q) => q.requestId == req.id).toList();
+    return _allQuotes.where((q) => q.requestId == req.id && q.isLive).toList();
   }
 
+  /// The offers still on the table for [requestId] — what the client sees and
+  /// the only ones they can act on. Withdrawn and rejected quotes are filtered
+  /// out here, once, so no screen has to remember to do it.
   List<MechanicQuote> quotesForRequest(String requestId) =>
+      _allQuotes.where((q) => q.requestId == requestId && q.isLive).toList();
+
+  /// Every quote record for [requestId], live or not. Internal: the lifecycle
+  /// sweeps need the withdrawn and rejected ones too, so a stale `accepted`
+  /// flag can never survive on a record the client can no longer see.
+  List<MechanicQuote> _quoteRecordsFor(String requestId) =>
       _allQuotes.where((q) => q.requestId == requestId).toList();
 
   int get unseenCount => _unseenCount;
@@ -543,14 +815,19 @@ class QuoteNotificationStore extends ChangeNotifier {
   void clientAcceptQuote(String quoteId) {
     final quote = quoteById(quoteId);
     if (quote == null) return;
+    // A withdrawn or rejected quote is not an offer any more. The client's
+    // list never shows one, but a screen holding a stale id must not be able
+    // to accept an offer that was taken off the table.
+    if (!quote.isLive) return;
     final req = requestFor(quote.requestId);
     if (req == null) return;
 
-    for (final q in quotesForRequest(quote.requestId)) {
+    for (final q in _quoteRecordsFor(quote.requestId)) {
       q.accepted = q.id == quoteId;
     }
     req.status = RequestStatus.matched;
     req.matchedAt = DateTime.now();
+    req.etaPassedNotifiedAt = null;
     req.lastCancelReason = null;
     req.lastCancelledBy = null;
     req.lastCancelledAt = null;
@@ -576,12 +853,16 @@ class QuoteNotificationStore extends ChangeNotifier {
     }
     final req = requestFor(requestId);
     if (req == null || req.status != RequestStatus.matched) return false;
+    // The mechanic is still inside the ETA they promised — enforced here, not
+    // only in the UI, so no screen can cancel around it.
+    if (clientCancelLockedByEta(req, acceptedQuoteFor(requestId))) return false;
 
-    for (final q in quotesForRequest(requestId)) {
+    for (final q in _quoteRecordsFor(requestId)) {
       q.accepted = false;
     }
     req.status = RequestStatus.pending;
     req.matchedAt = null;
+    req.etaPassedNotifiedAt = null;
     req.navigating = false;
     req.enRoute = false;
     req.arrived = false;
@@ -604,6 +885,9 @@ class QuoteNotificationStore extends ChangeNotifier {
     }
     final req = requestFor(requestId);
     if (req == null || req.paymentCompleted) return false;
+    // Deleting an accepted job is a cancellation by another name, so the same
+    // ETA lock applies. An uploaded request nobody has taken is never locked.
+    if (clientCancelLockedByEta(req, acceptedQuoteFor(requestId))) return false;
     _requests.removeWhere((r) => r.id == requestId);
     _allQuotes.removeWhere((q) => q.requestId == requestId);
     _clientNotifications.removeWhere((n) => n.requestId == requestId);
@@ -641,14 +925,90 @@ class QuoteNotificationStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// This mechanic's offer on [requestId] while it is still standing — what
+  /// turns their "Send Quote" button into "Withdraw Quote". Null once they
+  /// withdraw it or the client rejects it, because neither is an offer any
+  /// more.
+  MechanicQuote? mechanicLiveQuoteFor(String requestId, String mechanicName) {
+    for (final q in _allQuotes) {
+      if (q.requestId == requestId && q.mechanicName == mechanicName && q.isLive) return q;
+    }
+    return null;
+  }
+
+  /// Whether this mechanic already had an offer turned down on this job. A
+  /// rejection has to mean something: without this the mechanic could send the
+  /// same quote straight back and the client would be answering it forever.
+  /// Withdrawing their own quote carries no such block — that was their own
+  /// decision, and re-quoting is the point of taking it back.
+  bool mechanicQuoteWasRejected(String requestId, String mechanicName) => _allQuotes.any(
+      (q) => q.requestId == requestId && q.mechanicName == mechanicName && q.isRejected);
+
+  /// Whether this mechanic has a quote on the job that is still live. Kept as
+  /// the name every caller already uses; a withdrawn quote is deliberately not
+  /// one, since the whole point of withdrawing is to be able to quote again.
   bool mechanicHasQuoted(String requestId, String mechanicName) =>
-      _allQuotes.any((q) => q.requestId == requestId && q.mechanicName == mechanicName);
+      mechanicLiveQuoteFor(requestId, mechanicName) != null;
+
+  /// The mechanic takes their own offer back.
+  ///
+  /// Only while it has NOT been accepted: once the client has accepted, the
+  /// two are committed to each other and pulling out is a cancellation, which
+  /// goes through [mechanicCancelJob] and carries a reason the client is told.
+  /// Returns false when there is nothing of theirs to withdraw.
+  bool mechanicWithdrawQuote(String requestId, {required String mechanicName}) {
+    final quote = mechanicLiveQuoteFor(requestId, mechanicName);
+    if (quote == null || quote.accepted) return false;
+
+    quote.withdrawnAt = DateTime.now();
+    // The client can no longer see the quote, so they must not be left with a
+    // notification pointing at it either.
+    _clientNotifications.removeWhere((n) =>
+        n.kind == ClientNotificationKind.quoteReceived &&
+        n.requestId == requestId &&
+        n.mechanicName == mechanicName);
+    _seenClientQuoteIds.remove(quote.id);
+    if (_unseenCount > 0) _unseenCount--;
+    notifyListeners();
+    return true;
+  }
+
+  /// The client turns an offer down.
+  ///
+  /// The quote leaves their list and the mechanic is told, so a rejection is
+  /// an answer rather than silence. An accepted quote cannot be rejected —
+  /// backing out of a job the client already agreed to is a cancellation, and
+  /// goes through [clientRevertToPending] with the ETA lock that applies to it.
+  bool clientRejectQuote(String quoteId) {
+    if (AppSession.instance.currentRole != AppRole.client) {
+      throw StateError('Only the Client UI can reject a quote.');
+    }
+    final quote = quoteById(quoteId);
+    if (quote == null || !quote.isLive || quote.accepted) return false;
+    final req = requestFor(quote.requestId);
+
+    quote.rejectedAt = DateTime.now();
+    _clientNotifications.removeWhere((n) =>
+        n.kind == ClientNotificationKind.quoteReceived &&
+        n.requestId == quote.requestId &&
+        n.mechanicName == quote.mechanicName);
+    if (_unseenCount > 0) _unseenCount--;
+    MechanicNotificationStore.instance.add(
+      kind: MechanicNotificationKind.quoteRejected,
+      mechanicName: quote.mechanicName,
+      clientName: req?.clientName ?? 'The client',
+      detail: '${req?.problem ?? 'Job'} · ${quote.price}',
+      requestId: quote.requestId,
+    );
+    notifyListeners();
+    return true;
+  }
 
   void mechanicSendQuote(
     String requestId, {
     required String mechanicName,
     required String price,
-    required String eta,
+    required Duration eta,
     required double rating,
   }) {
     if (!MechanicAccountStore.instance.canPerformJobActions) {
@@ -657,12 +1017,23 @@ class QuoteNotificationStore extends ChangeNotifier {
     if (mechanicHasQuoted(requestId, mechanicName)) {
       throw StateError('You have already sent a quote for this job.');
     }
+    if (mechanicQuoteWasRejected(requestId, mechanicName)) {
+      throw StateError('The client rejected your quote for this job, so you cannot quote it again.');
+    }
+    // The ETA has to fit inside what is left of an Urgent or Emergency job's
+    // completion window. Checked here as well as on the form, so no screen can
+    // promise an arrival the job's own deadline rules out.
+    final request = requestFor(requestId);
+    if (request != null) {
+      final tooLong = etaTooLongReason(request, eta);
+      if (tooLong != null) throw StateError(tooLong);
+    }
     _allQuotes.add(MechanicQuote(
       id: '${DateTime.now().microsecondsSinceEpoch}_${_allQuotes.length}',
       requestId: requestId,
       mechanicName: mechanicName,
       price: price,
-      eta: eta,
+      etaDuration: eta,
       rating: rating,
     ));
     _unseenCount++;
@@ -689,25 +1060,29 @@ class QuoteNotificationStore extends ChangeNotifier {
     String requestId, {
     required String mechanicName,
     String price = '',
-    required String eta,
+    required Duration eta,
     required double rating,
   }) {
     final req = _requests.firstWhere((r) => r.id == requestId);
     if (req.status != RequestStatus.pending) return false;
     if (mechanicHasActiveEmergency(mechanicName)) return false;
     if (!MechanicAccountStore.instance.canPerformJobActions) return false;
+    // An emergency must be finished within its window, so the arrival time
+    // claimed on the way in cannot already overrun it.
+    if (!etaIsWithinCompletionWindow(req, eta)) return false;
 
     _allQuotes.add(MechanicQuote(
       id: '${DateTime.now().microsecondsSinceEpoch}_${_allQuotes.length}',
       requestId: requestId,
       mechanicName: mechanicName,
       price: price,
-      eta: eta,
+      etaDuration: eta,
       rating: rating,
       accepted: true,
     ));
     req.status = RequestStatus.matched;
     req.matchedAt = DateTime.now();
+    req.etaPassedNotifiedAt = null;
     req.lastCancelReason = null;
     req.lastCancelledBy = null;
     req.lastCancelledAt = null;
@@ -836,11 +1211,12 @@ class QuoteNotificationStore extends ChangeNotifier {
 
     final mechanicName = acceptedQuoteFor(requestId)?.mechanicName;
 
-    for (final q in quotesForRequest(requestId)) {
+    for (final q in _quoteRecordsFor(requestId)) {
       q.accepted = false;
     }
     req.status = RequestStatus.pending;
     req.matchedAt = null;
+    req.etaPassedNotifiedAt = null;
     req.navigating = false;
     req.enRoute = false;
     req.arrived = false;
@@ -856,6 +1232,16 @@ class QuoteNotificationStore extends ChangeNotifier {
     req.lastCancelReason = reason;
     req.lastCancelledBy = mechanicName;
     req.lastCancelledAt = DateTime.now();
+
+    // The client is waiting on someone who is no longer coming — that has to
+    // reach the bell, not just change a card they may not be looking at. The
+    // reason travels with the entry so it still reads correctly later.
+    _addClientNotification(
+      ClientNotificationKind.jobCancelled,
+      req,
+      mechanicName ?? 'Your mechanic',
+      detail: reason,
+    );
 
     // Chat intentionally NOT cleared — the job reverts to Pending (still
     // visible, still chattable there), not removed. See clientDeleteRequest
@@ -878,6 +1264,28 @@ class QuoteNotificationStore extends ChangeNotifier {
   /// Safe to call as often as you like — a job it has already dealt with is
   /// no longer `matched`, so it is skipped. Returns how many expired, and
   /// only notifies when something actually did.
+  /// Tells the client, once, about every accepted job whose quoted ETA has
+  /// run out with the mechanic still not there.
+  ///
+  /// The clock starts at [HelpRequest.matchedAt] — the moment the quote was
+  /// accepted — and stops the instant the mechanic marks themselves arrived,
+  /// so a mechanic who makes it on time is never reported late. Safe to call
+  /// as often as you like: [HelpRequest.etaPassedNotifiedAt] makes it fire
+  /// once per acceptance. Returns how many clients were notified.
+  int notifyLateArrivals([DateTime? now]) {
+    var raised = 0;
+    for (final req in _requests) {
+      if (req.etaPassedNotifiedAt != null) continue;
+      final quote = acceptedQuoteFor(req.id);
+      if (!arrivalIsOverdue(req, quote, now)) continue;
+      req.etaPassedNotifiedAt = now ?? DateTime.now();
+      _addClientNotification(ClientNotificationKind.etaPassed, req, quote!.mechanicName);
+      raised++;
+    }
+    if (raised > 0) notifyListeners();
+    return raised;
+  }
+
   int expireOverdueJobs([DateTime? now]) {
     var expired = 0;
     for (final req in _requests) {
@@ -898,13 +1306,14 @@ class QuoteNotificationStore extends ChangeNotifier {
       // otherwise the client would be offered it as a real quote to accept.
       _allQuotes.removeWhere((q) => q.requestId == req.id && q.mechanicName == mechanicName);
     } else {
-      for (final q in quotesForRequest(req.id)) {
+      for (final q in _quoteRecordsFor(req.id)) {
         q.accepted = false;
       }
     }
 
     req.status = RequestStatus.pending;
     req.matchedAt = null;
+    req.etaPassedNotifiedAt = null;
     req.navigating = false;
     req.enRoute = false;
     req.arrived = false;

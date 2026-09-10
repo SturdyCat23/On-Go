@@ -103,7 +103,7 @@ class _MechanicLeaderboardScreenState extends State<MechanicLeaderboardScreen> {
           border: Border.all(color: AppColors.textmedium.withValues(alpha: 0.55)),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.textmedium : AppColors.textdark)),
+        child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.textlight : AppColors.textdark)),
       ),
     );
   }

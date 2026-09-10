@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/common_widgets.dart';
@@ -18,6 +20,7 @@ class ClientJobsScreen extends StatefulWidget {
 class _ClientJobsScreenState extends State<ClientJobsScreen> {
   final _store = QuoteNotificationStore.instance;
   int _tabIndex = 0;
+  Timer? _ticker;
 
   @override
   void initState() {
@@ -26,12 +29,29 @@ class _ClientJobsScreenState extends State<ClientJobsScreen> {
     // Catches up on any job whose deadline passed while the client wasn't
     // looking, so this screen opens showing the truth.
     _store.expireOverdueJobs();
+    // And raise the "running late" notice for any mechanic whose ETA ran out
+    // while the client was elsewhere in the app.
+    _store.notifyLateArrivals();
+    // Keeps the "cancelling unlocks in …" countdown moving, and flips the
+    // card to cancellable the moment the ETA runs out.
+    _ticker = Timer.periodic(const Duration(seconds: 1), _onTick);
   }
 
   @override
   void dispose() {
+    _ticker?.cancel();
     _store.removeListener(_onChange);
     super.dispose();
+  }
+
+  void _onTick(Timer _) {
+    // Notifies on its own if an ETA just ran out; the setState is for the
+    // ticking numbers on the cards.
+    _store.notifyLateArrivals();
+    if (!mounted) return;
+    final counting = _store.myActiveJobs
+        .any((r) => timeUntilArrival(r, _store.acceptedQuoteFor(r.id)) != null);
+    if (counting) setState(() {});
   }
 
   void _onChange() => setState(() {});
@@ -76,6 +96,42 @@ class _ClientJobsScreenState extends State<ClientJobsScreen> {
   }
 
   Future<void> _cancelMatched(HelpRequest request) async {
+    final quote = _store.acceptedQuoteFor(request.id);
+    final remaining = timeUntilArrival(request, quote);
+
+    // The mechanic is still inside the ETA they committed to. Say so, with the
+    // time left and when cancelling opens up, rather than offering options
+    // that would be refused.
+    if (clientCancelLockedByEta(request, quote)) {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('You can\'t cancel yet'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${quote?.mechanicName ?? 'Your mechanic'} committed to arriving within '
+                '${quote?.eta ?? 'their ETA'} and is still on the way.',
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Cancelling is unavailable for another ${formatTimeRemaining(remaining!)}. '
+                'If they haven\'t arrived by then, you can cancel this job at any time.',
+                style: TextStyle(fontSize: 13, color: AppColors.textmedium),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Got it')),
+          ],
+        ),
+      );
+      return;
+    }
+
     final choice = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -613,6 +669,26 @@ class _PendingJobCard extends StatelessWidget {
                 ),
               ],
             ),
+            // While the mechanic is inside their ETA the client can't cancel,
+            // so say so on the card rather than only when Cancel is tapped.
+            if (clientCancelLockedByEta(request, quote)) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Icon(Icons.lock_clock, size: 14, color: AppColors.textdark.withValues(alpha: 0.55)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Cancelling unlocks in '
+                      '${formatTimeRemaining(timeUntilArrival(request, quote)!)} — '
+                      '${quote?.mechanicName ?? 'your mechanic'} is still within their '
+                      '${quote?.eta ?? 'ETA'}.',
+                      style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 14),
             Row(
               children: [

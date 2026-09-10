@@ -53,7 +53,9 @@ class _JobsScreenState extends State<JobsScreen> {
     // expired; the setState below is just for the ticking numbers.
     store.expireOverdueJobs();
     if (!mounted) return;
-    final counting = store.matchedJobsFor(_mechanicName).any((r) => r.timeRemaining() != null);
+    final counting = store
+        .matchedJobsFor(_mechanicName)
+        .any((r) => jobCountdown(r, store.acceptedQuoteFor(r.id)) != null);
     if (counting) setState(() {});
   }
 
@@ -101,7 +103,7 @@ class _JobsScreenState extends State<JobsScreen> {
         request.id,
         mechanicName: _mechanicName,
         price: '₱${input.total.toStringAsFixed(0)}',
-        eta: input.estimatedTime,
+        eta: input.eta,
         rating: ReviewStore.instance.averageRatingFor(_mechanicName),
       );
     } on StateError catch (e) {
@@ -113,6 +115,50 @@ class _JobsScreenState extends State<JobsScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Quote sent — the client will compare offers and choose.'), duration: AppDurations.snackBar),
+    );
+  }
+
+  /// Takes back an offer the client hasn't accepted yet.
+  ///
+  /// Confirmed first, because the client stops seeing the quote the moment it
+  /// happens — and unlike a rejection, this one is the mechanic's own doing,
+  /// so they can quote the job again afterwards.
+  Future<void> _withdrawQuote(HelpRequest request) async {
+    final quote = QuoteNotificationStore.instance.mechanicLiveQuoteFor(request.id, _mechanicName);
+    if (quote == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Withdraw your quote?'),
+        content: Text(
+          '${request.clientName} will no longer see your ${quote.price} quote or your '
+          '${quote.eta} arrival time, and cannot accept it.\n\n'
+          'You can send this job a new quote afterwards.',
+          style: const TextStyle(fontSize: 13),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Keep Quote')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: Text('Withdraw', style: TextStyle(color: AppColors.textlight)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final withdrawn =
+        QuoteNotificationStore.instance.mechanicWithdrawQuote(request.id, mechanicName: _mechanicName);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(withdrawn
+            ? 'Quote withdrawn. The client can no longer see it.'
+            : 'That quote has already been accepted, so it can no longer be withdrawn.'),
+        duration: AppDurations.snackBar,
+      ),
     );
   }
 
@@ -164,7 +210,7 @@ class _JobsScreenState extends State<JobsScreen> {
       // No price on purpose — an emergency's amount is agreed with the client
       // in person and set via Set Payment Amount, so there is nothing to
       // record here yet.
-      eta: '15 mins',
+      eta: const Duration(minutes: 15),
       rating: ReviewStore.instance.averageRatingFor(_mechanicName),
     );
 
@@ -284,6 +330,7 @@ class _JobsScreenState extends State<JobsScreen> {
                     requests: available,
                     canAct: canAct,
                     onSendQuote: _sendQuote,
+                    onWithdrawQuote: _withdrawQuote,
                   ),
                   _EmergencyTab(
                     requests: emergency,
@@ -641,11 +688,13 @@ class _AvailableTab extends StatelessWidget {
   final List<HelpRequest> requests;
   final bool canAct;
   final void Function(HelpRequest) onSendQuote;
+  final void Function(HelpRequest) onWithdrawQuote;
 
   const _AvailableTab({
     required this.requests,
     required this.canAct,
     required this.onSendQuote,
+    required this.onWithdrawQuote,
   });
 
   @override
@@ -665,14 +714,22 @@ class _AvailableTab extends StatelessWidget {
             ),
           ),
         ...requests.map((request) {
-          final alreadyQuoted = QuoteNotificationStore.instance.mechanicHasQuoted(request.id, mechanicName);
+          final store = QuoteNotificationStore.instance;
+          // Three states, in order of precedence: an offer of theirs is
+          // standing (they can take it back), the client already turned one
+          // down (nothing more to do here), or the job is open to them.
+          final live = store.mechanicLiveQuoteFor(request.id, mechanicName);
+          final rejected = store.mechanicQuoteWasRejected(request.id, mechanicName);
           return Padding(
             padding: const EdgeInsets.only(bottom: jobCardSpacing),
             child: _JobCard(
               request: request,
-              actionLabel: alreadyQuoted ? 'Quote Sent' : 'Send Quote',
-              actionEnabled: canAct && !alreadyQuoted,
-              onAction: () => onSendQuote(request),
+              actionLabel: live != null
+                  ? 'Withdraw Quote'
+                  : (rejected ? 'Quote Rejected' : 'Send Quote'),
+              actionEnabled: live != null ? !live.accepted : (canAct && !rejected),
+              actionIsDestructive: live != null,
+              onAction: () => live != null ? onWithdrawQuote(request) : onSendQuote(request),
             ),
           );
         }),
@@ -685,6 +742,10 @@ class _JobCard extends StatelessWidget {
   final HelpRequest request;
   final String actionLabel;
   final bool actionEnabled;
+
+  /// Draws the action as an undo rather than a commitment — Withdraw Quote
+  /// sits in the same place as Send Quote and must not look like it.
+  final bool actionIsDestructive;
   final VoidCallback onAction;
 
   const _JobCard({
@@ -692,6 +753,7 @@ class _JobCard extends StatelessWidget {
     required this.actionLabel,
     required this.onAction,
     this.actionEnabled = true,
+    this.actionIsDestructive = false,
   });
 
   @override
@@ -739,11 +801,22 @@ class _JobCard extends StatelessWidget {
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
-              onPressed: actionEnabled ? onAction : null,
-              style: ElevatedButton.styleFrom(shape: const StadiumBorder(), padding: const EdgeInsets.symmetric(vertical: 12)),
-              child: Text(actionLabel),
-            ),
+            child: actionIsDestructive
+                ? OutlinedButton(
+                    onPressed: actionEnabled ? onAction : null,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      side: BorderSide(color: AppColors.error),
+                      shape: const StadiumBorder(),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: Text(actionLabel),
+                  )
+                : ElevatedButton(
+                    onPressed: actionEnabled ? onAction : null,
+                    style: ElevatedButton.styleFrom(shape: const StadiumBorder(), padding: const EdgeInsets.symmetric(vertical: 12)),
+                    child: Text(actionLabel),
+                  ),
           ),
         ],
       ),
@@ -859,9 +932,12 @@ class _AcceptedTabState extends State<_AcceptedTab> {
       case _AcceptedSort.dateAccepted:
         list.sort((a, b) => _acceptedAt(b).compareTo(_acceptedAt(a)));
       case _AcceptedSort.timeRemaining:
+        final store = QuoteNotificationStore.instance;
         list.sort((a, b) {
-          final left = a.timeRemaining();
-          final right = b.timeRemaining();
+          // Whatever each job is actually counting down to — a completion
+          // deadline for Urgent and Emergency, the quoted arrival for Normal.
+          final left = jobCountdown(a, store.acceptedQuoteFor(a.id))?.remaining;
+          final right = jobCountdown(b, store.acceptedQuoteFor(b.id))?.remaining;
           // Jobs already under way have no clock left to run, so they sit
           // below the ones still waiting to be started.
           if (left == null && right == null) return _acceptedAt(b).compareTo(_acceptedAt(a));
@@ -891,7 +967,7 @@ class _AcceptedTabState extends State<_AcceptedTab> {
           border: Border.all(color: selected ? AppColors.primary : AppColors.textdark.withValues(alpha: 0.2)),
         ),
         child: Text(value.label,
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.textmedium : AppColors.textdark)),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: selected ? AppColors.textlight : AppColors.textdark)),
       ),
     );
   }
@@ -1109,13 +1185,19 @@ class _ActiveJobCard extends StatelessWidget {
   }
 }
 
-/// Live "time left to finish this job" line. The value comes from the
-/// request's own completion deadline ([HelpRequest.timeRemaining]) — accept
-/// time plus the urgency's window — so it keeps counting down across
-/// rebuilds, navigation and app reopens instead of restarting, and is never a
-/// stored or hard-coded figure. Renders nothing once the mechanic has reached
-/// Work in Progress — at that point [HelpRequest.timeRemaining] stops, which
-/// stops the expiry too rather than just hiding it.
+/// Live countdown line for an accepted job. Which clock it shows is
+/// [jobCountdown]'s decision, not this widget's:
+///
+///   - Urgent and Emergency count down to the job's completion deadline —
+///     accept time plus the urgency's window — labelled "Time Remaining".
+///   - Normal has no completion deadline, so it counts down to the arrival
+///     time the mechanic quoted, labelled "Arriving in".
+///
+/// Either way the value is derived from a stored timestamp, so it keeps
+/// running across rebuilds, navigation and app reopens instead of restarting,
+/// and is never a stored or hard-coded figure. Renders nothing once the
+/// countdown stops — Work in Progress for a completion clock, arrival for an
+/// ETA clock — which stops the expiry too rather than just hiding it.
 class _TimeRemainingRow extends StatelessWidget {
   final HelpRequest request;
 
@@ -1123,8 +1205,9 @@ class _TimeRemainingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final remaining = request.timeRemaining();
-    if (remaining == null) return const SizedBox.shrink();
+    final countdown = jobCountdown(request, QuoteNotificationStore.instance.acceptedQuoteFor(request.id));
+    if (countdown == null) return const SizedBox.shrink();
+    final remaining = countdown.remaining;
 
     // Runs hot in the final hour, so a job about to be handed back reads as
     // urgent rather than as just another grey line.
@@ -1137,7 +1220,7 @@ class _TimeRemainingRow extends StatelessWidget {
           Icon(Icons.timer_outlined, size: 13, color: color),
           const SizedBox(width: 4),
           Expanded(
-            child: Text('Time Remaining: ${formatTimeRemaining(remaining)}',
+            child: Text('${countdown.label}: ${formatTimeRemaining(remaining)}',
                 style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600)),
           ),
         ],

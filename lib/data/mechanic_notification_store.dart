@@ -7,6 +7,11 @@ enum MechanicNotificationKind {
   /// A client accepted this mechanic's quote.
   quoteAccepted,
 
+  /// A client turned this mechanic's quote down. Raised by
+  /// `QuoteNotificationStore.clientRejectQuote` — a rejection is an answer,
+  /// so the mechanic hears it rather than watching a quote go quiet.
+  quoteRejected,
+
   /// A client left this mechanic a rating.
   rated,
 
@@ -62,6 +67,8 @@ class MechanicNotification {
     switch (kind) {
       case MechanicNotificationKind.quoteAccepted:
         return 'Your quote was accepted';
+      case MechanicNotificationKind.quoteRejected:
+        return 'Your quote was rejected';
       case MechanicNotificationKind.rated:
         return 'You received a rating';
       case MechanicNotificationKind.paymentReceived:
@@ -77,6 +84,9 @@ class MechanicNotification {
     switch (kind) {
       case MechanicNotificationKind.quoteAccepted:
         return '$clientName accepted your quote.';
+      case MechanicNotificationKind.quoteRejected:
+        return '$clientName turned down your quote. The job is still open to '
+            'other mechanics, but you can no longer quote it.';
       case MechanicNotificationKind.rated:
         return '$clientName rated your service.';
       case MechanicNotificationKind.paymentReceived:
@@ -92,7 +102,7 @@ class MechanicNotification {
 /// The mechanic's notification log, behind the bell in the Mechanic shell.
 ///
 /// It lives on its own rather than inside `QuoteNotificationStore` because
-/// its five events come from three different stores — quotes/payments/
+/// its six events come from three different stores — quotes/payments/
 /// emergencies from `QuoteNotificationStore`, ratings from `ReviewStore`,
 /// approvals from `MechanicAccountStore`. This file imports none of them, so
 /// all three can raise into it without an import cycle.

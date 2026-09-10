@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../theme/app_theme.dart';
@@ -22,6 +24,7 @@ class ActiveRequestScreen extends StatefulWidget {
 class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
   final _store = QuoteNotificationStore.instance;
   final _reviews = ReviewStore.instance;
+  Timer? _ticker;
 
   @override
   void initState() {
@@ -30,13 +33,30 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
     // Keeps the mechanic's rating on this screen live — a review submitted
     // from here (or anywhere else) moves the average immediately.
     _reviews.addListener(_onChange);
+    // Drives the arrival countdown, and raises the client's "running late"
+    // notification the moment the mechanic's ETA runs out.
+    _store.notifyLateArrivals();
+    _ticker = Timer.periodic(const Duration(seconds: 1), _onTick);
   }
 
   @override
   void dispose() {
+    _ticker?.cancel();
     _store.removeListener(_onChange);
     _reviews.removeListener(_onChange);
     super.dispose();
+  }
+
+  void _onTick(Timer _) {
+    // Notifies by itself if anything actually went late; the setState is for
+    // the ticking numbers.
+    _store.notifyLateArrivals();
+    if (!mounted) return;
+    final request = _store.requestFor(widget.requestId);
+    if (request == null) return;
+    if (timeUntilArrival(request, _store.acceptedQuoteFor(request.id)) != null) {
+      setState(() {});
+    }
   }
 
   void _onChange() => setState(() {});
@@ -376,6 +396,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _ArrivalStatus(request: request, quote: quote),
                 const Text('Service Status', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
                 if (request.isEmergency) ...[
@@ -543,6 +564,69 @@ class _PaymentBreakdownRow extends StatelessWidget {
         const SizedBox(width: 8),
         Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textdark)),
       ],
+    );
+  }
+}
+
+/// Where the mechanic is against the ETA they committed to: counting down
+/// while they still have time, and saying so plainly once that time is up.
+///
+/// Reads [timeUntilArrival], so it disappears the moment the mechanic marks
+/// themselves arrived and never appears on a job with no accepted quote.
+class _ArrivalStatus extends StatelessWidget {
+  final HelpRequest request;
+  final MechanicQuote quote;
+
+  const _ArrivalStatus({required this.request, required this.quote});
+
+  @override
+  Widget build(BuildContext context) {
+    final remaining = timeUntilArrival(request, quote);
+    if (remaining == null) return const SizedBox.shrink();
+
+    final late = remaining == Duration.zero;
+    final color = late ? AppColors.error : AppColors.success;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(late ? Icons.schedule_outlined : Icons.directions_car_outlined, size: 18, color: color),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    late
+                        ? '${quote.mechanicName} is running late'
+                        : '${quote.mechanicName} should arrive in ${formatTimeRemaining(remaining)}',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    late
+                        ? 'Their ETA of ${quote.eta} has passed and they haven\'t arrived yet. '
+                            'You can cancel this job now if you want to.'
+                        : 'They committed to arriving within ${quote.eta} of you accepting the '
+                            'quote. You can cancel once that time is up.',
+                    style: TextStyle(fontSize: 12, color: AppColors.error),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

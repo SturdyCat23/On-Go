@@ -164,8 +164,8 @@ class _AdminPointsPageState extends State<AdminPointsPage> {
                       children: [
                         _RateField(
                           label: 'Points per ₱1 paid out',
-                          helper: 'A ₱500 job pays '
-                              '${edited == null ? '—' : formatPointsLabel(edited.mechanicPointsFor(500))}',
+                          helper: 'A ₱1000 job earns '
+                              '${edited == null ? '—' : formatPointsLabel(edited.mechanicPointsFor(1000))}',
                           suffix: 'pts / ₱1',
                           controller: _mechanicRate,
                           onChanged: () => setState(() => _error = null),

@@ -127,6 +127,43 @@ class _RequestQuoteCard extends StatelessWidget {
 
   const _RequestQuoteCard({required this.request, required this.store});
 
+  /// Turning a quote down is final for that mechanic — they are told, and they
+  /// cannot re-quote this job — so it is confirmed rather than one stray tap
+  /// away.
+  Future<void> _reject(BuildContext context, MechanicQuote quote) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reject this quote?'),
+        content: Text(
+          '${quote.mechanicName} will be told you turned down their ${quote.price} quote, '
+          'and will not be able to quote this job again.\n\n'
+          'Your request stays open, and other mechanics can still send quotes.',
+          style: const TextStyle(fontSize: 13),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Keep')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: Text('Reject', style: TextStyle(color: AppColors.textlight)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final name = quote.mechanicName;
+    if (store.clientRejectQuote(quote.id) && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Quote rejected. $name has been notified.'),
+          duration: AppDurations.snackBar,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final problem = _splitProblem(request.problem);
@@ -136,7 +173,7 @@ class _RequestQuoteCard extends StatelessWidget {
 
     return AppCard(
       padding: const EdgeInsets.all(14),
-      color: AppColors.surface.withValues(alpha: 0.55),
+      color: AppColors.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -209,16 +246,35 @@ class _RequestQuoteCard extends StatelessWidget {
                             ? Text('Accepted',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.success))
-                            : ElevatedButton(
-                                onPressed: hasAccepted ? null : () => store.clientAcceptQuote(q.id),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  shape: const StadiumBorder(),
-                                  padding: EdgeInsets.zero,
-                                  minimumSize: const Size(70, 32),
-                                  textStyle: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textmedium),
-                                ),
-                                child: Text('Accept', style: TextStyle(color: AppColors.textlight)),
+                            : Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ElevatedButton(
+                                    onPressed: hasAccepted ? null : () => store.clientAcceptQuote(q.id),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primary,
+                                      shape: const StadiumBorder(),
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: const Size(70, 32),
+                                      textStyle: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textmedium),
+                                    ),
+                                    child: Text('Accept', style: TextStyle(color: AppColors.textlight)),
+                                  ),
+                                  // The other half of the decision. Says no to
+                                  // one mechanic and tells them so, rather than
+                                  // leaving the quote sitting unanswered.
+                                  TextButton(
+                                    onPressed: hasAccepted ? null : () => _reject(context, q),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: AppColors.error,
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: const Size(70, 26),
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                      textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                                    ),
+                                    child: const Text('Reject'),
+                                  ),
+                                ],
                               ),
                       ),
                     ],

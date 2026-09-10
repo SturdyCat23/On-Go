@@ -206,7 +206,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Request uploaded! Mechanics will send quotes to your notifications 🔔'),
+        content: Text('Request uploaded! You will get notified when mechanics send their quotes.'),
         duration: AppDurations.snackBar,
       ),
     );
@@ -245,8 +245,8 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Describe your motorcycle problem and get matched with nearby mechanics',
-            style: TextStyle(fontSize: 13, color: AppColors.textdark.withValues(alpha: 0.55)),
+            'Describe your motorcycle problem to help mechanics understand your situation better. The more details you provide, the better quotes you will receive.',
+            style: TextStyle(fontSize: 13, color: AppColors.textdark),
           ),
           const SizedBox(height: 20),
           const Text('Common Issues',
@@ -303,7 +303,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
             controller: _problemCtrl,
             maxLines: 4,
             decoration: const InputDecoration(
-              hintText: "E.g. My motorcycle won't start and blablabla",
+              hintText: "E.g. My motorcycle won't start, and I hear a clicking sound when I turn the key.",
             ),
           ),
           const SizedBox(height: 12),
@@ -379,7 +379,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
                 });
               }
             },
-            decoration: const InputDecoration(hintText: 'Enter your location or use GPS'),
+            decoration: const InputDecoration(hintText: 'Enter your location or use current location'),
           ),
           const SizedBox(height: 6),
           Align(
@@ -503,7 +503,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
                           style: TextStyle(color: AppColors.info, fontWeight: FontWeight.w700, fontSize: 16)),
                       SizedBox(height: 4),
                       Text(
-                        'Mechanic will review your problem and send their quotes. You can compare prices and choose the best mechanic for you.',
+                        'Mechanics quote a price for the job after they see your request. You can choose the best offer, and pay the mechanic directly after the job is done.',
                         style: TextStyle(color: AppColors.info, fontSize: 13),
                       ),
                     ],

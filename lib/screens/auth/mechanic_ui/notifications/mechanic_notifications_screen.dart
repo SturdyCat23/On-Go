@@ -19,6 +19,8 @@ class MechanicNotificationsScreen extends StatelessWidget {
     switch (kind) {
       case MechanicNotificationKind.quoteAccepted:
         return Icons.handshake_outlined;
+      case MechanicNotificationKind.quoteRejected:
+        return Icons.do_not_disturb_on_outlined;
       case MechanicNotificationKind.rated:
         return Icons.star_outline;
       case MechanicNotificationKind.paymentReceived:
@@ -34,6 +36,8 @@ class MechanicNotificationsScreen extends StatelessWidget {
     switch (kind) {
       case MechanicNotificationKind.quoteAccepted:
         return AppColors.success;
+      case MechanicNotificationKind.quoteRejected:
+        return AppColors.error;
       case MechanicNotificationKind.rated:
         return AppColors.info;
       case MechanicNotificationKind.paymentReceived:
