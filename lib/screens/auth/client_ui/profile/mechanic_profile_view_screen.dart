@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../../../data/app_session.dart';
+import '../../../../data/mechanic_contact_store.dart';
 import '../../../../data/mechanic_credential_store.dart';
 import '../../../../data/review_store.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/app_widgets.dart';
 import '../../../../widgets/common_widgets.dart';
 import '../../../../widgets/credential_widgets.dart';
+import '../../../../widgets/mechanic_details_card.dart';
 import '../../../../data/quote_store.dart';
 
 enum _ReviewFilter { all, rating, mostRelevant }
@@ -21,6 +23,7 @@ class MechanicProfileViewScreen extends StatefulWidget {
 class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
   final _store = ReviewStore.instance;
   final _credentials = MechanicCredentialStore.instance;
+  final _contacts = MechanicContactStore.instance;
   _ReviewFilter _filter = _ReviewFilter.all;
 
   @override
@@ -28,12 +31,14 @@ class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
     super.initState();
     _store.addListener(_onChange);
     _credentials.addListener(_onChange);
+    _contacts.addListener(_onChange);
   }
 
   @override
   void dispose() {
     _store.removeListener(_onChange);
     _credentials.removeListener(_onChange);
+    _contacts.removeListener(_onChange);
     super.dispose();
   }
 
@@ -132,6 +137,7 @@ class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
   @override
   Widget build(BuildContext context) {
     final credentials = _credentials.publicFor(widget.name);
+    final contact = _contacts.contactFor(widget.name);
     final reviews = _applyFilter(_store.reviewsFor(widget.name));
     final average = _store.averageRatingFor(widget.name);
     final distribution = _store.ratingDistributionFor(widget.name);
@@ -195,6 +201,10 @@ class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 16),
+          // How to reach this mechanic. Read from the directory, since a
+          // profile opened from a job card has only their name to go on.
+          MechanicDetailsCard(phone: contact.phone, email: contact.email),
           const SizedBox(height: 16),
           AppCard(
             padding: const EdgeInsets.all(16),

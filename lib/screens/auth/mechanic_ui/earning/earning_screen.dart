@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../../../data/points_offers.dart';
+import '../../../../data/points_wallet_store.dart';
 import '../../../../data/quote_store.dart';
+import '../../../../services/backend/mobile_backend.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/common_widgets.dart';
 import '../rank/mechanic_leaderboard_screen.dart';
+import 'points_offers_screen.dart';
 
 class EarningScreen extends StatefulWidget {
   const EarningScreen({super.key, this.onViewAll});
@@ -16,6 +20,7 @@ class EarningScreen extends StatefulWidget {
 class _EarningScreenState extends State<EarningScreen> {
   bool _showBalance = true;
   final _store = QuoteNotificationStore.instance;
+  final _wallet = PointsWalletStore.instance;
 
   String get _mechanicName => QuoteNotificationStore.currentMechanicName;
 
@@ -49,8 +54,12 @@ class _EarningScreenState extends State<EarningScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final balance = _store.totalEarningsFor(_mechanicName);
-    final points = _store.totalPointsFor(_mechanicName);
+    // Earnings plus anything converted from points — the wallet records the
+    // conversion, so the balance follows it without earnings history moving.
+    final balance = _store.totalEarningsFor(_mechanicName) +
+        PointsOffers.convertedBalanceFor(_mechanicName);
+    // Spendable, not lifetime: converting draws this down.
+    final points = _wallet.balanceFor(_mechanicName);
     final paidJobs = _store.completedJobsFor(_mechanicName)
       ..sort((a, b) => (b.paymentCompletedAt ?? b.createdAt).compareTo(a.paymentCompletedAt ?? a.createdAt));
 
@@ -102,9 +111,11 @@ class _EarningScreenState extends State<EarningScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      _showBalance ? '$points' : '••••',
+                      _showBalance ? formatPoints(points) : '••••',
                       style: TextStyle(color: AppColors.textlight, fontSize: 28, fontWeight: FontWeight.w800),
                     ),
+                    const SizedBox(height: 8),
+                    const _ViewOfferButton(),
                   ],
                 ),
               ),
@@ -219,4 +230,39 @@ class _ProblemText {
   final String issue;
   final String description;
   const _ProblemText(this.issue, this.description);
+}
+/// Opens the offers a mechanic can spend points on.
+///
+/// Its own widget so the earnings header stays a layout, and so the button
+/// reads the same wherever it is put next.
+class _ViewOfferButton extends StatelessWidget {
+  const _ViewOfferButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TextButton.icon(
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const PointsOffersScreen()),
+        ),
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+          minimumSize: const Size(0, 0),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          backgroundColor: AppColors.textlight.withValues(alpha: 0.18),
+        ),
+        icon: Icon(Icons.local_offer_outlined, size: 14, color: AppColors.textlight),
+        label: Text(
+          'View Offer',
+          style: TextStyle(
+            color: AppColors.textlight,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
 }

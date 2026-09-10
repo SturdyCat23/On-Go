@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../services/backend/mobile_backend.dart';
+import 'mechanic_contact_store.dart';
 import 'mechanic_notification_store.dart';
 
 enum MechanicAccountMode { none, demo, registered }
@@ -136,6 +137,16 @@ class MechanicAccountStore extends ChangeNotifier {
     this.photoPath = photoPath;
     this.photoIsNetwork = photoIsNetwork;
     photoLastChangedAt = photoPath != null ? DateTime.now() : null;
+
+    // Published under this mechanic's name, so a client opening their profile
+    // can reach them. Recorded here rather than in the registration screen:
+    // an account cannot be created without going through this method, so it
+    // cannot be created without its contact details being on file.
+    MechanicContactStore.instance.record(
+      mechanicName: name,
+      phone: phone,
+      email: email,
+    );
 
     _stopWatching();
     notifyListeners();

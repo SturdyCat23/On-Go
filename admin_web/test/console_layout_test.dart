@@ -214,13 +214,13 @@ void main() {
         ['Overview', 'Mods', 'Add', 'Audit', 'Income'],
       );
 
-      // Notifications sits behind the bell and Settings in the drawer, so
-      // neither takes a slot — and neither is unreachable.
+      // Notifications sits behind the bell, and Points Modifier and Settings
+      // in the drawer, so none of them takes a slot — and none is unreachable.
       expect(ConsoleNavigation.bellFor(UserRole.admin)?.route,
           ConsoleRoutes.adminEscalations);
       expect(
         ConsoleNavigation.drawerFor(UserRole.admin).map((d) => d.route).toList(),
-        [ConsoleRoutes.adminSettings],
+        [ConsoleRoutes.adminPoints, ConsoleRoutes.adminSettings],
       );
     });
 

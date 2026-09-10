@@ -4,12 +4,61 @@ import '../backend/console_backend.dart';
 import '../theme/console_theme.dart';
 import 'console_formats.dart';
 
-/// The two revenue charts, ported from the Admin panel this console replaced
-/// and re-fitted for a mouse: they highlight on hover rather than on a drag,
-/// which is the interaction a desktop user expects.
+/// The two revenue charts, ported from the Admin panel this console replaced.
+///
+/// Both answer a pointer the same way: a month lights up under a hovering
+/// mouse or a pressed finger, and goes dark again when the mouse leaves or the
+/// finger lifts. See [ChartProbe], which is where that behaviour lives.
 ///
 /// Both read the same [MonthlyIncome] list and share the axis and the callout,
 /// so the Overview line and the Income bars cannot drift apart.
+
+/// The pointer handling both charts sit under, so a mouse and a finger pick a
+/// month the same way on either of them.
+///
+/// [onProbe] is called with a position inside the plot whenever the pointer is
+/// over it — moving a mouse, or pressing and dragging a finger. [onClear] is
+/// called the moment the pointer stops being there: the mouse leaves, or the
+/// finger lifts.
+///
+/// Horizontal drag rather than pan, deliberately. These charts sit inside a
+/// vertically scrolling page, and a pan recognizer would claim vertical drags
+/// too — the chart would eat the scroll, and a reader who swiped up over it
+/// would find the page stuck. Claiming only horizontal movement leaves the
+/// scroll to the list it belongs to.
+class ChartProbe extends StatelessWidget {
+  const ChartProbe({
+    super.key,
+    required this.onProbe,
+    required this.onClear,
+    required this.child,
+  });
+
+  final ValueChanged<Offset> onProbe;
+  final VoidCallback onClear;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onHover: (event) => onProbe(event.localPosition),
+      onExit: (_) => onClear(),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        // A press shows the month under the finger straight away, rather than
+        // waiting to see whether a drag is coming.
+        onTapDown: (d) => onProbe(d.localPosition),
+        onTapUp: (_) => onClear(),
+        onTapCancel: onClear,
+        onHorizontalDragStart: (d) => onProbe(d.localPosition),
+        onHorizontalDragUpdate: (d) => onProbe(d.localPosition),
+        onHorizontalDragEnd: (_) => onClear(),
+        onHorizontalDragCancel: onClear,
+        child: child,
+      ),
+    );
+  }
+}
 
 /// The left-hand '₱Xk' axis labels.
 class RevenueAxis extends StatelessWidget {
@@ -167,37 +216,35 @@ class _RevenueLineChartState extends State<RevenueLineChart> {
                     final segment =
                         income.length > 1 ? width / (income.length - 1) : width;
 
-                    void hover(Offset local) {
+                    void probe(Offset local) {
                       final raw =
                           income.length > 1 ? (local.dx / segment).round() : 0;
                       final clamped = raw.clamp(0, income.length - 1);
                       if (clamped != _hovered) setState(() => _hovered = clamped);
                     }
 
-                    return MouseRegion(
-                      onHover: (event) => hover(event.localPosition),
-                      onExit: (_) => setState(() => _hovered = null),
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTapDown: (d) => hover(d.localPosition),
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Positioned.fill(
-                              child: CustomPaint(
-                                painter: _LineChartPainter(
-                                  income: income,
-                                  maxRevenue: maxRevenue,
-                                  highlight: _hovered,
-                                  line: ConsoleColors.brand,
-                                  grid: ConsoleColors.border,
-                                  surface: ConsoleColors.surface,
-                                ),
+                    return ChartProbe(
+                      onProbe: probe,
+                      onClear: () {
+                        if (_hovered != null) setState(() => _hovered = null);
+                      },
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Positioned.fill(
+                            child: CustomPaint(
+                              painter: _LineChartPainter(
+                                income: income,
+                                maxRevenue: maxRevenue,
+                                highlight: _hovered,
+                                line: ConsoleColors.brand,
+                                grid: ConsoleColors.border,
+                                surface: ConsoleColors.surface,
                               ),
                             ),
-                            ..._callout(income, maxRevenue, segment, width),
-                          ],
-                        ),
+                          ),
+                          ..._callout(income, maxRevenue, segment, width),
+                        ],
                       ),
                     );
                   },
@@ -390,25 +437,23 @@ class _RevenueBarChartState extends State<RevenueBarChart> {
                     final width = constraints.maxWidth;
                     final slot = width / income.length;
 
-                    void hover(Offset local) {
+                    void probe(Offset local) {
                       final index =
                           (local.dx / slot).floor().clamp(0, income.length - 1);
                       if (index != _hovered) setState(() => _hovered = index);
                     }
 
-                    return MouseRegion(
-                      onHover: (event) => hover(event.localPosition),
-                      onExit: (_) => setState(() => _hovered = null),
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTapDown: (d) => hover(d.localPosition),
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Positioned.fill(child: _bars(income, maxRevenue)),
-                            ..._callout(income, maxRevenue, slot, width),
-                          ],
-                        ),
+                    return ChartProbe(
+                      onProbe: probe,
+                      onClear: () {
+                        if (_hovered != null) setState(() => _hovered = null);
+                      },
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Positioned.fill(child: _bars(income, maxRevenue)),
+                          ..._callout(income, maxRevenue, slot, width),
+                        ],
                       ),
                     );
                   },

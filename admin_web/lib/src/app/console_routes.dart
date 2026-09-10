@@ -19,6 +19,7 @@ class ConsoleRoutes {
   static const String adminEscalations = '/admin/escalations';
   static const String adminAudit = '/admin/audit';
   static const String adminIncome = '/admin/income';
+  static const String adminPoints = '/admin/points';
   static const String adminSettings = '/admin/settings';
 
   static const String moderatorQueue = '/moderator';
@@ -136,6 +137,14 @@ class ConsoleNavigation {
       label: 'Income',
       icon: Icons.bar_chart,
       blurb: 'Platform revenue reported by the mobile app',
+    ),
+    ConsoleDestination(
+      route: ConsoleRoutes.adminPoints,
+      label: 'Points Modifier',
+      shortLabel: 'Points',
+      icon: Icons.stars_outlined,
+      blurb: 'What a job is worth in points',
+      placement: ConsolePlacement.drawer,
     ),
     ConsoleDestination(
       route: ConsoleRoutes.adminSettings,

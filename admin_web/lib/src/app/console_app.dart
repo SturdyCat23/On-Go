@@ -5,6 +5,7 @@ import '../features/admin/admin_add_moderator_page.dart';
 import '../features/admin/admin_audit_page.dart';
 import '../features/admin/admin_escalations_page.dart';
 import '../features/admin/admin_income_page.dart';
+import '../features/admin/admin_points_page.dart';
 import '../features/admin/admin_moderators_page.dart';
 import '../features/admin/admin_overview_page.dart';
 import '../features/admin/admin_settings_page.dart';
@@ -115,6 +116,7 @@ class _ConsoleAppState extends State<ConsoleApp> {
         ConsoleRoutes.adminEscalations => const AdminEscalationsPage(),
         ConsoleRoutes.adminAudit => const AdminAuditPage(),
         ConsoleRoutes.adminIncome => const AdminIncomePage(),
+        ConsoleRoutes.adminPoints => const AdminPointsPage(),
         ConsoleRoutes.adminSettings => const AdminSettingsPage(),
         ConsoleRoutes.moderatorQueue => const ModeratorQueuePage(),
         ConsoleRoutes.moderatorHistory => const ModeratorHistoryPage(),

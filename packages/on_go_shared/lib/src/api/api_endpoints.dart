@@ -77,6 +77,11 @@ class ApiEndpoints {
   /// (`PlatformAppearanceApi.clearBackground`).
   static const String appearance = '$_root/platform/appearance';
 
+  // ---------------------------------------------------------------- points ---
+
+  /// GET (`PointsPolicyApi.fetch`) and PUT (`PointsPolicyApi.update`).
+  static const String pointsPolicy = '/platform/points-policy';
+
   // --------------------------------------------------------------- streams ---
 
   /// The live channel behind every `watch*` method. One socket carrying

@@ -1,6 +1,7 @@
 import 'package:on_go_shared/on_go_shared.dart';
 
 import 'local_appearance_service.dart';
+import 'local_points_policy_service.dart';
 import 'local_auth_service.dart';
 import 'local_revenue_service.dart';
 import 'local_verification_service.dart';
@@ -28,6 +29,7 @@ class MobileBackend {
     required this.verification,
     required this.revenue,
     required this.appearance,
+    required this.pointsPolicy,
   });
 
   static MobileBackend _instance = MobileBackend._(
@@ -35,6 +37,7 @@ class MobileBackend {
     verification: LocalVerificationService(),
     revenue: LocalRevenueService(),
     appearance: LocalAppearanceService(),
+    pointsPolicy: LocalPointsPolicyService(),
   );
 
   static MobileBackend get instance => _instance;
@@ -51,6 +54,9 @@ class MobileBackend {
   /// Branding the console publishes and this app paints.
   final PlatformAppearanceApi appearance;
 
+  /// The points rules the console configures and this app awards by.
+  final PointsPolicyApi pointsPolicy;
+
   /// Replaces some or all of the implementations. Call it once, before
   /// `runApp`, when the API client arrives; each argument left null keeps the
   /// local implementation it already had.
@@ -59,12 +65,14 @@ class MobileBackend {
     AccountVerificationApi? verification,
     PlatformRevenueApi? revenue,
     PlatformAppearanceApi? appearance,
+    PointsPolicyApi? pointsPolicy,
   }) {
     _instance = MobileBackend._(
       auth: auth ?? _instance.auth,
       verification: verification ?? _instance.verification,
       revenue: revenue ?? _instance.revenue,
       appearance: appearance ?? _instance.appearance,
+      pointsPolicy: pointsPolicy ?? _instance.pointsPolicy,
     );
   }
 }

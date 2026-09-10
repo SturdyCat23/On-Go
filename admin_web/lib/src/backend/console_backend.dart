@@ -1,6 +1,7 @@
 import 'package:on_go_shared/on_go_shared.dart';
 
 import 'local/local_appearance_service.dart';
+import 'local/local_points_policy_service.dart';
 import 'local/local_client_ip_service.dart';
 import 'local/local_console_auth_service.dart';
 import 'local/local_moderator_directory_service.dart';
@@ -33,6 +34,7 @@ class ConsoleBackend {
     required this.moderators,
     required this.revenue,
     required this.appearance,
+    required this.pointsPolicy,
   });
 
   /// Builds the default, local-only backend. Everything shares one directory
@@ -46,6 +48,7 @@ class ConsoleBackend {
       moderators: directory,
       revenue: LocalRevenueService(),
       appearance: LocalAppearanceService(),
+      pointsPolicy: LocalPointsPolicyService(),
     );
   }
 
@@ -77,6 +80,9 @@ class ConsoleBackend {
   /// Branding this console publishes for the mobile app.
   final PlatformAppearanceApi appearance;
 
+  /// The points rules this console configures for the whole platform.
+  final PointsPolicyApi pointsPolicy;
+
   /// The local moderation service, when that is what is installed.
   ///
   /// A handful of console screens need things that are genuinely not API
@@ -103,6 +109,7 @@ class ConsoleBackend {
     ModeratorDirectoryApi? moderators,
     PlatformRevenueApi? revenue,
     PlatformAppearanceApi? appearance,
+    PointsPolicyApi? pointsPolicy,
   }) {
     _instance = ConsoleBackend._(
       auth: auth ?? _instance.auth,
@@ -110,6 +117,7 @@ class ConsoleBackend {
       moderators: moderators ?? _instance.moderators,
       revenue: revenue ?? _instance.revenue,
       appearance: appearance ?? _instance.appearance,
+      pointsPolicy: pointsPolicy ?? _instance.pointsPolicy,
     );
   }
 }

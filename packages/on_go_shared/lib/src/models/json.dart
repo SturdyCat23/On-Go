@@ -34,7 +34,12 @@ List<Map<String, dynamic>> readObjectList(Object? value) => value is List
     : const [];
 
 /// Reads a number that may arrive as an int or a double.
-double readDouble(Object? value) => value is num ? value.toDouble() : 0;
+///
+/// [fallback] is what an absent or unreadable value becomes. It defaults to
+/// zero, which is right for an amount; pass something else where zero would be
+/// a meaningful — and wrong — answer, such as a configured rate.
+double readDouble(Object? value, [double fallback = 0]) =>
+    value is num ? value.toDouble() : fallback;
 
 /// Reads an int that may arrive as a double (JSON has one number type).
 int readInt(Object? value) => value is num ? value.toInt() : 0;

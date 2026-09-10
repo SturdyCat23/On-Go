@@ -6,6 +6,8 @@ import '../services/backend/mobile_backend.dart';
 import 'app_session.dart';
 import 'chat_store.dart';
 import 'mechanic_notification_store.dart';
+import 'points_policy_store.dart';
+import 'points_wallet_store.dart';
 import 'mechanic_account_store.dart';
 
 enum RequestStatus { pending, matched, completed }
@@ -151,7 +153,14 @@ class HelpRequest {
   DateTime? serviceCompletedAt;
   DateTime? paymentCompletedAt;
 
-  int? pointsAwarded;
+  /// Points the MECHANIC earned on this job, from the configured rate at the
+  /// moment it was paid. Kept per job so the earnings list can show what each
+  /// one was worth, even after the admin changes the rate.
+  double? pointsAwarded;
+
+  /// Points the client spent to cover this job's priority fee, or null when
+  /// they paid it in pesos. 1 pt = ₱1, so this doubles as the peso value.
+  double? feePaidWithPoints;
   DateTime? completedAt;
 
   String? lastCancelReason;
@@ -221,6 +230,7 @@ class HelpRequest {
     this.serviceCompletedAt,
     this.paymentCompletedAt,
     this.pointsAwarded,
+    this.feePaidWithPoints,
     this.completedAt,
     this.lastCancelReason,
     this.lastCancelledBy,
@@ -932,7 +942,11 @@ class QuoteNotificationStore extends ChangeNotifier {
   /// income screens that read it live in the console website. A job can only
   /// be paid once (the paymentCompleted guard below), so the payment can never
   /// be booked twice.
-  int? clientConfirmPayment(String requestId) {
+  /// [payFeeWithPoints] spends the client's points on the job's priority fee
+  /// instead of charging it, at 1 pt = ₱1. Ignored when the job carries no
+  /// fee, and refused when the balance will not cover it — see
+  /// [canPayFeeWithPoints], which is what the checkout screen offers on.
+  double? clientConfirmPayment(String requestId, {bool payFeeWithPoints = false}) {
     if (AppSession.instance.currentRole != AppRole.client) {
       throw StateError('Only the Client UI can confirm a payment.');
     }
@@ -945,21 +959,39 @@ class QuoteNotificationStore extends ChangeNotifier {
     final amount = effectivePaymentAmount(req, quote);
     if (amount == null) return null;
 
-    // Points stay based on the mechanic's amount — the priority fee is
-    // ONGO's cut, not part of the service the client earns points on.
-    final points = (amount * 0.05).round();
+    // Both awards come from the configured rules, never from a number written
+    // here — an admin changing a rate in the console changes what this pays
+    // out, with nothing in this method to update.
+    final policy = PointsPolicyStore.instance.current;
+    final points = policy.clientPointsFor(req.urgency);
 
     req.paymentCompleted = true;
     req.paymentCompletedAt = DateTime.now();
-    req.pointsAwarded = points;
+    req.pointsAwarded = policy.mechanicPointsFor(amount);
     // The payment record. Stamped once, here, from the amount actually
     // charged — history reads this rather than re-deriving from the quote.
     req.amountPaid = amount;
     req.status = RequestStatus.completed;
     req.completedAt = req.paymentCompletedAt;
 
+    // The priority fee, settled before it is booked: points cover it or the
+    // client is charged it, never both.
     final fee = req.platformFee;
-    if (fee > 0) req.platformFeeCharged = fee;
+    if (fee > 0) {
+      req.platformFeeCharged = fee;
+      if (payFeeWithPoints) {
+        final spent = PointsWalletStore.instance.debit(
+          owner: req.clientName,
+          kind: PointsEntryKind.clientPaidSurcharge,
+          points: pointsForPesos(fee),
+          note: '${req.urgency} priority fee · ${req.problem}',
+          pesos: fee,
+        );
+        // Only recorded when the debit actually went through; a short balance
+        // leaves the fee charged as normal rather than quietly waived.
+        if (spent != null) req.feePaidWithPoints = pointsForPesos(fee);
+      }
+    }
     // Every successful payment is reported, fee or no fee: the fee is ONGO's
     // revenue, and the payment itself is one Admin transaction either way.
     //
@@ -987,10 +1019,36 @@ class QuoteNotificationStore extends ChangeNotifier {
       );
     }
 
+    // The client's reward for the job, and the mechanic's for being paid for
+    // it. Both land in the one ledger the balances are read from.
+    PointsWalletStore.instance.credit(
+      owner: req.clientName,
+      kind: PointsEntryKind.clientJobCompleted,
+      points: points,
+      note: '${req.urgency} job · ${req.problem}',
+    );
+    if (quote != null) {
+      PointsWalletStore.instance.credit(
+        owner: quote.mechanicName,
+        kind: PointsEntryKind.mechanicJobCompleted,
+        points: req.pointsAwarded ?? 0,
+        note: req.problem,
+      );
+    }
+
     // Chat intentionally NOT cleared — see clientDeleteRequest.
 
     notifyListeners();
     return points;
+  }
+
+  /// Whether [requestId]'s priority fee could be paid with the client's
+  /// points right now. False when there is no fee to pay.
+  bool canPayFeeWithPoints(String requestId) {
+    final req = requestFor(requestId);
+    if (req == null || req.platformFee <= 0) return false;
+    return PointsWalletStore.instance
+        .canAfford(req.clientName, pointsForPesos(req.platformFee));
   }
 
   // ---------------------------------------------------------------------
@@ -1011,8 +1069,14 @@ class QuoteNotificationStore extends ChangeNotifier {
     return sum;
   }
 
-  int totalPointsFor(String mechanicName) {
-    int sum = 0;
+  /// Points this mechanic has earned across every job they finished — the
+  /// lifetime figure the earnings history adds up to.
+  ///
+  /// NOT what they can spend: converting points to balance draws them down,
+  /// and that is tracked in [PointsWalletStore]. Read the wallet's balance for
+  /// anything the mechanic is about to spend.
+  double totalPointsFor(String mechanicName) {
+    double sum = 0;
     for (final req in completedJobsFor(mechanicName)) {
       sum += req.pointsAwarded ?? 0;
     }

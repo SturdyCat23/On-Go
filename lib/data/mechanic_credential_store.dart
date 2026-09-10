@@ -48,6 +48,13 @@ class MechanicCredential {
 
   final DateTime uploadedAt;
 
+  /// Whether [path] points at the app's own copy of the file, or at the file
+  /// the mechanic picked because copying was not possible.
+  ///
+  /// This is what makes deleting safe: removing a credential deletes the app's
+  /// copy, and never a file that merely happens to be on the user's device.
+  final bool isOwnedCopy;
+
   const MechanicCredential({
     required this.id,
     required this.mechanicName,
@@ -56,6 +63,7 @@ class MechanicCredential {
     required this.fileName,
     required this.path,
     required this.uploadedAt,
+    this.isOwnedCopy = false,
   });
 
   static const _imageExtensions = {'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'heic'};
@@ -149,7 +157,7 @@ class MechanicCredentialStore extends ChangeNotifier {
     }
   }
 
-  Future<void> _store(
+  Future<MechanicCredential> _store(
     String mechanicName,
     CredentialKind kind,
     String label,
@@ -158,6 +166,7 @@ class MechanicCredentialStore extends ChangeNotifier {
   ) async {
     final fileName = _baseName(sourcePath);
     var storedPath = sourcePath;
+    var owned = false;
 
     if (destination != null) {
       try {
@@ -168,13 +177,14 @@ class MechanicCredentialStore extends ChangeNotifier {
           final target = '${destination.path}/${DateTime.now().microsecondsSinceEpoch}_$fileName';
           await source.copy(target);
           storedPath = target;
+          owned = true;
         }
       } catch (_) {
         // Keep the source path; the credential is still recorded.
       }
     }
 
-    _all.add(MechanicCredential(
+    final credential = MechanicCredential(
       id: 'cred_${DateTime.now().microsecondsSinceEpoch}_${_all.length}',
       mechanicName: mechanicName,
       kind: kind,
@@ -182,7 +192,69 @@ class MechanicCredentialStore extends ChangeNotifier {
       fileName: fileName,
       path: storedPath,
       uploadedAt: DateTime.now(),
-    ));
+      isOwnedCopy: owned,
+    );
+    _all.add(credential);
+    return credential;
+  }
+
+  /// Attaches ONE more certificate to [mechanicName], after registration.
+  ///
+  /// The same copy-into-app-storage rule as [saveForMechanic] — this is the
+  /// single-file version of it, for the Certifications screen.
+  ///
+  /// [label] is what the profile shows; it falls back to the file's own name,
+  /// which is what a mechanic uploading "NC III Diesel.pdf" would expect to
+  /// see there.
+  Future<MechanicCredential?> addCertification({
+    required String mechanicName,
+    required String sourcePath,
+    String? label,
+  }) async {
+    if (mechanicName.isEmpty || sourcePath.isEmpty) return null;
+
+    final destination = await _folderFor(mechanicName);
+    final trimmed = label?.trim();
+    final credential = await _store(
+      mechanicName,
+      CredentialKind.certification,
+      trimmed == null || trimmed.isEmpty ? _baseName(sourcePath) : trimmed,
+      sourcePath,
+      destination,
+    );
+    notifyListeners();
+    return credential;
+  }
+
+  /// Detaches a credential and deletes the app's copy of its file.
+  ///
+  /// Only ever deletes a file this store wrote ([MechanicCredential.isOwnedCopy]).
+  /// A credential still pointing at the file the mechanic picked is dropped
+  /// from the index and the original is left exactly where it is — removing a
+  /// certificate from a profile must not delete the user's own document.
+  ///
+  /// Returns false if there is no credential with that id.
+  Future<bool> remove(String credentialId) async {
+    final index = _all.indexWhere((c) => c.id == credentialId);
+    if (index == -1) return false;
+
+    final credential = _all.removeAt(index);
+
+    // Notify before touching the disk, not after: the index is what every
+    // profile reads, so the certificate should leave the screen the moment it
+    // leaves the list rather than after a filesystem round-trip.
+    notifyListeners();
+
+    if (credential.isOwnedCopy) {
+      try {
+        final file = File(credential.path);
+        if (file.existsSync()) await file.delete();
+      } catch (_) {
+        // A file left behind is untidy, not incorrect — the credential is
+        // already gone from the index either way.
+      }
+    }
+    return true;
   }
 
   static String _baseName(String path) => path.split(RegExp(r'[/\\]')).last;

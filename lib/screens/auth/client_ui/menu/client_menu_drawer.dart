@@ -4,6 +4,7 @@ import '../../../../data/client_account_store.dart';
 import '../../../../theme/app_theme.dart';
 import '../../sign_in_screen.dart';
 import '../profile/client_profile_screen.dart';
+import '../rewards/client_rewards_screen.dart';
 import '../settings/client_settings_screen.dart';
 
 class ClientMenuDrawer extends StatefulWidget {
@@ -78,7 +79,17 @@ class _ClientMenuDrawerState extends State<ClientMenuDrawer> {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const ClientProfileScreen()));
                   },
                 ),
-                _DrawerItem(icon: Icons.star_border, label: 'Rewards & Points', onTap: () => Navigator.pop(context)),
+                _DrawerItem(
+                  icon: Icons.star_border,
+                  label: 'Rewards & Points',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ClientRewardsScreen()),
+                    );
+                  },
+                ),
                 _DrawerItem(
                   icon: Icons.settings_outlined,
                   label: 'Settings',

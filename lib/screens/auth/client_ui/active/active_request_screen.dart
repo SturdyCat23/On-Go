@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/chat_icon_button.dart';
+import '../../../../services/backend/mobile_backend.dart';
 import '../../../../widgets/common_widgets.dart';
+import '../../../../data/points_wallet_store.dart';
 import '../../../../data/quote_store.dart';
 import '../../../../data/review_store.dart';
 import '../../../shared/job_chat_screen.dart';
@@ -160,49 +162,90 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
     final platformFee = currentRequest.platformFee;
     final totalAmount = clientTotalPaymentAmount(currentRequest, currentQuote)!;
 
+    // Points can cover the priority fee on an Urgent or Emergency job, at
+    // 1 pt = ₱1, and only when the balance covers the whole fee — the store
+    // decides that, so the offer and the charge cannot disagree.
+    final feeInPoints = pointsForPesos(platformFee);
+    final canUsePoints = _store.canPayFeeWithPoints(request.id);
+    final pointsBalance =
+        PointsWalletStore.instance.balanceFor(currentRequest.clientName);
+    var usePoints = false;
+
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Confirm Payment'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Pay ${payload.mechanicName}', style: TextStyle(fontSize: 14, color: AppColors.textdark.withValues(alpha: 0.55))),
-            const SizedBox(height: 8),
-            Text('₱${totalAmount.toStringAsFixed(0)}',
-                style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppColors.primary)),
-            if (platformFee > 0) ...[
-              const SizedBox(height: 12),
-              _PaymentBreakdownRow(
-                  label: 'Mechanic (${payload.mechanicName})', value: '₱${mechanicAmount.toStringAsFixed(0)}'),
-              const SizedBox(height: 4),
-              _PaymentBreakdownRow(
-                  label: '${currentRequest.urgency} priority fee', value: '₱${platformFee.toStringAsFixed(0)}'),
-              const SizedBox(height: 6),
-              Text('The priority fee is an ONGO service charge and is not paid to the mechanic.',
-                  style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Confirm Payment'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Pay ${payload.mechanicName}', style: TextStyle(fontSize: 14, color: AppColors.textdark.withValues(alpha: 0.55))),
+              const SizedBox(height: 8),
+              Text(
+                  '₱${(usePoints ? mechanicAmount : totalAmount).toStringAsFixed(0)}',
+                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppColors.primary)),
+              if (platformFee > 0) ...[
+                const SizedBox(height: 12),
+                _PaymentBreakdownRow(
+                    label: 'Mechanic (${payload.mechanicName})', value: '₱${mechanicAmount.toStringAsFixed(0)}'),
+                const SizedBox(height: 4),
+                _PaymentBreakdownRow(
+                    label: '${currentRequest.urgency} priority fee',
+                    value: usePoints
+                        ? formatPointsLabel(feeInPoints)
+                        : '₱${platformFee.toStringAsFixed(0)}'),
+                const SizedBox(height: 6),
+                Text('The priority fee is an ONGO service charge and is not paid to the mechanic.',
+                    style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55))),
+                if (platformFee > 0) ...[
+                  const Divider(height: 18),
+                  if (canUsePoints)
+                    CheckboxListTile(
+                      value: usePoints,
+                      onChanged: (v) => setDialogState(() => usePoints = v ?? false),
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      dense: true,
+                      title: Text('Use ${formatPointsLabel(feeInPoints)} for the fee',
+                          style: const TextStyle(fontSize: 13)),
+                      subtitle: Text('You have ${formatPointsLabel(pointsBalance)}',
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textdark.withValues(alpha: 0.55))),
+                    )
+                  else
+                    Text(
+                      'Pay this fee with points once you have '
+                      '${formatPointsLabel(feeInPoints)} — you have '
+                      '${formatPointsLabel(pointsBalance)}.',
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textdark.withValues(alpha: 0.55)),
+                    ),
+                ],
+              ],
             ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Confirm & Pay'),
+            ),
           ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Confirm & Pay'),
-          ),
-        ],
       ),
     );
     if (confirmed != true) return;
 
-    final points = _store.clientConfirmPayment(request.id);
+    final earned = _store.clientConfirmPayment(request.id, payFeeWithPoints: usePoints);
     if (!mounted) return;
-    if (points == null) {
+    if (earned == null) {
       _showSnack('Payment could not be completed.');
     } else {
-      _showSnack('Payment sent! ${payload.mechanicName} earned $points points.');
+      _showSnack('Payment sent! You earned ${formatPointsLabel(earned)}.');
     }
   }
 

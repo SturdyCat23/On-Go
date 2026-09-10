@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'data/mechanic_settings_store.dart';
+import 'data/points_policy_store.dart';
 import 'data/registration_draft.dart';
 import 'screens/auth/mechanic_registration/mechanic_step4_documents.dart';
 import 'screens/auth/mechanic_registration/mechanic_step5_verification.dart';
@@ -18,6 +19,9 @@ void main() async {
   // And the mechanic's own preferences, so the Emergency pulse toggle is
   // whatever they last set it to.
   await MechanicSettingsStore.instance.load();
+  // The points rules the console configures. Loaded before the first frame so
+  // a payment settled early in the session awards the right amount.
+  await PointsPolicyStore.instance.load();
   // The registration draft, so a launch that is really Android restarting us
   // mid-photo-pick can put the user back on the form rather than Sign In.
   await RegistrationDraft.instance.load();

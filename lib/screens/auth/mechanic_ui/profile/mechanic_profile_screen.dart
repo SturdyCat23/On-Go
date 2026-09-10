@@ -9,6 +9,7 @@ import '../../../../data/review_store.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/common_widgets.dart';
 import '../../../../widgets/credential_widgets.dart';
+import '../../../../widgets/mechanic_details_card.dart';
 
 enum _ReviewFilter { all, rating, mostRelevant }
 
@@ -165,6 +166,10 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
             ],
           ),
         ),
+        const SizedBox(height: 16),
+        // The same card a client sees on this profile, from the signed-in
+        // account rather than the directory.
+        MechanicDetailsCard(phone: _account.phone, email: _account.email),
         const SizedBox(height: 16),
         AppCard(
           padding: const EdgeInsets.all(16),
