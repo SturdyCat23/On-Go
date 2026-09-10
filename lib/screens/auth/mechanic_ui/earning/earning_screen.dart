@@ -71,6 +71,7 @@ class _EarningScreenState extends State<EarningScreen> {
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(color: AppColors.primarydark, borderRadius: BorderRadius.circular(16)),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Column(

@@ -124,11 +124,13 @@ class ConsoleMetrics {
 
   /// Controls and small surfaces use the app's medium step; cards use its
   /// large one — the same two radii the app's cards and fields use.
-  static const double radius = AppRadii.md;
-  static const double radiusLarge = AppRadii.lg;
+  // Both read from the UI Style system, so a radius changed in
+  // `ui_container_styles.dart` reaches the console as well as the app.
+  static double get radius => AppOutlinedContainers.field.radius;
+  static double get radiusLarge => AppOutlinedContainers.card.radius;
 
-  static BorderRadius get borderRadius => AppRadii.borderMd;
-  static BorderRadius get borderRadiusLarge => AppRadii.borderLg;
+  static BorderRadius get borderRadius => AppOutlinedContainers.field.borderRadius;
+  static BorderRadius get borderRadiusLarge => AppOutlinedContainers.card.borderRadius;
 
   /// How long a toast stays up. The console's lists do not repaint as fast as
   /// the app's, so a message gets a beat longer to be read.
@@ -175,7 +177,7 @@ class ConsoleTheme {
       canvasColor: c.surface,
       dividerColor: border,
       // The same family the app sets, so type matches across the product.
-      fontFamily: 'Roboto',
+      fontFamily: AppTextStyles.fontFamily,
       visualDensity: VisualDensity.compact,
       splashFactory: InkSparkle.splashFactory,
       appBarTheme: AppBarTheme(
@@ -190,41 +192,14 @@ class ConsoleTheme {
         ),
         iconTheme: IconThemeData(color: c.textlight),
       ),
-      textTheme: TextTheme(
-        displaySmall: TextStyle(
-          fontSize: 28,
-          fontWeight: FontWeight.w700,
-          color: c.textdark,
-        ),
-        headlineSmall: TextStyle(
-          fontSize: 21,
-          fontWeight: FontWeight.w700,
-          color: c.textdark,
-        ),
-        titleLarge: TextStyle(
-          fontSize: 17,
-          fontWeight: FontWeight.w700,
-          color: c.textdark,
-        ),
-        titleMedium: TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-          color: c.textdark,
-        ),
-        titleSmall: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: c.textdark,
-        ),
-        bodyLarge: TextStyle(fontSize: 14, color: c.textdark),
-        bodyMedium: TextStyle(fontSize: 13, color: c.textdark),
-        bodySmall: TextStyle(fontSize: 12, color: c.textmedium),
-        labelSmall: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.6,
-          color: c.textmedium,
-        ),
+      // Sizes, weights and typeface come from the UI Style system, shared with
+      // the mobile app; the two colours come from the palette. The console
+      // scales up because a monitor is read from further away than a phone —
+      // see `AppTextScale`.
+      textTheme: AppText.textTheme(
+        scale: AppTextScale.desktop,
+        color: c.textdark,
+        mutedColor: c.textmedium,
       ),
       dividerTheme: DividerThemeData(
         color: border,

@@ -22,4 +22,8 @@ export 'src/app_palette.dart';
 export 'src/design_tokens.dart';
 export 'src/on_go_bottom_nav.dart';
 export 'src/theme_controller.dart';
+export 'src/ui_container_styles.dart';
+export 'src/ui_icon_styles.dart';
+export 'src/ui_style.dart';
+export 'src/ui_text_styles.dart';
 export 'src/warm_filter_slider.dart';

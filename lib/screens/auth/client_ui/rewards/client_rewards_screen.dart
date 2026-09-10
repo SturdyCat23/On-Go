@@ -140,7 +140,7 @@ class _ClientRewardsScreenState extends State<ClientRewardsScreen> {
                 const SizedBox(height: 12),
                 if (entries.isEmpty)
                   Text(
-                    'Nothing yet. Complete a job to earn your first points.',
+                    'Nothing yet. Upload a job to earn your first points when it is completed.',
                     style: TextStyle(
                         fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55)),
                   )

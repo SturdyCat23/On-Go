@@ -48,7 +48,7 @@ class AppTheme {
         brightness: option.isDark ? Brightness.dark : Brightness.light,
         primaryColor: c.primary,
         scaffoldBackgroundColor: c.background,
-        fontFamily: 'Roboto',
+        fontFamily: AppTextStyles.fontFamily,
         colorScheme: colorScheme,
         appBarTheme: AppBarTheme(
           backgroundColor: c.primary,
@@ -99,24 +99,24 @@ class AppTheme {
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           border: OutlineInputBorder(
-            borderRadius: AppRadii.borderMd,
+            borderRadius: AppOutlinedContainers.field.borderRadius,
             borderSide: BorderSide(color: c.textmedium.withValues(alpha: 0.3), width: AppBorders.thin),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: AppRadii.borderMd,
+            borderRadius: AppOutlinedContainers.field.borderRadius,
             borderSide: BorderSide(color: c.textmedium.withValues(alpha: 0.3), width: AppBorders.thin),
           ),
           // A focused field steps up to the 2px regular border weight.
           focusedBorder: OutlineInputBorder(
-            borderRadius: AppRadii.borderMd,
+            borderRadius: AppOutlinedContainers.field.borderRadius,
             borderSide: BorderSide(color: c.textdark, width: AppBorders.regular),
           ),
           errorBorder: OutlineInputBorder(
-            borderRadius: AppRadii.borderMd,
+            borderRadius: AppOutlinedContainers.field.borderRadius,
             borderSide: BorderSide(color: c.error, width: AppBorders.thin),
           ),
           focusedErrorBorder: OutlineInputBorder(
-            borderRadius: AppRadii.borderMd,
+            borderRadius: AppOutlinedContainers.field.borderRadius,
             borderSide: BorderSide(color: c.error, width: AppBorders.regular),
           ),
           hintStyle: TextStyle(
@@ -124,17 +124,25 @@ class AppTheme {
             fontSize: 14,
           ),
         ),
-        textTheme: TextTheme(
-          titleLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: c.textdark),
-          titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: c.textdark),
-          bodyLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: c.textdark),
-          bodyMedium: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: c.textmedium),
-          bodySmall: TextStyle(fontSize: 12, color: c.textmedium),
+        // Sizes, weights and typeface come from the UI Style system; the two
+        // colours come from the palette. Anything already reading
+        // `Theme.of(context).textTheme` therefore follows a change made in
+        // `ui_text_styles.dart` without being touched.
+        //
+        // The scale is fixed at 1 here: a phone is the size these numbers
+        // were written for. A screen that wants live scaling across a tablet
+        // uses `AppText.body(context)` directly.
+        textTheme: AppText.textTheme(
+          color: c.textdark,
+          mutedColor: c.textmedium,
         ),
+        // Shapes below come from the UI Style system; every colour still
+        // comes from the palette. Changing a radius in
+        // `ui_container_styles.dart` reaches all of these.
         cardTheme: CardThemeData(
           elevation: AppElevation.raised,
           color: c.background,
-          shape: RoundedRectangleBorder(borderRadius: AppRadii.borderLg),
+          shape: AppFilledContainers.surface.shape(),
           margin: EdgeInsets.zero,
         ),
         floatingActionButtonTheme: FloatingActionButtonThemeData(
@@ -146,16 +154,16 @@ class AppTheme {
           thickness: AppBorders.thin,
         ),
         dialogTheme: DialogThemeData(
-          shape: RoundedRectangleBorder(borderRadius: AppRadii.borderXl),
+          shape: AppFilledContainers.dialog.shape(),
           elevation: AppElevation.modal,
         ),
         bottomSheetTheme: BottomSheetThemeData(
-          shape: RoundedRectangleBorder(borderRadius: AppRadii.sheetTop),
+          shape: RoundedRectangleBorder(borderRadius: AppFilledContainers.sheetTopRadius),
           elevation: AppElevation.modal,
         ),
         snackBarTheme: SnackBarThemeData(
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: AppRadii.borderMd),
+          shape: AppFilledContainers.overlay.shape(),
           elevation: AppElevation.popover,
         ),
         // Badges and filter chips read as pills.
