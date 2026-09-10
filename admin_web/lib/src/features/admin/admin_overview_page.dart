@@ -60,7 +60,11 @@ class AdminOverviewPage extends StatelessWidget {
     final approved =
         requests.where((r) => r.status == ApprovalStatus.approved).length;
     final activeMods = moderators.where((m) => m.isActive).length;
-    final months = revenue.months;
+    // This card is the year to date and says so, so it plots this year's
+    // months. A ledger carrying earlier years belongs to Income's Yearly
+    // Revenue chart, not to a twenty-one-month curve here.
+    final year = DateTime.now().year;
+    final months = revenue.months.where((m) => m.year == year).toList();
     final latest = months.isEmpty ? null : months.last;
 
     return Column(
@@ -85,7 +89,8 @@ class AdminOverviewPage extends StatelessWidget {
               icon: Icons.attach_money,
               accent: ConsoleColors.success,
               value: latest == null ? '₱0' : formatPeso(latest.revenue),
-              label: latest == null ? 'Revenue' : '${latest.month} Revenue',
+              label: 'Monthly Revenue',
+              footnote: latest == null ? null : '${latest.month} ${latest.year}',
             ),
             ConsoleStatTile(
               icon: Icons.check_circle_outline,
@@ -97,13 +102,12 @@ class AdminOverviewPage extends StatelessWidget {
         ),
         SizedBox(height: context.layout.sectionSpacing),
         ConsoleCard(
-          title:
-              'Revenue — ${months.isEmpty ? DateTime.now().year : months.first.year}',
+          title: 'Monthly Revenue',
           subtitle: context.layout.isPhone
               ? null
               : (months.isEmpty
                   ? 'Platform fees, as the mobile app reports them'
-                  : 'Year to date'),
+                  : 'Normal, Urgent and Emergency, month by month'),
           trailing: Text('YTD', style: Theme.of(context).textTheme.labelSmall),
           child: months.isEmpty
               ? RevenueEmptyChart(

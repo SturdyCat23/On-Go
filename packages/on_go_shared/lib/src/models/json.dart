@@ -28,6 +28,11 @@ String? writeDateOrNull(DateTime? value) => value == null ? null : writeDate(val
 List<String> readStringList(Object? value) =>
     value is List ? value.map((item) => '$item').toList(growable: false) : const [];
 
+/// Reads a nested object out of a decoded JSON value, tolerating null or a
+/// value of the wrong shape — both come back as an empty map.
+Map<String, dynamic> readObject(Object? value) =>
+    value is Map ? Map<String, dynamic>.from(value) : const {};
+
 /// Reads a list of objects out of a decoded JSON value, tolerating null.
 List<Map<String, dynamic>> readObjectList(Object? value) => value is List
     ? value.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList(growable: false)

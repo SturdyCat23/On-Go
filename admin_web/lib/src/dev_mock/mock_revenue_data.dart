@@ -13,12 +13,15 @@ import 'package:on_go_shared/on_go_shared.dart';
 
 /// Whether the mock ledger also carries the previous calendar year.
 ///
-/// Off by default, and that is the interesting setting: the Overview titles
-/// its card from `months.first.year` and plots every month it is handed, so a
-/// two-year ledger reads '2025' over a 21-point curve there. Turn it on to
-/// look at the Income screen's year-on-year chip (`+19% vs 2025`), which is
-/// the one thing a single year cannot show.
-const bool kMockRevenueIncludesPriorYear = false;
+/// On by default now that the Income screen plots Yearly Revenue: a ledger of
+/// one year draws a single bar there, which says nothing about the shape of
+/// the chart. It also feeds the year-on-year chip (`+19% vs 2025`), the other
+/// thing a single year cannot show.
+///
+/// Safe for the Overview, which scopes itself to the current year rather than
+/// plotting every month it is handed. Turn it off to see either screen with a
+/// brand-new platform's single year of history.
+const bool kMockRevenueIncludesPriorYear = true;
 
 /// Whether the month in progress is cut down to the part of it that has passed.
 ///
@@ -76,6 +79,27 @@ class MockMonthProfile {
   double get revenue => transactions * mockBasePlatformFee + priorityFees;
 
   int get priorityJobs => urgentJobs + emergencyJobs;
+
+  /// Everything that wasn't Urgent or Emergency.
+  int get normalJobs => transactions - priorityJobs;
+
+  /// The month split the way the ledger stores it. Derived from the same three
+  /// numbers the totals are, so the three series always add back up to the
+  /// month above them rather than drifting from it.
+  Map<RevenueUrgency, UrgencyTotals> get byUrgency => {
+        RevenueUrgency.normal: UrgencyTotals(
+          revenue: normalJobs * mockBasePlatformFee,
+          transactions: normalJobs,
+        ),
+        RevenueUrgency.urgent: UrgencyTotals(
+          revenue: urgentJobs * (mockBasePlatformFee + mockUrgentFee),
+          transactions: urgentJobs,
+        ),
+        RevenueUrgency.emergency: UrgencyTotals(
+          revenue: emergencyJobs * (mockBasePlatformFee + mockEmergencyFee),
+          transactions: emergencyJobs,
+        ),
+      };
 }
 
 /// A full calendar year, January first.
@@ -126,6 +150,7 @@ PlatformRevenueSummary buildMockRevenueSummary({
       year: year,
       revenue: profile.revenue,
       transactions: profile.transactions,
+      byUrgency: profile.byUrgency,
     ));
     priorityRevenue += profile.priorityFees;
     priorityJobs += profile.priorityJobs;

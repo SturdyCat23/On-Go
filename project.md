@@ -97,12 +97,23 @@ where a change is cheap and a duplicate is expensive.
 | `formatTimeRemaining()` | same | One countdown format app-wide: `4d 23h 59m` at or above a day, `23h 59m 59s` below it |
 | `clientCancelLockedByEta()` | same | Whether the client may cancel yet, enforced in the store rather than per screen |
 | `PointsPolicyStore.current` | `lib/data/points_policy_store.dart` | Every points rate, so an admin changing one changes all the arithmetic at once |
+| `revenueUrgencyColor()` | `admin_web/lib/src/widgets/revenue_charts.dart` | The colour of Normal / Urgent / Emergency in every console chart, ring and key |
+| `PlatformRevenueSummary.yearlyTotals` | `packages/on_go_shared/…/platform_revenue.dart` | A year's revenue, always summed from its months rather than stored beside them |
 
 **The priority fee is platform revenue, not payout.** +₱50 Urgent and +₱100
 Emergency are charged at checkout, booked as ONGO revenue on a successful
 payment, and never reach the mechanic. Urgency still drives dispatch priority
 and the completion deadline. The two halves live in separate functions on
 purpose — compare `clientTotalPaymentAmount` with `effectivePaymentAmount`.
+
+**The ledger is split by urgency, and Normal earns nothing.** A payment is
+reported with its `RevenueUrgency`, so the console's Overview line chart,
+Income bars and Income rings all read one breakdown rather than three. Because
+Normal jobs carry no priority fee, their **revenue** line legitimately sits at
+zero while their **transaction** count is the largest of the three — which is
+why the console reports volume and revenue as separate figures instead of
+inferring one from the other. Give Normal a base fee and the line lifts on its
+own, no chart change required.
 
 **The ETA is a promise, not an estimate.** The mechanic sends a number plus a
 unit; the countdown starts when the quote is accepted. While it runs the job is

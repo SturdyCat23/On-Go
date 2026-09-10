@@ -1413,6 +1413,7 @@ class QuoteNotificationStore extends ChangeNotifier {
         requestId: req.id,
         platformFee: fee,
         paidAt: req.paymentCompletedAt!,
+        urgency: RevenueUrgency.fromJobUrgency(req.urgency),
       ),
     ));
 

@@ -48,7 +48,7 @@ class MockRevenueService implements PlatformRevenueApi {
         if (month.month == label && month.year == year)
           () {
             matched = true;
-            return month.addPayment(fee: payment.platformFee);
+            return month.addPayment(fee: payment.platformFee, urgency: payment.urgency);
           }()
         else
           month,
@@ -60,6 +60,10 @@ class MockRevenueService implements PlatformRevenueApi {
         year: year,
         revenue: payment.platformFee,
         transactions: 1,
+        byUrgency: {
+          payment.urgency:
+              UrgencyTotals(revenue: payment.platformFee, transactions: 1),
+        },
       ));
       months.sort((a, b) => a.year == b.year
           ? a.monthNumber.compareTo(b.monthNumber)

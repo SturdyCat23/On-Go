@@ -40,11 +40,19 @@ class LocalRevenueService implements PlatformRevenueApi {
 
     final index = _months.indexWhere((m) => m.month == month && m.year == year);
     if (index >= 0) {
-      _months[index] = _months[index].addPayment(fee: fee);
+      _months[index] = _months[index].addPayment(fee: fee, urgency: payment.urgency);
     } else {
       _months.insert(
         _insertIndexFor(payment.paidAt),
-        MonthlyIncome(month: month, year: year, revenue: fee, transactions: 1),
+        MonthlyIncome(
+          month: month,
+          year: year,
+          revenue: fee,
+          transactions: 1,
+          byUrgency: {
+            payment.urgency: UrgencyTotals(revenue: fee, transactions: 1),
+          },
+        ),
       );
     }
 

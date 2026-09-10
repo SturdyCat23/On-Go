@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../backend/console_backend.dart';
 import '../theme/console_theme.dart';
 import 'console_formats.dart';
+import 'console_widgets.dart';
 
 /// The two revenue charts, ported from the Admin panel this console replaced.
 ///
@@ -12,6 +13,83 @@ import 'console_formats.dart';
 ///
 /// Both read the same [MonthlyIncome] list and share the axis and the callout,
 /// so the Overview line and the Income bars cannot drift apart.
+
+/// THE colour each urgency is drawn in, wherever it appears in the console —
+/// the two charts, the legend and the rings all read this one function, so a
+/// reader who learns the key on the Overview can use it on Income.
+///
+/// It is the same severity ramp the mobile app paints urgency in (green →
+/// amber → red), so a Normal job looks like a Normal job in both applications.
+/// The colours come from the shared palette, never from a literal here.
+Color revenueUrgencyColor(RevenueUrgency urgency) {
+  switch (urgency) {
+    case RevenueUrgency.normal:
+      return ConsoleColors.success;
+    case RevenueUrgency.urgent:
+      return ConsoleColors.warning;
+    case RevenueUrgency.emergency:
+      return ConsoleColors.danger;
+  }
+}
+
+/// One urgency plotted across the months on screen.
+///
+/// Built once per chart and handed to the painter, so the three series are
+/// read out of [MonthlyIncome] in exactly one place rather than each chart
+/// reaching into the model its own way.
+class RevenueSeries {
+  final RevenueUrgency urgency;
+  final Color color;
+
+  /// Revenue per month, in the order the months were given.
+  final List<double> revenue;
+
+  /// Completed payments per month, same order.
+  final List<int> transactions;
+
+  const RevenueSeries({
+    required this.urgency,
+    required this.color,
+    required this.revenue,
+    required this.transactions,
+  });
+
+  String get label => urgency.label;
+}
+
+List<RevenueSeries> buildRevenueSeries(List<RevenuePeriod> periods) => [
+      for (final urgency in RevenueUrgency.values)
+        RevenueSeries(
+          urgency: urgency,
+          color: revenueUrgencyColor(urgency),
+          revenue: [for (final period in periods) period.revenueFor(urgency)],
+          transactions: [for (final period in periods) period.transactionsFor(urgency)],
+        ),
+    ];
+
+/// The top of the scale for OVERLAID series — the tallest single point across
+/// all three, with headroom. Scaling to the period TOTAL instead would flatten
+/// every line into the bottom third, since the total is the three added up.
+double revenueSeriesMax(List<RevenueSeries> series) {
+  var max = 0.0;
+  for (final line in series) {
+    for (final value in line.revenue) {
+      if (value > max) max = value;
+    }
+  }
+  // A ledger with no fees yet still needs a scale to draw an axis against.
+  return max <= 0 ? 100 : max * 1.15;
+}
+
+/// The top of the scale for STACKED bars — the tallest period total, since a
+/// stack is the three urgencies piled on each other rather than laid over.
+double revenuePeriodMax(List<RevenuePeriod> periods) {
+  var max = 0.0;
+  for (final period in periods) {
+    if (period.revenue > max) max = period.revenue;
+  }
+  return max <= 0 ? 100 : max * 1.15;
+}
 
 /// The pointer handling both charts sit under, so a mouse and a finger pick a
 /// month the same way on either of them.
@@ -95,25 +173,31 @@ class RevenueAxis extends StatelessWidget {
   }
 }
 
-/// The floating callout naming the highlighted month and its revenue.
+/// The floating callout naming the highlighted month, its total, and what each
+/// urgency contributed to it.
+///
+/// Three lines rather than one, because the charts now draw three series: a
+/// callout reporting only the total would name a figure no line on screen is
+/// actually at.
 class RevenueCallout extends StatelessWidget {
   final String label;
-  final double value;
-  final int transactions;
+  final RevenuePeriod period;
 
-  const RevenueCallout({
-    super.key,
-    required this.label,
-    required this.value,
-    required this.transactions,
-  });
+  const RevenueCallout({super.key, required this.label, required this.period});
+
+  /// Fixed, because the charts position it by half its width — a callout that
+  /// sized itself to its content would drift off the point it is naming.
+  static const double width = 168;
 
   @override
   Widget build(BuildContext context) {
+    final onDark = ConsoleColors.canvas;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
+          width: width,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
           decoration: BoxDecoration(
             color: ConsoleColors.text,
@@ -132,25 +216,54 @@ class RevenueCallout extends StatelessWidget {
                   fontSize: 10,
                   letterSpacing: 0.7,
                   fontWeight: FontWeight.w700,
-                  color: ConsoleColors.canvas.withValues(alpha: 0.75),
+                  color: onDark.withValues(alpha: 0.75),
                 ),
               ),
               const SizedBox(height: 3),
               Text(
-                '₱${value.toStringAsFixed(0)}',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: ConsoleColors.canvas,
-                ),
+                '₱${period.revenue.toStringAsFixed(0)}',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: onDark),
               ),
               Text(
-                transactions == 1 ? '1 payment' : '$transactions payments',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: ConsoleColors.canvas.withValues(alpha: 0.75),
-                ),
+                period.transactions == 1 ? '1 payment' : '${period.transactions} payments',
+                style: TextStyle(fontSize: 11, color: onDark.withValues(alpha: 0.75)),
               ),
+              const SizedBox(height: 6),
+              for (final urgency in RevenueUrgency.values)
+                Padding(
+                  padding: const EdgeInsets.only(top: 3),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: revenueUrgencyColor(urgency),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          urgency.label,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: onDark.withValues(alpha: 0.85),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '₱${period.revenueFor(urgency).toStringAsFixed(0)} · '
+                        '${period.transactionsFor(urgency)}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: onDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
         ),
@@ -179,9 +292,15 @@ class _CalloutTail extends CustomPainter {
   bool shouldRepaint(_CalloutTail old) => old.color != color;
 }
 
-/// Monthly revenue as a line, for the Admin Overview.
+/// Monthly revenue as three curves — Normal, Urgent and Emergency — for the
+/// Admin Overview.
+///
+/// Smooth curves over a translucent wash of their own colour, on a light
+/// horizontal grid, with the key underneath. The washes are deliberately faint
+/// and drawn beneath every line, so three overlapping areas read as depth
+/// rather than hiding the two series behind the front one.
 class RevenueLineChart extends StatefulWidget {
-  final List<MonthlyIncome> income;
+  final List<RevenuePeriod> income;
   final double height;
 
   const RevenueLineChart({super.key, required this.income, this.height = 170});
@@ -196,8 +315,8 @@ class _RevenueLineChartState extends State<RevenueLineChart> {
   @override
   Widget build(BuildContext context) {
     final income = widget.income;
-    final maxRevenue =
-        income.map((m) => m.revenue).reduce((a, b) => a > b ? a : b) * 1.15;
+    final series = buildRevenueSeries(income);
+    final maxRevenue = revenueSeriesMax(series);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,16 +353,15 @@ class _RevenueLineChartState extends State<RevenueLineChart> {
                           Positioned.fill(
                             child: CustomPaint(
                               painter: _LineChartPainter(
-                                income: income,
+                                series: series,
                                 maxRevenue: maxRevenue,
                                 highlight: _hovered,
-                                line: ConsoleColors.brand,
                                 grid: ConsoleColors.border,
                                 surface: ConsoleColors.surface,
                               ),
                             ),
                           ),
-                          ..._callout(income, maxRevenue, segment, width),
+                          ..._callout(income, series, maxRevenue, segment, width),
                         ],
                       ),
                     );
@@ -254,13 +372,17 @@ class _RevenueLineChartState extends State<RevenueLineChart> {
           ),
         ),
         const SizedBox(height: 8),
-        _MonthAxisLabels(income: income, highlight: _hovered),
+        _PeriodAxisLabels(periods: income, highlight: _hovered),
+        const SizedBox(height: 14),
+        // The key, doubling as the monthly transaction counts asked of it.
+        RevenueUrgencyLegend(periods: income, highlight: _hovered),
       ],
     );
   }
 
   List<Widget> _callout(
-    List<MonthlyIncome> income,
+    List<RevenuePeriod> income,
+    List<RevenueSeries> series,
     double maxRevenue,
     double segment,
     double width,
@@ -268,22 +390,25 @@ class _RevenueLineChartState extends State<RevenueLineChart> {
     final index = _hovered;
     if (index == null) return const [];
 
-    final point = income[index];
-    final fraction =
-        maxRevenue == 0 ? 0.0 : (point.revenue / maxRevenue).clamp(0.0, 1.0);
-    final pointY = widget.height - fraction * (widget.height - 12);
+    // Anchor the callout above the HIGHEST of the three points at this month,
+    // so it never lands on top of a line it is describing.
+    var topFraction = 0.0;
+    for (final line in series) {
+      final fraction =
+          maxRevenue == 0 ? 0.0 : (line.revenue[index] / maxRevenue).clamp(0.0, 1.0);
+      if (fraction > topFraction) topFraction = fraction;
+    }
+    final pointY = widget.height - topFraction * (widget.height - 12);
 
-    const calloutWidth = 130.0;
-    final maxLeft = (width - calloutWidth).clamp(0.0, double.infinity);
+    final maxLeft = (width - RevenueCallout.width).clamp(0.0, double.infinity);
     return [
       Positioned(
-        left: (segment * index - calloutWidth / 2).clamp(0.0, maxLeft),
-        top: (pointY - 78).clamp(0.0, widget.height),
+        left: (segment * index - RevenueCallout.width / 2).clamp(0.0, maxLeft),
+        top: (pointY - 132).clamp(0.0, widget.height),
         child: IgnorePointer(
           child: RevenueCallout(
-            label: '${point.month} ${point.year}',
-            value: point.revenue,
-            transactions: point.transactions,
+            label: income[index].periodLabel,
+            period: income[index],
           ),
         ),
       ),
@@ -293,24 +418,23 @@ class _RevenueLineChartState extends State<RevenueLineChart> {
 
 class _LineChartPainter extends CustomPainter {
   _LineChartPainter({
-    required this.income,
+    required this.series,
     required this.maxRevenue,
     required this.highlight,
-    required this.line,
     required this.grid,
     required this.surface,
   });
 
-  final List<MonthlyIncome> income;
+  final List<RevenueSeries> series;
   final double maxRevenue;
   final int? highlight;
-  final Color line;
   final Color grid;
   final Color surface;
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (income.isEmpty) return;
+    if (series.isEmpty || series.first.revenue.isEmpty) return;
+    final count = series.first.revenue.length;
 
     final gridPaint = Paint()
       ..color = grid
@@ -320,15 +444,91 @@ class _LineChartPainter extends CustomPainter {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
     }
 
-    final dx = income.length > 1 ? size.width / (income.length - 1) : size.width;
-    final points = <Offset>[];
-    for (var i = 0; i < income.length; i++) {
+    final dx = count > 1 ? size.width / (count - 1) : size.width;
+
+    Offset pointFor(RevenueSeries line, int index) {
       final fraction =
-          maxRevenue == 0 ? 0.0 : (income[i].revenue / maxRevenue).clamp(0.0, 1.0);
-      points.add(Offset(dx * i, size.height - fraction * (size.height - 12)));
+          maxRevenue == 0 ? 0.0 : (line.revenue[index] / maxRevenue).clamp(0.0, 1.0);
+      return Offset(dx * index, size.height - fraction * (size.height - 12));
     }
 
+    // The vertical marker goes down first, so it sits behind every line
+    // instead of cutting across them.
+    final index = highlight;
+    if (index != null) {
+      final x = dx * index.clamp(0, count - 1);
+      _dashedLine(canvas, Offset(x, 0), Offset(x, size.height), grid);
+    }
+
+    final curves = <RevenueSeries, Path>{};
+    final plotted = <RevenueSeries, List<Offset>>{};
+    for (final line in series) {
+      final points = [for (var i = 0; i < count; i++) pointFor(line, i)];
+      plotted[line] = points;
+      curves[line] = _smoothPath(points);
+    }
+
+    // Every wash first, then every line. Drawing each series complete would
+    // put the second area over the first line, and the third over both — the
+    // series drawn last would be the only one fully visible.
+    for (final line in series) {
+      final points = plotted[line]!;
+      final fill = Path.from(curves[line]!)
+        ..lineTo(points.last.dx, size.height)
+        ..lineTo(points.first.dx, size.height)
+        ..close();
+
+      canvas.drawPath(
+        fill,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              line.color.withValues(alpha: 0.34),
+              line.color.withValues(alpha: 0.02),
+            ],
+          ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
+      );
+    }
+
+    for (final line in series) {
+      canvas.drawPath(
+        curves[line]!,
+        Paint()
+          ..color = line.color
+          ..strokeWidth = 2.4
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round,
+      );
+
+      if (index != null) {
+        final points = plotted[line]!;
+        final point = points[index.clamp(0, points.length - 1)];
+        canvas.drawCircle(point, 5, Paint()..color = line.color);
+        canvas.drawCircle(
+          point,
+          5,
+          Paint()
+            ..color = surface
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2,
+        );
+      }
+    }
+  }
+
+  /// A curve through [points], rounded at each one rather than cornered.
+  ///
+  /// Each segment is a quadratic bent around the point it passes, joining the
+  /// midpoints either side of it — the standard way to smooth a series without
+  /// the overshoot a spline through every point produces, which on a revenue
+  /// chart would draw dips below zero that were never earned.
+  Path _smoothPath(List<Offset> points) {
     final path = Path()..moveTo(points.first.dx, points.first.dy);
+    if (points.length == 1) return path;
+
     for (var i = 0; i < points.length - 1; i++) {
       final current = points[i];
       final next = points[i + 1];
@@ -336,44 +536,7 @@ class _LineChartPainter extends CustomPainter {
       path.quadraticBezierTo(current.dx, current.dy, mid.dx, mid.dy);
     }
     path.lineTo(points.last.dx, points.last.dy);
-
-    final fill = Path.from(path)
-      ..lineTo(points.last.dx, size.height)
-      ..lineTo(points.first.dx, size.height)
-      ..close();
-
-    canvas.drawPath(
-      fill,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [line.withValues(alpha: 0.20), line.withValues(alpha: 0.0)],
-        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
-    );
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = line
-        ..strokeWidth = 2.4
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round,
-    );
-
-    final index = highlight;
-    if (index != null) {
-      final point = points[index.clamp(0, points.length - 1)];
-      _dashedLine(canvas, point, Offset(point.dx, size.height), grid);
-      canvas.drawCircle(point, 5, Paint()..color = line);
-      canvas.drawCircle(
-        point,
-        5,
-        Paint()
-          ..color = surface
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2,
-      );
-    }
+    return path;
   }
 
   void _dashedLine(Canvas canvas, Offset start, Offset end, Color color) {
@@ -395,18 +558,111 @@ class _LineChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _LineChartPainter old) =>
-      old.income != income ||
+      old.series != series ||
       old.maxRevenue != maxRevenue ||
       old.highlight != highlight ||
-      old.line != line;
+      old.grid != grid;
 }
 
-/// Monthly revenue as bars, for the Income screen.
+/// The key under either chart, and the three transaction indicators in one.
+///
+/// A swatch, the urgency, and how many payments of it that period saw. Which
+/// period is whichever one the reader is pointing at, falling back to the most
+/// recent — so the counts always describe the part of the chart being looked
+/// at rather than a fixed one that may be off the point.
+class RevenueUrgencyLegend extends StatelessWidget {
+  const RevenueUrgencyLegend({
+    super.key,
+    required this.periods,
+    required this.highlight,
+  });
+
+  final List<RevenuePeriod> periods;
+  final int? highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    if (periods.isEmpty) return const SizedBox.shrink();
+    final period =
+        periods[(highlight ?? periods.length - 1).clamp(0, periods.length - 1)];
+    final text = Theme.of(context).textTheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '${period.periodLabel} · '
+          '${period.transactions} ${period.transactions == 1 ? 'transaction' : 'transactions'}',
+          style: text.bodySmall,
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 20,
+          runSpacing: 10,
+          children: [
+            for (final urgency in RevenueUrgency.values)
+              _LegendEntry(
+                color: revenueUrgencyColor(urgency),
+                label: urgency.label,
+                count: period.transactionsFor(urgency),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _LegendEntry extends StatelessWidget {
+  const _LegendEntry({
+    required this.color,
+    required this.label,
+    required this.count,
+  });
+
+  final Color color;
+  final String label;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 11,
+          height: 11,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 7),
+        Text(label.toUpperCase(),
+            style: text.labelSmall?.copyWith(letterSpacing: 0.6)),
+        const SizedBox(width: 6),
+        Text(
+          '$count',
+          style: text.titleSmall?.copyWith(color: color),
+        ),
+      ],
+    );
+  }
+}
+
+/// Revenue as stacked bars — one bar per period, segmented by urgency.
+///
+/// The Income screen hands it years, so each bar is a whole year of platform
+/// revenue and its height is that year's total. Stacked rather than grouped
+/// because the question the Income screen asks is "how much did the year
+/// earn", and a stack answers that with its height while still showing where
+/// the money came from.
 class RevenueBarChart extends StatefulWidget {
-  final List<MonthlyIncome> income;
+  final List<RevenuePeriod> periods;
   final double height;
 
-  const RevenueBarChart({super.key, required this.income, this.height = 190});
+  const RevenueBarChart({super.key, required this.periods, this.height = 190});
 
   @override
   State<RevenueBarChart> createState() => _RevenueBarChartState();
@@ -415,11 +671,18 @@ class RevenueBarChart extends StatefulWidget {
 class _RevenueBarChartState extends State<RevenueBarChart> {
   int? _hovered;
 
+  /// Stacked bottom-up in urgency order, so the same band is in the same place
+  /// in every bar and the eye can follow one urgency across the chart.
+  static const List<RevenueUrgency> _stackOrder = [
+    RevenueUrgency.normal,
+    RevenueUrgency.urgent,
+    RevenueUrgency.emergency,
+  ];
+
   @override
   Widget build(BuildContext context) {
-    final income = widget.income;
-    final maxRevenue =
-        income.map((m) => m.revenue).reduce((a, b) => a > b ? a : b) * 1.15;
+    final periods = widget.periods;
+    final maxRevenue = revenuePeriodMax(periods);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -435,11 +698,11 @@ class _RevenueBarChartState extends State<RevenueBarChart> {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final width = constraints.maxWidth;
-                    final slot = width / income.length;
+                    final slot = width / periods.length;
 
                     void probe(Offset local) {
                       final index =
-                          (local.dx / slot).floor().clamp(0, income.length - 1);
+                          (local.dx / slot).floor().clamp(0, periods.length - 1);
                       if (index != _hovered) setState(() => _hovered = index);
                     }
 
@@ -451,8 +714,8 @@ class _RevenueBarChartState extends State<RevenueBarChart> {
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [
-                          Positioned.fill(child: _bars(income, maxRevenue)),
-                          ..._callout(income, maxRevenue, slot, width),
+                          Positioned.fill(child: _bars(periods, maxRevenue)),
+                          ..._callout(periods, maxRevenue, slot, width),
                         ],
                       ),
                     );
@@ -463,54 +726,75 @@ class _RevenueBarChartState extends State<RevenueBarChart> {
           ),
         ),
         const SizedBox(height: 8),
-        _MonthAxisLabels(income: income, highlight: _hovered),
+        _PeriodAxisLabels(periods: periods, highlight: _hovered),
+        const SizedBox(height: 14),
+        RevenueUrgencyLegend(periods: periods, highlight: _hovered),
       ],
     );
   }
 
-  Widget _bars(List<MonthlyIncome> income, double maxRevenue) {
-    return Stack(
-      children: [
-        for (var i = 0; i <= 4; i++)
-          Positioned(
-            left: 0,
-            right: 0,
-            top: widget.height * i / 4,
-            child: Container(height: 1, color: ConsoleColors.border),
-          ),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
+  /// How wide one bar is, given the room each period has.
+  ///
+  /// A proportion of the slot rather than a fixed width, so two years and
+  /// twelve months both look deliberate — but capped, because a single year
+  /// spread across the whole card would be a block, not a bar.
+  double _barWidth(double slot) => (slot * 0.55).clamp(10.0, 76.0);
+
+  Widget _bars(List<RevenuePeriod> periods, double maxRevenue) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final slot = constraints.maxWidth / periods.length;
+        final barWidth = _barWidth(slot);
+
+        return Stack(
           children: [
-            for (final entry in income.asMap().entries)
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Container(
-                      height: widget.height *
-                          (maxRevenue == 0
-                              ? 0.0
-                              : (entry.value.revenue / maxRevenue).clamp(0.03, 1.0)),
-                      decoration: BoxDecoration(
-                        color: entry.key == _hovered
-                            ? ConsoleColors.brandStrong
-                            : ConsoleColors.brand.withValues(alpha: 0.85),
-                        borderRadius:
-                            const BorderRadius.vertical(top: Radius.circular(5)),
+            for (var i = 0; i <= 4; i++)
+              Positioned(
+                left: 0,
+                right: 0,
+                top: widget.height * i / 4,
+                child: Container(height: 1, color: ConsoleColors.border),
+              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                for (var i = 0; i < periods.length; i++)
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: SizedBox(
+                        width: barWidth,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Top of the stack first, since a Column paints
+                            // downwards and the highest urgency sits on top.
+                            for (final urgency in _stackOrder.reversed)
+                              _StackSegment(
+                                height: widget.height *
+                                    (maxRevenue == 0
+                                        ? 0.0
+                                        : (periods[i].revenueFor(urgency) / maxRevenue)
+                                            .clamp(0.0, 1.0)),
+                                color: revenueUrgencyColor(urgency),
+                                dimmed: _hovered != null && _hovered != i,
+                                isTop: urgency == _stackOrder.last,
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
+              ],
+            ),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 
   List<Widget> _callout(
-    List<MonthlyIncome> income,
+    List<RevenuePeriod> periods,
     double maxRevenue,
     double slot,
     double width,
@@ -518,21 +802,44 @@ class _RevenueBarChartState extends State<RevenueBarChart> {
     final index = _hovered;
     if (index == null) return const [];
 
-    final point = income[index];
-    final barHeight = widget.height *
-        (maxRevenue == 0 ? 0.0 : (point.revenue / maxRevenue).clamp(0.03, 1.0));
+    // Above the whole stack — its height is the period's total, which is what
+    // the callout leads with.
+    final fraction =
+        maxRevenue == 0 ? 0.0 : (periods[index].revenue / maxRevenue).clamp(0.0, 1.0);
+    final barHeight = widget.height * fraction;
 
-    const calloutWidth = 130.0;
-    final maxLeft = (width - calloutWidth).clamp(0.0, double.infinity);
+    const calloutHeight = 134.0;
+    final maxLeft = (width - RevenueCallout.width).clamp(0.0, double.infinity);
+    final centre = slot * index + slot / 2;
+    final wantedTop = widget.height - barHeight - calloutHeight;
+
+    // The tallest bar reaches the top of the plot, leaving nothing above it to
+    // put the callout in. Rather than dropping it onto the bar it is
+    // describing, move it alongside — there is always room, because a bar is
+    // only ever part of its slot.
+    final double left;
+    final double top;
+    if (wantedTop >= 0) {
+      left = (centre - RevenueCallout.width / 2).clamp(0.0, maxLeft);
+      top = wantedTop;
+    } else {
+      final barEdge = _barWidth(slot) / 2 + 12;
+      final toTheLeft = centre > width / 2;
+      left = (toTheLeft
+              ? centre - barEdge - RevenueCallout.width
+              : centre + barEdge)
+          .clamp(0.0, maxLeft);
+      top = 0;
+    }
+
     return [
       Positioned(
-        left: (slot * index + slot / 2 - calloutWidth / 2).clamp(0.0, maxLeft),
-        top: (widget.height - barHeight - 80).clamp(0.0, widget.height),
+        left: left,
+        top: top,
         child: IgnorePointer(
           child: RevenueCallout(
-            label: '${point.month} ${point.year}',
-            value: point.revenue,
-            transactions: point.transactions,
+            label: periods[index].periodLabel,
+            period: periods[index],
           ),
         ),
       ),
@@ -540,29 +847,73 @@ class _RevenueBarChartState extends State<RevenueBarChart> {
   }
 }
 
-/// The month names under either chart.
-///
-/// Twelve of them do not fit across a phone, so on a narrow screen only every
-/// nth label is printed — the highlighted one always is, because that is the
-/// one being read.
-class _MonthAxisLabels extends StatelessWidget {
-  const _MonthAxisLabels({required this.income, required this.highlight});
+/// One urgency's band inside a stacked bar.
+class _StackSegment extends StatelessWidget {
+  const _StackSegment({
+    required this.height,
+    required this.color,
+    required this.dimmed,
+    required this.isTop,
+  });
 
-  final List<MonthlyIncome> income;
+  final double height;
+  final Color color;
+
+  /// Faded because another bar is being read. The whole stack dims together,
+  /// so the highlighted period stands out as one thing.
+  final bool dimmed;
+
+  /// The band that caps the bar, and the only one with a rounded edge.
+  final bool isTop;
+
+  @override
+  Widget build(BuildContext context) {
+    // A band worth nothing is drawn as nothing rather than as a hairline that
+    // reads as a small amount.
+    if (height <= 0) return const SizedBox.shrink();
+
+    return Padding(
+      // The hairline gap between bands in the reference: enough to separate
+      // two similar colours, not enough to break the bar into blocks.
+      padding: const EdgeInsets.only(bottom: 1.5),
+      child: Container(
+        height: height,
+        decoration: BoxDecoration(
+          color: dimmed ? color.withValues(alpha: 0.45) : color,
+          borderRadius: isTop
+              ? const BorderRadius.vertical(top: Radius.circular(3))
+              : BorderRadius.zero,
+        ),
+      ),
+    );
+  }
+}
+
+/// The period names under either chart — month names on the Overview, years
+/// on Income.
+///
+/// Twelve months do not fit across a phone, so on a narrow screen only every
+/// nth label is printed — the highlighted one always is, because that is the
+/// one being read. A handful of years always fit, and the same stride rule
+/// leaves them all printed.
+class _PeriodAxisLabels extends StatelessWidget {
+  const _PeriodAxisLabels({required this.periods, required this.highlight});
+
+  final List<RevenuePeriod> periods;
   final int? highlight;
 
   @override
   Widget build(BuildContext context) {
-    final stride = context.layout.monthLabelStride(income.length);
+    final stride = context.layout.monthLabelStride(periods.length);
 
     return Row(
       children: [
         const SizedBox(width: 54),
-        for (final entry in income.asMap().entries)
+        for (final entry in periods.asMap().entries)
           Expanded(
             child: Text(
               entry.key % stride == 0 || entry.key == highlight
-                  ? entry.value.month
+                  ? entry.value.axisLabel
                   : '',
               textAlign: TextAlign.center,
               maxLines: 1,
@@ -580,6 +931,248 @@ class _MonthAxisLabels extends StatelessWidget {
       ],
     );
   }
+}
+
+/// The year's transactions as three rings — one per urgency.
+///
+/// Each ring reports that urgency's completed payments for the year, and its
+/// arc is that count as a share of the year's payments, so the three arcs add
+/// up to a full circle between them. The figure in the middle is the count
+/// itself rather than the percentage: a share tells you the mix, but the
+/// number of jobs is what the Income screen is being asked for.
+class RevenueUrgencyRings extends StatelessWidget {
+  const RevenueUrgencyRings({
+    super.key,
+    required this.revenue,
+    required this.year,
+  });
+
+  final PlatformRevenueSummary revenue;
+  final int year;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = revenue.transactionsForYear(year);
+    // A phone shows the same three-across row, just tighter: the three rings
+    // are meant to be compared with each other, and a column of three turns
+    // that comparison into a scroll.
+    final compact = context.layout.isPhone;
+
+    return ConsoleResponsiveGrid(
+      columns: 3,
+      // Narrower gutters on a phone, because every pixel taken from between
+      // the cells goes into the rings themselves.
+      spacing: compact ? 8 : 16,
+      children: [
+        for (final urgency in RevenueUrgency.values)
+          _UrgencyRing(
+            urgency: urgency,
+            count: revenue.transactionsForYearBy(urgency, year),
+            revenue: revenue.revenueForYearBy(urgency, year),
+            total: total,
+            compact: compact,
+          ),
+      ],
+    );
+  }
+}
+
+class _UrgencyRing extends StatelessWidget {
+  const _UrgencyRing({
+    required this.urgency,
+    required this.count,
+    required this.revenue,
+    required this.total,
+    this.compact = false,
+  });
+
+  final RevenueUrgency urgency;
+  final int count;
+  final double revenue;
+  final int total;
+
+  /// Three rings across a phone. The ring itself needs no special case — it
+  /// measures its own cell — but the words around it do: a caption that reads
+  /// on one line at 300 pixels becomes four wrapped lines at 95.
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final color = revenueUrgencyColor(urgency);
+    final share = total == 0 ? 0.0 : count / total;
+    final percent = '${(share * 100).toStringAsFixed(0)}%';
+
+    return Column(
+      children: [
+        // The ring is measured from the cell it was given rather than fixed,
+        // so it fills a wide desktop column and shrinks into a third of a
+        // phone's width without a breakpoint of its own. Clamped at both ends:
+        // too small to read the count at the bottom, out of proportion with
+        // its own caption at the top.
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final available = constraints.maxWidth.isFinite
+                ? constraints.maxWidth
+                : MediaQuery.sizeOf(context).width;
+            // Nearly the whole cell, since the cell is already a third of the
+            // row — the gaps between the rings come from the grid's spacing,
+            // not from padding inside each one.
+            final diameter = (available * 0.92).clamp(56.0, 150.0);
+            final stroke = (diameter * 0.078).clamp(4.0, 12.0);
+            // Under about a hundred pixels there is no room for a word as well
+            // as the number, and the label directly beneath the ring already
+            // says what is being counted.
+            final showsUnit = diameter >= 100;
+
+            return SizedBox(
+              width: diameter,
+              height: diameter,
+              child: CustomPaint(
+                painter: _RingPainter(
+                  progress: share,
+                  color: color,
+                  stroke: stroke,
+                  track: ConsoleColors.border,
+                ),
+                child: Center(
+                  // The figure scales with the ring, so a long count never
+                  // runs into the arc around it.
+                  child: SizedBox(
+                    width: diameter - stroke * 2 - 10,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '$count',
+                            style: text.headlineSmall
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          if (showsUnit)
+                            Text(
+                              count == 1 ? 'payment' : 'payments',
+                              style: text.bodySmall,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        SizedBox(height: compact ? 7 : 10),
+        // Scaled down rather than wrapped or clipped: EMERGENCY beside its
+        // swatch is wider than a third of a small phone.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 11,
+                height: 11,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 7),
+              Text(
+                urgency.label.toUpperCase(),
+                style: text.labelSmall?.copyWith(letterSpacing: 0.6),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 3),
+        if (total == 0)
+          Text('No payments yet', style: text.bodySmall, textAlign: TextAlign.center)
+        else if (compact) ...[
+          // Two short lines instead of one long one — the same two facts, in
+          // the width a third of a phone actually has.
+          Text(
+            '$percent of the year',
+            style: text.bodySmall,
+            textAlign: TextAlign.center,
+          ),
+          Text(
+            formatPeso(revenue),
+            style: text.bodySmall,
+            textAlign: TextAlign.center,
+          ),
+        ] else
+          Text(
+            '$percent of the year · ${formatPeso(revenue)}',
+            style: text.bodySmall,
+            textAlign: TextAlign.center,
+          ),
+      ],
+    );
+  }
+}
+
+class _RingPainter extends CustomPainter {
+  const _RingPainter({
+    required this.progress,
+    required this.color,
+    required this.stroke,
+    required this.track,
+  });
+
+  final double progress;
+  final Color color;
+
+  /// Scaled with the ring, so a small one keeps the same proportions rather
+  /// than turning into a thick band around a tiny hole.
+  final double stroke;
+
+  final Color track;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Rect.fromLTWH(
+      stroke / 2,
+      stroke / 2,
+      size.width - stroke,
+      size.height - stroke,
+    );
+
+    canvas.drawArc(
+      rect,
+      0,
+      3.14159265 * 2,
+      false,
+      Paint()
+        ..color = track
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke,
+    );
+
+    if (progress <= 0) return;
+    canvas.drawArc(
+      rect,
+      // From twelve o'clock, clockwise, the way a dial is read.
+      -3.14159265 / 2,
+      3.14159265 * 2 * progress.clamp(0.0, 1.0),
+      false,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _RingPainter old) =>
+      old.progress != progress ||
+      old.color != color ||
+      old.stroke != stroke ||
+      old.track != track;
 }
 
 /// What the revenue screens show before a single payment has been reported.

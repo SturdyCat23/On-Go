@@ -26,6 +26,9 @@ class AdminIncomePage extends StatelessWidget {
         builder: (context, snapshot) {
           final revenue = snapshot.data ?? const PlatformRevenueSummary();
           final months = revenue.months;
+          // The Yearly Revenue chart plots whole years, totalled from the same
+          // months the breakdown below lists — never a second set of figures.
+          final years = revenue.yearlyTotals;
           final thisYear = revenue.revenueForYear(year);
           final transactions = revenue.transactionsForYear(year);
           final trend = revenueTrend(
@@ -73,18 +76,42 @@ class AdminIncomePage extends StatelessWidget {
               ],
               SizedBox(height: context.layout.sectionSpacing),
               ConsoleCard(
-                title: 'Monthly revenue',
-                subtitle: 'Platform fees booked per month',
-                child: months.isEmpty
+                title: 'Yearly Revenue',
+                subtitle: years.length == 1
+                    ? 'Platform fees booked in ${years.single.year}, by urgency'
+                    : 'Platform fees booked per year, by urgency',
+                trailing: years.isEmpty
+                    ? null
+                    : Text(
+                        years.length == 1
+                            ? '1 year'
+                            : '${years.first.year}–${years.last.year}',
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                child: years.isEmpty
                     ? RevenueEmptyChart(
                         height: context.layout.chartHeight,
                         message:
-                            'Months appear here as the mobile app reports client payments.',
+                            'Years appear here as the mobile app reports client payments.',
                       )
                     : RevenueBarChart(
-                        income: months,
+                        periods: years,
                         height: context.layout.chartHeight,
                       ),
+              ),
+              SizedBox(height: context.layout.sectionSpacing),
+              ConsoleCard(
+                title: 'Transactions by urgency',
+                subtitle: 'Completed payments in $year, and each urgency\'s share',
+                child: transactions == 0
+                    ? const ConsoleEmptyState(
+                        icon: Icons.donut_large_outlined,
+                        title: 'No payments this year',
+                        message:
+                            'Each ring fills as the mobile app reports Normal, Urgent '
+                            'and Emergency payments.',
+                      )
+                    : RevenueUrgencyRings(revenue: revenue, year: year),
               ),
               SizedBox(height: context.layout.sectionSpacing),
               ConsoleCard(
