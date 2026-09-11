@@ -52,8 +52,6 @@ class _ClientRewardsScreenState extends State<ClientRewardsScreen> {
   Widget build(BuildContext context) {
     final balance = _wallet.balanceFor(_owner);
     final entries = _wallet.entriesFor(_owner);
-    final policy = _policy.current;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -68,45 +66,6 @@ class _ClientRewardsScreenState extends State<ClientRewardsScreen> {
             points: balance,
             caption: 'Worth ${formatPesos(pesosForPoints(balance))} towards '
                 'priority fees',
-          ),
-          const SizedBox(height: 16),
-          AppCard(
-            padding: const EdgeInsets.all(16),
-            color: AppColors.surface,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('How you earn',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 4),
-                Text(
-                  'Points are added once you complete the payment for a job.',
-                  style: TextStyle(
-                      fontSize: 12, color: AppColors.textdark.withValues(alpha: 0.55)),
-                ),
-                const SizedBox(height: 12),
-                for (final urgency in PointsPolicy.urgencies)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text('$urgency job',
-                              style: const TextStyle(fontSize: 13)),
-                        ),
-                        Text(
-                          formatPointsLabel(policy.clientPointsFor(urgency)),
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.success,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
           ),
           const SizedBox(height: 16),
           AppCard(

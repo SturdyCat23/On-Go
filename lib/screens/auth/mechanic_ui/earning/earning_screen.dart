@@ -141,6 +141,7 @@ class _EarningScreenState extends State<EarningScreen> {
         ),
         const SizedBox(height: 12),
         AppCard(
+          color: AppColors.surface,
           padding: const EdgeInsets.all(16),
           // Todo: there's no multi-mechanic backend yet, so this is always
           // just the current mechanic — same single-entry source as
@@ -152,7 +153,7 @@ class _EarningScreenState extends State<EarningScreen> {
                       padding: const EdgeInsets.only(right: 12),
                       child: CircleAvatar(
                         radius: 26,
-                        backgroundColor: AppColors.surface,
+                        backgroundColor: AppColors.background,
                         child: Icon(Icons.person, color: AppColors.textdark.withValues(alpha: 0.55)),
                       ),
                     ))

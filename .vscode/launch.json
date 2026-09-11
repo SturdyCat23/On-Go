@@ -22,26 +22,6 @@
             "flutterMode": "release"
         },
         {
-            "name": "admin_web",
-            "cwd": "admin_web",
-            "request": "launch",
-            "type": "dart"
-        },
-        {
-            "name": "admin_web (profile mode)",
-            "cwd": "admin_web",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "profile"
-        },
-        {
-            "name": "admin_web (release mode)",
-            "cwd": "admin_web",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "release"
-        },
-        {
             "name": "on_go_design",
             "cwd": "packages\\on_go_design",
             "request": "launch",

@@ -20,7 +20,14 @@ class AppCard extends StatelessWidget {
   final BorderRadiusGeometry? borderRadius;
   final Color? color;
 
-  const AppCard({super.key, required this.child, this.padding = const EdgeInsets.all(12), this.elevation, this.borderRadius, this.color});
+  const AppCard({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(12),
+    this.elevation,
+    this.borderRadius,
+    this.color,
+  });
 
   @override
   Widget build(BuildContext context) {

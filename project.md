@@ -23,7 +23,7 @@ routes, so the two applications cannot yet see each other.
 | Part | State |
 | --- | --- |
 | `/lib` — mobile app (Client + Mechanic) | Working, in-memory |
-| `/admin_web` — console (Admin + Moderator) | Working, in-memory |
+| `on_go_console` (separate repo) — console (Admin + Moderator) | Working, in-memory |
 | `/packages/on_go_shared` — API contract | Complete for what exists |
 | `/packages/on_go_design` — design system | Complete, 8 themes in 4 families |
 | `/server` — backend | Schema + infrastructure only, **no routes** |
@@ -97,7 +97,7 @@ where a change is cheap and a duplicate is expensive.
 | `formatTimeRemaining()` | same | One countdown format app-wide: `4d 23h 59m` at or above a day, `23h 59m 59s` below it |
 | `clientCancelLockedByEta()` | same | Whether the client may cancel yet, enforced in the store rather than per screen |
 | `PointsPolicyStore.current` | `lib/data/points_policy_store.dart` | Every points rate, so an admin changing one changes all the arithmetic at once |
-| `revenueUrgencyColor()` | `admin_web/lib/src/widgets/revenue_charts.dart` | The colour of Normal / Urgent / Emergency in every console chart, ring and key |
+| `revenueUrgencyColor()` | `on_go_console/lib/src/widgets/revenue_charts.dart` | The colour of Normal / Urgent / Emergency in every console chart, ring and key |
 | `PlatformRevenueSummary.yearlyTotals` | `packages/on_go_shared/…/platform_revenue.dart` | A year's revenue, always summed from its months rather than stored beside them |
 
 **The priority fee is platform revenue, not payout.** +₱50 Urgent and +₱100
@@ -179,7 +179,7 @@ no server.
 
 ### Test coverage
 
-- `/admin_web` — 30 tests (`console_layout_test.dart`, `console_theme_test.dart`)
+- `on_go_console` (separate repo) — 30 tests (`console_layout_test.dart`, `console_theme_test.dart`)
   covering responsive layout classification and the shared theme registry.
 - `/lib` — **none.** `test/` exists and is empty. Features here have been
   verified with throwaway tests deleted once they passed, which proves a change
@@ -211,7 +211,7 @@ records describing them do not, so the app forgets whose they were. See below.
 **A brand-coloured "denied" state.** Two places assume the brand colour is red
 and use it to mean negative:
 
-- `admin_web/lib/src/widgets/console_widgets.dart:460` — a withheld permission
+- `on_go_console/lib/src/widgets/console_widgets.dart:460` — a withheld permission
   draws its disc in `ConsoleColors.brand`.
 - `lib/widgets/change_password_dialog.dart:102` — error text uses
   `AppColors.primary`.

@@ -3,7 +3,8 @@
 /// The product ships as two front ends:
 ///
 /// * **Mobile app** (`/lib`, Flutter, Android + iOS) — Client and Mechanic.
-/// * **Console website** (`/admin_web`, Flutter web) — Admin and Moderator.
+/// * **Console website** (the `on_go_console` repository, Flutter web) —
+///   Admin and Moderator.
 ///
 /// They are separate applications that will meet at a backend. This package is
 /// that meeting point, written down ahead of the backend: the DTOs that will

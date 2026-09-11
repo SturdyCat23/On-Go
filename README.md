@@ -1,11 +1,12 @@
 # On Go
 
-Roadside mechanic services. The product ships as **two applications**:
+Roadside mechanic services. The product ships as **two applications**, in **two
+repositories**:
 
 | | | |
 | --- | --- | --- |
-| **Mobile app** | `/lib` | Client + Mechanic — Flutter, Android/iOS |
-| **Admin console** | `/admin_web` | Admin + Moderator — Flutter web |
+| **Mobile app** | `/lib`, this repository | Client + Mechanic — Flutter, Android/iOS |
+| **Admin console** | `on_go_console`, its own repository | Admin + Moderator — Flutter web |
 
 They share no code except `/packages/on_go_shared`, which holds the models and
 API contracts they exchange. They will meet at a backend that implements those
@@ -13,6 +14,17 @@ contracts; that backend is not built yet.
 
 **Read [ARCHITECTURE.md](ARCHITECTURE.md)** before changing anything that
 crosses between them.
+
+## Checking out
+
+The console resolves the two shared packages in this repository by **relative
+path**, so the two checkouts have to be siblings:
+
+```
+Flutter/
+  on_go/          this repository
+  on_go_console/  the admin console
+```
 
 ## Running
 
@@ -26,10 +38,10 @@ Sign in with `client`, `mechanic`, `demo-client` or `demo-mechanic`, or with an
 account registered in that session. Admin and Moderator are not in the app —
 they sign in on the console.
 
-The admin console:
+The admin console, from its own checkout beside this one:
 
 ```bash
-cd admin_web && flutter run -d chrome
+cd ../on_go_console && flutter run -d chrome
 ```
 
 Sign in as `admin` to create the first moderator account. Moderators then sign
@@ -44,13 +56,6 @@ lib/                      Mobile app (Client + Mechanic)
   services/backend/         ← everything that will become a network call
   theme/  widgets/
 
-admin_web/                Admin console website (Admin + Moderator)
-  lib/src/app/              Routing and the console shell
-  lib/src/backend/          ← everything that will become a network call
-  lib/src/features/         Admin, Moderator and shared pages
-  lib/src/session/          Who is signed in
-  lib/src/theme/  widgets/
-
 packages/on_go_shared/    API contract shared by both — pure Dart
   lib/src/models/           DTOs with toJson/fromJson
   lib/src/api/              Abstract interfaces + the agreed REST routes
@@ -60,6 +65,10 @@ packages/on_go_design/    Design system shared by both
 
 server/                   Backend scaffold. No routes yet.
 ```
+
+The console is not in this tree — it is the `on_go_console` repository beside
+it, and it consumes `packages/on_go_shared` and `packages/on_go_design` above
+by relative path.
 
 ## The rules that keep this working
 

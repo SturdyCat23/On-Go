@@ -1,8 +1,10 @@
 # On Go — architecture
 
-On Go ships as **two front ends** that will meet at **one backend**.
+On Go ships as **two front ends** that will meet at **one backend**. They live
+in **two repositories**: this one, and `on_go_console` beside it.
 
 ```
+                        THIS REPOSITORY (on_go)
    ┌───────────────────────────────┐  ┌───────────────────────────────┐
    │    packages/on_go_shared      │  │    packages/on_go_design      │
    │  models + API contracts       │  │  palettes, theme registry,    │
@@ -13,7 +15,7 @@ On Go ships as **two front ends** that will meet at **one backend**.
           │                └────────┬────────┘              │
           │                         │                       │
    ┌──────┴────────────────────┐   ┌┴───────────────────────┴─────┐
-   │  /lib  — MOBILE APP       │   │  /admin_web — CONSOLE SITE   │
+   │  /lib  — MOBILE APP       │   │  on_go_console — CONSOLE     │
    │  Flutter · Android + iOS  │   │  Flutter web                 │
    │                           │   │                              │
    │  • Client                 │   │  • Admin                     │
@@ -21,7 +23,7 @@ On Go ships as **two front ends** that will meet at **one backend**.
    │                           │   │                              │
    │  MobileBackend.instance   │   │  ConsoleBackend.instance     │
    └───────────────┬───────────┘   └──────────────┬───────────────┘
-                   │                              │
+      this repo    │                              │  sibling repo
                    │        ┌──────────────┐      │
                    └───────►│   /server    │◄─────┘
                             │  NOT BUILT   │
@@ -33,21 +35,39 @@ Two shared packages, for two different reasons. `on_go_shared` is what the apps
 **say to each other**, and stays pure Dart so the backend can depend on it too.
 `on_go_design` is what they **look like**, and necessarily depends on Flutter.
 
-Nothing in `/lib` imports anything from `/admin_web`, and nothing in
-`/admin_web` imports anything from `/lib`. That is the whole point: they are
-separate applications, deployed separately, to different people.
+Nothing in `/lib` imports anything from the console, and nothing in the console
+imports anything from `/lib`. That is the whole point: they are separate
+applications, deployed separately, to different people — which is why they are
+now separate repositories too.
+
+### Where the console lives
+
+The console is its own repository, `on_go_console`. It depends on the two
+shared packages in this repository by **relative path**, so the two checkouts
+have to be siblings:
+
+```
+Flutter/
+  on_go/          this repository — the mobile app, and packages/
+  on_go_console/  the Admin + Moderator console
+```
+
+An edit to `packages/on_go_design` or `packages/on_go_shared` is picked up by
+the console immediately, with no publish step — the same as when it was one
+repository. What changed is only that the console's own history, issues and
+deploys are its own.
 
 ---
 
-## The three parts
+## The parts
 
-| Path                     | What it is                 | Who uses it            |
-| ------------------------ | -------------------------- | ---------------------- |
-| `/lib`                   | Flutter mobile app         | Clients, Mechanics     |
-| `/admin_web`             | Flutter **web** console    | Admins, Moderators     |
-| `/packages/on_go_shared` | Pure-Dart API contract     | Both, and the backend  |
-| `/packages/on_go_design` | The shared design system   | Both front ends        |
-| `/server`                | Backend scaffold           | Nothing yet            |
+| Path                          | What it is               | Who uses it            |
+| ----------------------------- | ------------------------ | ---------------------- |
+| `/lib`                        | Flutter mobile app       | Clients, Mechanics     |
+| `../on_go_console` (own repo) | Flutter **web** console  | Admins, Moderators     |
+| `/packages/on_go_shared`      | Pure-Dart API contract   | Both, and the backend  |
+| `/packages/on_go_design`      | The shared design system | Both front ends        |
+| `/server`                     | Backend scaffold         | Nothing yet            |
 
 ### `/lib` — the mobile app
 
@@ -58,7 +78,7 @@ Typing `admin` or `moderator` now reports that those accounts sign in on the
 console website — the app has no admin or moderator UI, and it never gets one
 back.
 
-### `/admin_web` — the console
+### `on_go_console` — the console (separate repository)
 
 Admin and Moderator, rebuilt for a browser rather than ported screen-for-screen:
 
@@ -74,10 +94,10 @@ Admin and Moderator, rebuilt for a browser rather than ported screen-for-screen:
 - **Hover** interactions on the charts, because there is a mouse.
 - **The app's own theme system**, from `packages/on_go_design` — see below.
 
-Run it:
+Run it, from the sibling checkout:
 
 ```bash
-cd admin_web && flutter run -d chrome
+cd ../on_go_console && flutter run -d chrome
 ```
 
 Sign in as `admin` to create the first moderator; moderators then sign in with
@@ -126,7 +146,7 @@ needs touching.
 
 What each app still owns is its **own `ThemeData`**, built from those palettes:
 
-| | Mobile (`lib/theme/app_theme.dart`) | Console (`admin_web/lib/src/theme/console_theme.dart`) |
+| | Mobile (`lib/theme/app_theme.dart`) | Console (`on_go_console/lib/src/theme/console_theme.dart`) |
 | --- | --- | --- |
 | Colours | `AppPalette` | the same `AppPalette` |
 | Corners | `AppRadii` | the same `AppRadii` |
@@ -185,7 +205,7 @@ website instead of claiming their password is wrong.
 Each application has exactly one place where a call leaves it:
 
 - Mobile: `lib/services/backend/mobile_backend.dart`
-- Console: `admin_web/lib/src/backend/console_backend.dart`
+- Console: `on_go_console/lib/src/backend/console_backend.dart`
 
 Both are a small holder of contract implementations plus a `configure()`:
 

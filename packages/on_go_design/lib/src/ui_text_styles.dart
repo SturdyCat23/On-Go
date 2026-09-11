@@ -96,7 +96,7 @@ import 'package:flutter/material.dart';
 //  To make a new font real, do ONE of these first:
 //
 //    A. Bundle the files. Drop the .ttf files in `assets/fonts/` and add to
-//       `pubspec.yaml` (the app's, and `admin_web/pubspec.yaml` for the
+//       `pubspec.yaml` (the app's, and `on_go_console/pubspec.yaml` for the
 //       console — both front ends need it):
 //
 //           flutter:

@@ -17,7 +17,7 @@ export 'auth_background_controller.dart';
 /// This is the half the app owns: the colours are shared, the density is not.
 /// A phone gets full-width pill buttons and 48-point targets because it is
 /// tapped at arm's length; the console builds its own [ThemeData] from the
-/// same palettes for a mouse. See `admin_web/lib/src/theme/console_theme.dart`.
+/// same palettes for a mouse. See `on_go_console/lib/src/theme/console_theme.dart`.
 class AppTheme {
   /// The tint to multiply the whole app by for a Warm Filter level.
   ///

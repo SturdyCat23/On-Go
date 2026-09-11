@@ -22,7 +22,7 @@ export 'package:on_go_shared/on_go_shared.dart';
 /// implementations at startup and not one screen changes: they already await
 /// Futures and listen to Streams.
 ///
-/// The console has the mirror image of this file in `admin_web/lib/src/backend`.
+/// The console has the mirror image of this file in `on_go_console/lib/src/backend`.
 class MobileBackend {
   MobileBackend._({
     required this.auth,
