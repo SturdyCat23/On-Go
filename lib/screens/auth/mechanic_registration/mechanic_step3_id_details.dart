@@ -248,7 +248,7 @@ class _MechanicStep3IdDetailsState extends State<MechanicStep3IdDetails> {
           const _RegHeader(),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: context.layout.pageInsets,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

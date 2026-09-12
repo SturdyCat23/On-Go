@@ -21,28 +21,61 @@ class MechanicHomeScreen extends StatefulWidget {
 class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
   int _currentIndex = 0;
 
+  // Positions in [build]'s tab list.
+  static const int _jobsTab = 0;
+  static const int _earningTab = 1;
+  static const int _profileTab = 4;
+
+  /// How a notification asks the Jobs tab to open one particular job.
+  final _jobFocus = ValueNotifier<JobFocusRequest?>(null);
+
   @override
   void initState() {
     super.initState();
     AppSession.instance.setRole(AppRole.mechanic, viewerName: QuoteNotificationStore.currentMechanicName);
   }
 
+  @override
+  void dispose() {
+    _jobFocus.dispose();
+    super.dispose();
+  }
+
   void _goToTab(int index) => setState(() => _currentIndex = index);
 
   /// Opening the list is what counts as "viewing" them, so the badge clears
   /// here — same as the Client bell.
+  ///
+  /// A notification about something inside this shell comes back as the
+  /// route the list closed with, and is carried out here.
   Future<void> _openNotifications() async {
     MechanicNotificationStore.instance.markSeenFor(QuoteNotificationStore.currentMechanicName);
-    await Navigator.push(
+    final route = await Navigator.push<NotificationRoute>(
       context,
       MaterialPageRoute(builder: (_) => const MechanicNotificationsScreen()),
     );
+    if (!mounted || route == null) return;
+
+    switch (route) {
+      case OpenJobInList(:final requestId, :final emergency):
+        _goToTab(_jobsTab);
+        _jobFocus.value = JobFocusRequest(requestId, emergency: emergency);
+      case OpenMechanicTab(:final tab):
+        _goToTab(switch (tab) {
+          MechanicHomeTab.jobs => _jobsTab,
+          MechanicHomeTab.earning => _earningTab,
+          MechanicHomeTab.profile => _profileTab,
+        });
+      case OpenJobQuotes() || OpenClientJob() || OpenMechanicJob() || NotificationUnavailable():
+        // Handled on the notifications screen itself, or not a mechanic route.
+        break;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final tabs = [
-      const JobsScreen(),
+      JobsScreen(focus: _jobFocus),
       EarningScreen(onViewAll: () => _goToTab(3)),
       const QrScreen(),
       const MechanicLeaderboardScreen(),

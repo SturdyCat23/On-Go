@@ -154,7 +154,7 @@ class _MechanicStep1AccountState extends State<MechanicStep1Account> {
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: context.layout.pageInsets,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

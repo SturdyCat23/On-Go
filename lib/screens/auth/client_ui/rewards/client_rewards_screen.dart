@@ -60,7 +60,7 @@ class _ClientRewardsScreenState extends State<ClientRewardsScreen> {
         title: const Text('Rewards & Points'),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: context.layout.pageInsets,
         children: [
           PointsBalanceCard(
             points: balance,

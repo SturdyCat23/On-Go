@@ -56,7 +56,7 @@ class _ClientSettingsScreenState extends State<ClientSettingsScreen> {
         title: const Text('Settings'),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: context.layout.pageInsets,
         children: [
           Text('APPEARANCE', style: TextStyle(fontSize: 11, color: AppColors.textdark.withValues(alpha: 0.55), fontWeight: FontWeight.w600)),
           const ThemesSettingsTile(),

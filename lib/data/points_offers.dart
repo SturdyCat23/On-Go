@@ -111,12 +111,4 @@ class PointsOffers {
 
   /// The offers to show a mechanic, in the order they should read.
   static List<PointsOffer> forMechanic(String mechanicName) => all;
-
-  /// Balance a mechanic has converted from points, which their earnings
-  /// screen adds to what their jobs paid.
-  static double convertedBalanceFor(String mechanicName) =>
-      PointsWalletStore.instance
-          .entriesFor(mechanicName)
-          .where((e) => e.kind == PointsEntryKind.mechanicConvertedToBalance)
-          .fold(0.0, (sum, e) => sum + (e.pesos ?? 0));
 }

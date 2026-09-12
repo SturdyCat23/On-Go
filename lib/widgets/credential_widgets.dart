@@ -95,6 +95,7 @@ class _CredentialPreviewBody extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!credential.fileExists) {
       return _placeholder(
+        context,
         Icons.broken_image_outlined,
         'This file is no longer on this device.',
       );
@@ -108,6 +109,7 @@ class _CredentialPreviewBody extends StatelessWidget {
             File(credential.path),
             fit: BoxFit.contain,
             errorBuilder: (_, _, _) => _placeholder(
+              context,
               Icons.broken_image_outlined,
               'This image could not be opened.',
             ),
@@ -116,6 +118,7 @@ class _CredentialPreviewBody extends StatelessWidget {
       );
     }
     return _placeholder(
+      context,
       credential.isPdf ? Icons.picture_as_pdf_outlined : Icons.insert_drive_file_outlined,
       credential.isPdf
           ? 'PDF uploaded. Open it outside the app to read it.'
@@ -123,9 +126,9 @@ class _CredentialPreviewBody extends StatelessWidget {
     );
   }
 
-  Widget _placeholder(IconData icon, String message) {
+  Widget _placeholder(BuildContext context, IconData icon, String message) {
     return Container(
-      height: 180,
+      height: context.layout.panelHeight(180),
       width: double.infinity,
       decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12)),
       child: Column(

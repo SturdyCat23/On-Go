@@ -144,7 +144,7 @@ class _MechanicStep4DocumentsState extends State<MechanicStep4Documents> {
           _buildHeader(),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: context.layout.pageInsets,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

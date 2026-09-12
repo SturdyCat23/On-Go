@@ -14,8 +14,58 @@ import 'send_quote_sheet.dart';
 import 'mechanic_active_job_screen.dart';
 import '../../../../widgets/job_photo_preview.dart';
 
+/// A request to bring one open job into view — raised when the mechanic taps a
+/// notification about it, so they land on THAT job rather than on a list they
+/// then have to search.
+///
+/// Deliberately not `==`-comparable: tapping the same notification twice is
+/// two requests, and each must move the screen again.
+class JobFocusRequest {
+  final String requestId;
+
+  /// Which list the job lives in: Emergency, or Available.
+  final bool emergency;
+
+  JobFocusRequest(this.requestId, {required this.emergency});
+}
+
+/// How long a job brought into view by a notification stays outlined — long
+/// enough to find it on a busy list, short enough not to linger as if it were
+/// a state of the job.
+const Duration _spotlightDuration = Duration(seconds: 5);
+
+/// Outlines a job card that a notification pointed at.
+///
+/// The outline is painted OVER the card rather than around it, so turning it
+/// on and off never nudges the list by the width of a border.
+class _Spotlight extends StatelessWidget {
+  const _Spotlight({super.key, required this.on, required this.child});
+
+  final bool on;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      foregroundDecoration: BoxDecoration(
+        borderRadius: AppRadii.borderLg,
+        border: Border.all(
+          color: on ? AppColors.primary : AppColors.primary.withValues(alpha: 0),
+          width: 2.5,
+        ),
+      ),
+      child: child,
+    );
+  }
+}
+
 class JobsScreen extends StatefulWidget {
-  const JobsScreen({super.key});
+  const JobsScreen({super.key, this.focus});
+
+  /// Set by the mechanic shell when a notification should open a specific job
+  /// here. The screen consumes each request and clears it back to null.
+  final ValueNotifier<JobFocusRequest?>? focus;
 
   @override
   State<JobsScreen> createState() => _JobsScreenState();
@@ -25,6 +75,17 @@ class _JobsScreenState extends State<JobsScreen> {
   int _tabIndex = 0;
   bool? _wasApproved;
   Timer? _ticker;
+
+  // What a notification needs in order to open one job on this screen: a way
+  // to scroll each open-jobs list, a handle on each card, and which card is
+  // currently spotlighted.
+  final _availableScroll = ScrollController();
+  final _emergencyScroll = ScrollController();
+  final Map<String, GlobalKey> _cardKeys = {};
+  String? _spotlightId;
+  Timer? _spotlightTimer;
+
+  GlobalKey _cardKeyFor(String requestId) => _cardKeys.putIfAbsent(requestId, GlobalKey.new);
 
   String get _mechanicName => QuoteNotificationStore.currentMechanicName;
 
@@ -38,13 +99,86 @@ class _JobsScreenState extends State<JobsScreen> {
     // request itself, so the clock is unaffected by this timer starting,
     // stopping or restarting.
     _ticker = Timer.periodic(const Duration(seconds: 1), _onTick);
+    widget.focus?.addListener(_onFocusRequested);
+    // A request made before this screen existed is still waiting to be served.
+    if (widget.focus?.value != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _onFocusRequested());
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant JobsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.focus != widget.focus) {
+      oldWidget.focus?.removeListener(_onFocusRequested);
+      widget.focus?.addListener(_onFocusRequested);
+    }
   }
 
   @override
   void dispose() {
     _ticker?.cancel();
+    _spotlightTimer?.cancel();
+    widget.focus?.removeListener(_onFocusRequested);
+    _availableScroll.dispose();
+    _emergencyScroll.dispose();
     MechanicAccountStore.instance.removeListener(_onAccountChange);
     super.dispose();
+  }
+
+  void _onFocusRequested() {
+    final request = widget.focus?.value;
+    if (request == null || !mounted) return;
+    // Consumed, so the same notification tapped again raises a fresh request.
+    // After the frame: clearing it synchronously would notify from inside the
+    // notification that got us here.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.focus?.value == request) widget.focus?.value = null;
+    });
+    _focusJob(request);
+  }
+
+  /// Switches to the list [request] lives in, scrolls its card into view and
+  /// outlines it for a few seconds.
+  Future<void> _focusJob(JobFocusRequest request) async {
+    _onTabChanged(request.emergency ? _JobTabBar.emergencyIndex : _JobTabBar.availableIndex);
+    setState(() => _spotlightId = request.requestId);
+    _spotlightTimer?.cancel();
+    _spotlightTimer = Timer(_spotlightDuration, () {
+      if (mounted) setState(() => _spotlightId = null);
+    });
+
+    // The same filter the tab itself applies, so the index is the card's
+    // position in the list on screen.
+    final list = QuoteNotificationStore.instance.availableJobs
+        .where((r) => r.isEmergency == request.emergency)
+        .toList();
+    final index = list.indexWhere((r) => r.id == request.requestId);
+    if (index < 0) return;
+    final controller = request.emergency ? _emergencyScroll : _availableScroll;
+
+    // A long list only builds the cards near the viewport, so the card may not
+    // exist yet. Each pass either finds it and scrolls it into view, or moves
+    // the list toward where it will be and tries again once that has built.
+    for (var attempt = 0; attempt < 6; attempt++) {
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+      final cardContext = _cardKeys[request.requestId]?.currentContext;
+      if (cardContext != null && cardContext.mounted) {
+        await Scrollable.ensureVisible(
+          cardContext,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOut,
+          alignment: 0.1,
+        );
+        return;
+      }
+      if (controller.hasClients) {
+        final position = controller.position;
+        final target = position.maxScrollExtent * index / list.length;
+        controller.jumpTo(target.clamp(position.minScrollExtent, position.maxScrollExtent));
+      }
+    }
   }
 
   void _onTick(Timer _) {
@@ -331,12 +465,18 @@ class _JobsScreenState extends State<JobsScreen> {
                     canAct: canAct,
                     onSendQuote: _sendQuote,
                     onWithdrawQuote: _withdrawQuote,
+                    controller: _availableScroll,
+                    cardKeyFor: _cardKeyFor,
+                    spotlightId: _spotlightId,
                   ),
                   _EmergencyTab(
                     requests: emergency,
                     onAccept: _acceptEmergency,
                     blocked: hasActiveEmergency,
                     canAct: canAct,
+                    controller: _emergencyScroll,
+                    cardKeyFor: _cardKeyFor,
+                    spotlightId: _spotlightId,
                   ),
                   _AcceptedTab(
                     requests: accepted,
@@ -500,6 +640,9 @@ class _JobTabBar extends StatefulWidget {
   });
 
   static const _labels = ['Available', 'Emergency', 'Accepted'];
+
+  /// The index of the Available pill in [_labels].
+  static const int availableIndex = 0;
 
   /// The index of the Emergency pill in [_labels].
   static const int emergencyIndex = 1;
@@ -689,12 +832,18 @@ class _AvailableTab extends StatelessWidget {
   final bool canAct;
   final void Function(HelpRequest) onSendQuote;
   final void Function(HelpRequest) onWithdrawQuote;
+  final ScrollController controller;
+  final GlobalKey Function(String requestId) cardKeyFor;
+  final String? spotlightId;
 
   const _AvailableTab({
     required this.requests,
     required this.canAct,
     required this.onSendQuote,
     required this.onWithdrawQuote,
+    required this.controller,
+    required this.cardKeyFor,
+    this.spotlightId,
   });
 
   @override
@@ -702,7 +851,8 @@ class _AvailableTab extends StatelessWidget {
     final mechanicName = QuoteNotificationStore.currentMechanicName;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      controller: controller,
+      padding: context.layout.listInsets(),
       children: [
         const _TipCard(),
         const SizedBox(height: 16),
@@ -722,14 +872,18 @@ class _AvailableTab extends StatelessWidget {
           final rejected = store.mechanicQuoteWasRejected(request.id, mechanicName);
           return Padding(
             padding: const EdgeInsets.only(bottom: jobCardSpacing),
-            child: _JobCard(
-              request: request,
-              actionLabel: live != null
-                  ? 'Withdraw Quote'
-                  : (rejected ? 'Quote Rejected' : 'Send Quote'),
-              actionEnabled: live != null ? !live.accepted : (canAct && !rejected),
-              actionIsDestructive: live != null,
-              onAction: () => live != null ? onWithdrawQuote(request) : onSendQuote(request),
+            child: _Spotlight(
+              key: cardKeyFor(request.id),
+              on: spotlightId == request.id,
+              child: _JobCard(
+                request: request,
+                actionLabel: live != null
+                    ? 'Withdraw Quote'
+                    : (rejected ? 'Quote Rejected' : 'Send Quote'),
+                actionEnabled: live != null ? !live.accepted : (canAct && !rejected),
+                actionIsDestructive: live != null,
+                onAction: () => live != null ? onWithdrawQuote(request) : onSendQuote(request),
+              ),
             ),
           );
         }),
@@ -833,13 +987,25 @@ class _EmergencyTab extends StatelessWidget {
   final void Function(HelpRequest) onAccept;
   final bool blocked;
   final bool canAct;
+  final ScrollController controller;
+  final GlobalKey Function(String requestId) cardKeyFor;
+  final String? spotlightId;
 
-  const _EmergencyTab({required this.requests, required this.onAccept, required this.blocked, required this.canAct});
+  const _EmergencyTab({
+    required this.requests,
+    required this.onAccept,
+    required this.blocked,
+    required this.canAct,
+    required this.controller,
+    required this.cardKeyFor,
+    this.spotlightId,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      controller: controller,
+      padding: context.layout.listInsets(),
       children: [
         Container(
           padding: const EdgeInsets.all(14),
@@ -875,11 +1041,15 @@ class _EmergencyTab extends StatelessWidget {
           ),
         ...requests.map((request) => Padding(
               padding: const EdgeInsets.only(bottom: jobCardSpacing),
-              child: _JobCard(
-                request: request,
-                actionLabel: 'Accept',
-                actionEnabled: canAct && !blocked,
-                onAction: () => onAccept(request),
+              child: _Spotlight(
+                key: cardKeyFor(request.id),
+                on: spotlightId == request.id,
+                child: _JobCard(
+                  request: request,
+                  actionLabel: 'Accept',
+                  actionEnabled: canAct && !blocked,
+                  onAction: () => onAccept(request),
+                ),
               ),
             )),
       ],
@@ -981,7 +1151,7 @@ class _AcceptedTabState extends State<_AcceptedTab> {
     return Stack(
       children: [
         ListView(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          padding: context.layout.listInsets(),
           children: [
             Row(
               children: [

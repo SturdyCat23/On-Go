@@ -171,7 +171,7 @@ class _MechanicActiveJobScreenState extends State<MechanicActiveJobScreen> {
                   clipBehavior: Clip.none,
                   children: [
                     Container(
-                      height: 190,
+                      height: context.layout.panelHeight(190),
                       width: double.infinity,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(

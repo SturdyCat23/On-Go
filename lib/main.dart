@@ -113,15 +113,36 @@ class _MyAppState extends State<MyApp> {
       navigatorKey: _navigatorKey,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.themeFor(_themeController.selected),
-      // The Warm Filter tints everything below MaterialApp — routes, sheets
-      // and dialogs alike — in one compositing pass.
+      // Everything that has to sit above every route, sheet and dialog is
+      // installed here, in one place, rather than remembered screen by screen.
       builder: (context, child) {
         final content = child ?? const SizedBox.shrink();
+        final media = MediaQuery.of(context);
+        final layout = AppLayout.fromSize(media.size);
+
+        // Text sizing, settled once for the whole app.
+        //
+        // Two things at once. The reader's own font-size setting is honoured
+        // but bounded — these screens carry fixed heights and single-line
+        // labels that genuinely break at the 2x some devices can ask for, and
+        // a bounded enlargement beats an unusable screen. On top of that, a
+        // gentle per-device factor: a little smaller on a small phone so long
+        // labels fit, a little larger on a tablet, which is held further away.
+        //
+        // Doing it here rather than in the theme is what makes it reach the
+        // hundreds of literal `fontSize:` values still scattered through the
+        // screens — those ignore the TextTheme, but nothing ignores this.
+        final sized = MediaQuery(
+          data: media.copyWith(textScaler: layout.textScalerFrom(media.textScaler)),
+          child: AppLayoutScope(layout: layout, child: content),
+        );
+
+        // The Warm Filter tints everything below in one compositing pass.
         final tint = AppTheme.warmFilterTint(_themeController.warmFilter);
-        if (tint == null) return content;
+        if (tint == null) return sized;
         return ColorFiltered(
           colorFilter: ColorFilter.mode(tint, BlendMode.modulate),
-          child: content,
+          child: sized,
         );
       },
       home: SignInScreen(),

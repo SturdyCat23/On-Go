@@ -52,7 +52,7 @@ class _ThemeScreenState extends State<ThemeScreen> {
         title: const Text('Themes'),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: context.layout.pageInsets,
         children: [
           Text(
             'APPEARANCE',

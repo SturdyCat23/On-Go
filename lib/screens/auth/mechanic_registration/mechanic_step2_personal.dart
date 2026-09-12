@@ -199,7 +199,7 @@ class _MechanicStep2PersonalState extends State<MechanicStep2Personal> {
           const _RegHeader(),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: context.layout.pageInsets,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

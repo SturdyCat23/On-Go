@@ -88,7 +88,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
         title: const Text('My Profile'),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: context.layout.pageInsets,
         children: [
           Center(
             child: Stack(
@@ -98,14 +98,14 @@ class _ClientProfileScreenState extends State<ClientProfileScreen> {
                   borderRadius: BorderRadius.circular(70),
                   child: photo == null
                       ? Container(
-                          width: 120,
-                          height: 120,
+                          width: context.layout.scale(120),
+                          height: context.layout.scale(120),
                           color: AppColors.background,
-                          child: Icon(Icons.person, size: 56, color: AppColors.textdark.withValues(alpha: 0.55)),
+                          child: Icon(Icons.person, size: context.layout.scale(56), color: AppColors.textdark.withValues(alpha: 0.55)),
                         )
                       : (_store.photoIsNetwork
-                          ? Image.network(photo, width: 120, height: 120, fit: BoxFit.cover)
-                          : Image.file(File(photo), width: 120, height: 120, fit: BoxFit.cover)),
+                          ? Image.network(photo, width: context.layout.scale(120), height: context.layout.scale(120), fit: BoxFit.cover)
+                          : Image.file(File(photo), width: context.layout.scale(120), height: context.layout.scale(120), fit: BoxFit.cover)),
                 ),
                 Positioned(
                   right: -4,

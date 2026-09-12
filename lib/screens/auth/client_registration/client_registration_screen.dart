@@ -238,7 +238,7 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
 
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
+                  padding: context.layout.pageInsets,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -332,18 +332,18 @@ class _ClientRegistrationScreenState extends State<ClientRegistrationScreen> {
                                 child: _profilePhoto != null
                                     ? Image.file(
                                         _profilePhoto!,
-                                        width: 140,
-                                        height: 140,
+                                        width: context.layout.scale(140),
+                                        height: context.layout.scale(140),
                                         fit: BoxFit.cover,
                                       )
                                     : Image.network(
                                         _socialPhotoUrl!,
-                                        width: 140,
-                                        height: 140,
+                                        width: context.layout.scale(140),
+                                        height: context.layout.scale(140),
                                         fit: BoxFit.cover,
                                         errorBuilder: (_, _, _) => Container(
-                                          width: 140,
-                                          height: 140,
+                                          width: context.layout.scale(140),
+                                          height: context.layout.scale(140),
                                           color: AppColors.background,
                                           child: Icon(
                                             Icons.person_outline,

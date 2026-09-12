@@ -91,6 +91,14 @@ class PointsWalletStore extends ChangeNotifier {
   List<PointsEntry> entriesFor(String owner) =>
       _entries.where((e) => e.owner == owner).toList().reversed.toList();
 
+  /// The pesos [owner] has turned points into — what their conversions have
+  /// added to their account balance. Read from the same entries as
+  /// [balanceFor], so the points a conversion takes away and the balance it
+  /// adds cannot disagree.
+  double convertedPesosFor(String owner) => _entries
+      .where((e) => e.owner == owner && e.kind == PointsEntryKind.mechanicConvertedToBalance)
+      .fold(0.0, (sum, e) => sum + (e.pesos ?? 0));
+
   /// What [owner] can spend right now.
   double balanceFor(String owner) => _entries
       .where((e) => e.owner == owner)

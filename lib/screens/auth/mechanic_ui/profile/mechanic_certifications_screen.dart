@@ -134,7 +134,7 @@ class _MechanicCertificationsScreenState
         title: const Text('Certifications'),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: context.layout.pageInsets,
         children: [
           Text(
             'Certificates you add here appear on your profile, where clients '
@@ -151,8 +151,17 @@ class _MechanicCertificationsScreenState
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Your certificates',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                    // Expanded so the heading gives way to the count beside
+                    // it. Bare, it demands its full width, which at the
+                    // largest text size a reader can ask for is wider than a
+                    // small phone.
+                    const Expanded(
+                      child: Text('Your certificates',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                    ),
+                    const SizedBox(width: 8),
                     Text(
                       '${certifications.length}',
                       style: TextStyle(

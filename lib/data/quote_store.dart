@@ -580,8 +580,20 @@ enum ClientNotificationKind {
 class ClientNotification {
   final String id;
   final ClientNotificationKind kind;
+
+  /// The job this is about. Every client notification has one, so every one
+  /// can be followed back to the job — see
+  /// [QuoteNotificationStore.routeForClientNotification].
   final String requestId;
+
+  /// The mechanic involved. Mechanics are keyed by name throughout the app
+  /// (ReviewStore, quotes, profiles), so this doubles as their identifier.
   final String mechanicName;
+
+  /// The specific quote, for [ClientNotificationKind.quoteReceived] — so
+  /// tapping it opens THAT mechanic's offer rather than the job's whole list.
+  /// Null for kinds that are about the job rather than an offer.
+  final String? quoteId;
 
   /// The problem text as it read when the notification was raised, so the
   /// list still makes sense if the request is gone.
@@ -606,6 +618,7 @@ class ClientNotification {
     required this.mechanicName,
     required this.problem,
     required this.createdAt,
+    this.quoteId,
     this.detail,
     this.read = false,
   });
@@ -655,6 +668,67 @@ class ClientNotification {
   }
 }
 
+/// Where tapping a notification leads.
+///
+/// Decided by [QuoteNotificationStore.routeForClientNotification] and
+/// [QuoteNotificationStore.routeForMechanicNotification] at the moment of the
+/// tap, from the job's CURRENT state rather than the state it was in when the
+/// notification was raised. A quote notification from last week must not open
+/// a quote for a job that has since been finished, so the screens never decide
+/// this for themselves — they only carry out the route they are handed.
+sealed class NotificationRoute {
+  const NotificationRoute();
+}
+
+/// The client's Quotes view for one job. [quoteId], when set, is the offer the
+/// notification was about, and the screen spotlights it.
+class OpenJobQuotes extends NotificationRoute {
+  final String requestId;
+  final String? quoteId;
+  const OpenJobQuotes(this.requestId, {this.quoteId});
+}
+
+/// The client's progress screen for a job a mechanic is on.
+class OpenClientJob extends NotificationRoute {
+  final String requestId;
+  const OpenClientJob(this.requestId);
+}
+
+/// The mechanic's active-job screen for a job assigned to them.
+class OpenMechanicJob extends NotificationRoute {
+  final String requestId;
+  const OpenMechanicJob(this.requestId);
+}
+
+/// A job still open to mechanics, shown in place on the mechanic's Jobs
+/// screen — the Emergency tab for an emergency, Available otherwise. There is
+/// no separate job-detail screen for an open job: its card IS the job, with
+/// the actions on it, so the card is what gets opened.
+class OpenJobInList extends NotificationRoute {
+  final String requestId;
+  final bool emergency;
+  const OpenJobInList(this.requestId, {required this.emergency});
+}
+
+/// The mechanic shell's tabs a notification can land on.
+enum MechanicHomeTab { jobs, earning, profile }
+
+/// One of the mechanic shell's own tabs, for notifications about the mechanic
+/// rather than one job — a payment lands on Earning, a rating on the Profile
+/// that lists reviews.
+class OpenMechanicTab extends NotificationRoute {
+  final MechanicHomeTab tab;
+  const OpenMechanicTab(this.tab);
+}
+
+/// What the notification referred to has been deleted, finished, or taken by
+/// someone else. The notification itself stays; tapping it explains instead of
+/// opening a screen with nothing sensible to show.
+class NotificationUnavailable extends NotificationRoute {
+  final String message;
+  const NotificationUnavailable(this.message);
+}
+
 class QuoteNotificationStore extends ChangeNotifier {
   QuoteNotificationStore._internal();
   static final QuoteNotificationStore instance = QuoteNotificationStore._internal();
@@ -691,12 +765,121 @@ class QuoteNotificationStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Where tapping [notification] should take the client, given the job as it
+  /// stands right now. See [NotificationRoute].
+  NotificationRoute routeForClientNotification(ClientNotification notification) {
+    final request = requestFor(notification.requestId);
+    if (request == null) {
+      return const NotificationUnavailable('This job no longer exists.');
+    }
+
+    if (notification.kind == ClientNotificationKind.quoteReceived) {
+      if (request.status == RequestStatus.completed) {
+        return const NotificationUnavailable(
+            'This quote is no longer available because the job has been completed.');
+      }
+
+      // By id first. The name fallback only covers an entry raised before
+      // quotes were tagged, and it only ever finds an offer still standing.
+      final quote = (notification.quoteId == null ? null : quoteById(notification.quoteId!)) ??
+          _liveQuoteFrom(request.id, notification.mechanicName);
+      if (quote == null || quote.isWithdrawn) {
+        return const NotificationUnavailable(
+            'This quote is no longer available because the mechanic withdrew it.');
+      }
+      if (quote.isRejected) {
+        return const NotificationUnavailable(
+            'This quote is no longer available because you rejected it.');
+      }
+      if (request.status == RequestStatus.matched) {
+        // The offer became the job — its progress is what there is to see now.
+        return quote.accepted
+            ? OpenClientJob(request.id)
+            : const NotificationUnavailable(
+                'This quote is no longer available because you accepted another mechanic\'s quote.');
+      }
+      return OpenJobQuotes(request.id, quoteId: quote.id);
+    }
+
+    // Every other client notification is about the job's progress, so it
+    // follows the job to wherever it is now.
+    switch (request.status) {
+      case RequestStatus.completed:
+        return const NotificationUnavailable(
+            'This job has already been completed. You can find it in History.');
+      case RequestStatus.matched:
+        return OpenClientJob(request.id);
+      case RequestStatus.pending:
+        // Back on the market — after a cancellation, say — so its quotes are
+        // the useful thing to see.
+        return OpenJobQuotes(request.id);
+    }
+  }
+
+  MechanicQuote? _liveQuoteFrom(String requestId, String mechanicName) {
+    for (final q in _allQuotes) {
+      if (q.requestId == requestId && q.mechanicName == mechanicName && q.isLive) return q;
+    }
+    return null;
+  }
+
+  /// Where tapping [notification] should take [mechanicName], given the job
+  /// as it stands right now. See [NotificationRoute].
+  NotificationRoute routeForMechanicNotification(
+    MechanicNotification notification,
+    String mechanicName,
+  ) {
+    switch (notification.kind) {
+      case MechanicNotificationKind.paymentReceived:
+        return const OpenMechanicTab(MechanicHomeTab.earning);
+      case MechanicNotificationKind.rated:
+        return const OpenMechanicTab(MechanicHomeTab.profile);
+      case MechanicNotificationKind.accountApproved:
+        return const OpenMechanicTab(MechanicHomeTab.jobs);
+      case MechanicNotificationKind.emergencyPosted:
+      case MechanicNotificationKind.quoteAccepted:
+      case MechanicNotificationKind.quoteRejected:
+        break;
+    }
+
+    final isEmergencyAlert = notification.kind == MechanicNotificationKind.emergencyPosted;
+    final requestId = notification.requestId;
+    final request = requestId == null ? null : requestFor(requestId);
+    if (request == null) {
+      return NotificationUnavailable(isEmergencyAlert
+          ? 'This emergency job is no longer available. The client may have cancelled it.'
+          : 'This job no longer exists.');
+    }
+
+    switch (request.status) {
+      case RequestStatus.completed:
+        return NotificationUnavailable(isEmergencyAlert
+            ? 'This emergency job has already been completed.'
+            : 'This job has already been completed.');
+      case RequestStatus.matched:
+        if (acceptedQuoteFor(request.id)?.mechanicName == mechanicName) {
+          return OpenMechanicJob(request.id);
+        }
+        return NotificationUnavailable(isEmergencyAlert
+            ? 'Another mechanic has already accepted this emergency job.'
+            : 'This job is no longer assigned to you.');
+      case RequestStatus.pending:
+        // An accepted quote whose job is open again was handed back — by the
+        // client, the clock, or the mechanic themselves.
+        if (notification.kind == MechanicNotificationKind.quoteAccepted) {
+          return const NotificationUnavailable('This job is no longer assigned to you.');
+        }
+        return OpenJobInList(request.id, emergency: request.isEmergency);
+    }
+  }
+
   /// Records one event for the client. Callers notify listeners themselves —
   /// every one of them already does at the end of the action.
   void _addClientNotification(
     ClientNotificationKind kind,
     HelpRequest request,
     String mechanicName, {
+    String? quoteId,
     String? detail,
   }) {
     _clientNotifications.insert(
@@ -708,6 +891,7 @@ class QuoteNotificationStore extends ChangeNotifier {
         mechanicName: mechanicName,
         problem: request.problem,
         createdAt: DateTime.now(),
+        quoteId: quoteId,
         detail: detail,
       ),
     );
@@ -841,6 +1025,7 @@ class QuoteNotificationStore extends ChangeNotifier {
       clientName: req.clientName,
       detail: '${req.problem} · ${quote.price}',
       requestId: req.id,
+      quoteId: quote.id,
     );
     notifyListeners();
   }
@@ -999,6 +1184,7 @@ class QuoteNotificationStore extends ChangeNotifier {
       clientName: req?.clientName ?? 'The client',
       detail: '${req?.problem ?? 'Job'} · ${quote.price}',
       requestId: quote.requestId,
+      quoteId: quote.id,
     );
     notifyListeners();
     return true;
@@ -1028,18 +1214,24 @@ class QuoteNotificationStore extends ChangeNotifier {
       final tooLong = etaTooLongReason(request, eta);
       if (tooLong != null) throw StateError(tooLong);
     }
-    _allQuotes.add(MechanicQuote(
+    final quote = MechanicQuote(
       id: '${DateTime.now().microsecondsSinceEpoch}_${_allQuotes.length}',
       requestId: requestId,
       mechanicName: mechanicName,
       price: price,
       etaDuration: eta,
       rating: rating,
-    ));
+    );
+    _allQuotes.add(quote);
     _unseenCount++;
     final req = requestFor(requestId);
     if (req != null) {
-      _addClientNotification(ClientNotificationKind.quoteReceived, req, mechanicName);
+      _addClientNotification(
+        ClientNotificationKind.quoteReceived,
+        req,
+        mechanicName,
+        quoteId: quote.id,
+      );
     }
     notifyListeners();
   }
@@ -1478,6 +1670,17 @@ class QuoteNotificationStore extends ChangeNotifier {
     }
     return sum;
   }
+
+  /// THE mechanic's Available Balance: what their jobs paid, plus what they
+  /// have converted from points. The single definition every screen showing
+  /// a balance reads, so one conversion moves it everywhere at once.
+  ///
+  /// Derived on every call, never stored — there is no copy for a screen to
+  /// keep that could go stale. A screen showing it must listen to BOTH this
+  /// store (jobs paid) and [PointsWalletStore] (conversions).
+  double availableBalanceFor(String mechanicName) =>
+      totalEarningsFor(mechanicName) +
+      PointsWalletStore.instance.convertedPesosFor(mechanicName);
 
   /// Points this mechanic has earned across every job they finished — the
   /// lifetime figure the earnings history adds up to.

@@ -57,14 +57,23 @@ class _QrScanScreenState extends State<QrScanScreen> {
             ),
           ),
           Center(
-            child: Container(
-              width: 240,
-              height: 240,
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.surface, width: 2),
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
+            child: Builder(builder: (context) {
+              // The scanning window stays square, and the SAME number drives
+              // both sides so it cannot stretch. Derived from the screen's
+              // height rather than its width because that is the dimension
+              // that runs out first — a phone held sideways has plenty of
+              // width and very little height, and a 240-point box there would
+              // reach past the top and bottom of the viewfinder.
+              final side = context.layout.panelHeight(240, maxFraction: 0.45);
+              return Container(
+                width: side,
+                height: side,
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.surface, width: 2),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              );
+            }),
           ),
           Positioned(
             bottom: 40,

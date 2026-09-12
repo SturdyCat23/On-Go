@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../../data/quote_store.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../widgets/notification_card.dart';
+import '../active/active_request_screen.dart';
+import '../home/quotes_screen.dart';
 
 /// What the client's bell opens: quotes that arrived and the progress the
 /// mechanic reported on their job.
@@ -55,6 +58,33 @@ class ClientNotificationsScreen extends StatelessWidget {
     return '${diff.inDays}d ago';
   }
 
+  /// Follows [notification] to what it is about. Where that is, is the store's
+  /// call — made now, from the job's current state — so a notification for a
+  /// job that has since finished explains itself instead of opening a stale
+  /// quote.
+  void _open(BuildContext context, ClientNotification notification) {
+    final route = QuoteNotificationStore.instance.routeForClientNotification(notification);
+    switch (route) {
+      case OpenJobQuotes(:final requestId, :final quoteId):
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => QuotesScreen(requestId: requestId, focusQuoteId: quoteId)),
+        );
+      case OpenClientJob(:final requestId):
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => ActiveRequestScreen(requestId: requestId)),
+        );
+      case NotificationUnavailable(:final message):
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(message), duration: AppDurations.snackBar));
+      case OpenMechanicJob() || OpenJobInList() || OpenMechanicTab():
+        // Mechanic-side routes; never produced for a client notification.
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -100,13 +130,9 @@ class ClientNotificationsScreen extends StatelessWidget {
               final n = notifications[index];
               final accent = _accentFor(n.kind);
 
-              return Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
-                ),
+              return NotificationCard(
+                onTap: () => _open(context, n),
+                semanticsLabel: '${n.title}. ${n.message}',
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../data/points_offers.dart';
 import '../../../../data/points_wallet_store.dart';
 import '../../../../data/quote_store.dart';
 import '../../../../services/backend/mobile_backend.dart';
@@ -24,19 +23,27 @@ class _EarningScreenState extends State<EarningScreen> {
 
   String get _mechanicName => QuoteNotificationStore.currentMechanicName;
 
+  // Both halves of what this screen shows: the jobs store (earnings, history)
+  // and the points wallet (points, and the balance conversions add). This tab
+  // stays alive behind View Offer, so a conversion made there only reaches
+  // this header if the header is listening to the wallet it was written to.
+  late final Listenable _sources = Listenable.merge([_store, _wallet]);
+
   @override
   void initState() {
     super.initState();
-    _store.addListener(_onChange);
+    _sources.addListener(_onChange);
   }
 
   @override
   void dispose() {
-    _store.removeListener(_onChange);
+    _sources.removeListener(_onChange);
     super.dispose();
   }
 
-  void _onChange() => setState(() {});
+  void _onChange() {
+    if (mounted) setState(() {});
+  }
 
   void _toggleBalance() => setState(() => _showBalance = !_showBalance);
 
@@ -54,80 +61,36 @@ class _EarningScreenState extends State<EarningScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Earnings plus anything converted from points — the wallet records the
-    // conversion, so the balance follows it without earnings history moving.
-    final balance = _store.totalEarningsFor(_mechanicName) +
-        PointsOffers.convertedBalanceFor(_mechanicName);
+    // The shared definition, not a sum made here — see availableBalanceFor.
+    final balance = _store.availableBalanceFor(_mechanicName);
     // Spendable, not lifetime: converting draws this down.
     final points = _wallet.balanceFor(_mechanicName);
     final paidJobs = _store.completedJobsFor(_mechanicName)
       ..sort((a, b) => (b.paymentCompletedAt ?? b.createdAt).compareTo(a.paymentCompletedAt ?? a.createdAt));
 
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: context.layout.pageInsets,
       children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(color: AppColors.primarydark, borderRadius: BorderRadius.circular(16)),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text('Available Balance',
-                            style: TextStyle(color: AppColors.textlight, fontSize: 13, fontWeight: FontWeight.w600)),
-                        const SizedBox(width: 4),
-                        InkWell(
-                          onTap: _toggleBalance,
-                          child: Icon(_showBalance ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                              color: AppColors.textlight, size: 16),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _showBalance ? '₱${balance.toStringAsFixed(2)}' : '••••',
-                      style: TextStyle(color: AppColors.textlight, fontSize: 28, fontWeight: FontWeight.w800),
-                    ),
-                  ],
-                ),
-              ),
-              Container(width: 1, height: 48, color: AppColors.surface.withValues(alpha: 0.3)),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.card_giftcard, color: AppColors.textlight, size: 16),
-                        SizedBox(width: 4),
-                        Text('Points', style: TextStyle(color: AppColors.textlight, fontSize: 13, fontWeight: FontWeight.w600)),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _showBalance ? formatPoints(points) : '••••',
-                      style: TextStyle(color: AppColors.textlight, fontSize: 28, fontWeight: FontWeight.w800),
-                    ),
-                    const SizedBox(height: 8),
-                    const _ViewOfferButton(),
-                  ],
-                ),
-              ),
-            ],
-          ),
+        _EarningsHeader(
+          showBalance: _showBalance,
+          onToggle: _toggleBalance,
+          balance: balance,
+          points: points,
         ),
         const SizedBox(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Top Mechanics', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+            // The heading yields to the action beside it rather than pushing
+            // it off the row on a narrow phone.
+            const Expanded(
+              child: Text(
+                'Top Mechanics',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+            ),
             TextButton(
               onPressed: widget.onViewAll ?? () => Navigator.push(
                     context,
@@ -232,6 +195,167 @@ class _ProblemText {
   final String issue;
   final String description;
   const _ProblemText(this.issue, this.description);
+}
+
+/// The balance-and-points panel at the top of Earnings.
+///
+/// Two figures that want to sit side by side, and cannot on a narrow phone.
+/// Half of a 320-point screen is about 110 points once the card's padding is
+/// taken out, and "Available Balance" alone is wider than that — which is
+/// what used to push this header off the right edge.
+///
+/// So the two halves stack below a threshold instead of being squeezed. The
+/// threshold is measured against the room the header actually has, not the
+/// width of the device, so the same panel behaves correctly if it is ever put
+/// somewhere narrower.
+class _EarningsHeader extends StatelessWidget {
+  const _EarningsHeader({
+    required this.showBalance,
+    required this.onToggle,
+    required this.balance,
+    required this.points,
+  });
+
+  final bool showBalance;
+  final VoidCallback onToggle;
+  final double balance;
+  final double points;
+
+  /// Below this much room, side by side stops working: each column would get
+  /// less than ~150 points, which is not enough for the label above a figure
+  /// at this type size.
+  static const double _sideBySideMin = 320;
+
+  @override
+  Widget build(BuildContext context) {
+    final layout = context.layout;
+    final divider = AppColors.surface.withValues(alpha: 0.3);
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(layout.scale(18)),
+      decoration: BoxDecoration(
+        color: AppColors.primarydark,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final stack = constraints.maxWidth < _sideBySideMin;
+
+          final balanceHalf = _Figure(
+            label: 'Available Balance',
+            value: showBalance ? '₱${balance.toStringAsFixed(2)}' : '••••',
+            trailing: InkWell(
+              onTap: onToggle,
+              child: Icon(
+                showBalance ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                color: AppColors.textlight,
+                size: 16,
+              ),
+            ),
+          );
+
+          final pointsHalf = _Figure(
+            label: 'Points',
+            leading: Icon(Icons.card_giftcard, color: AppColors.textlight, size: 16),
+            value: showBalance ? formatPoints(points) : '••••',
+            footer: const _ViewOfferButton(),
+          );
+
+          if (stack) {
+            // Stacked, the rule between them turns from a vertical bar into a
+            // horizontal one — it is still separating the two figures, just
+            // along the other axis.
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                balanceHalf,
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Container(height: 1, color: divider),
+                ),
+                pointsHalf,
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: balanceHalf),
+              Container(width: 1, height: 48, color: divider),
+              const SizedBox(width: 20),
+              Expanded(child: pointsHalf),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// A label, a large figure, and optionally something after each.
+///
+/// The figure scales itself down rather than overflowing: a mechanic with a
+/// six-figure balance should see the number get smaller, not get cut off.
+class _Figure extends StatelessWidget {
+  const _Figure({
+    required this.label,
+    required this.value,
+    this.leading,
+    this.trailing,
+    this.footer,
+  });
+
+  final String label;
+  final String value;
+  final Widget? leading;
+  final Widget? trailing;
+  final Widget? footer;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            if (leading != null) ...[leading!, const SizedBox(width: 4)],
+            // Flexible so a long label ellipses inside its column instead of
+            // pushing the row wider than the card.
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: AppColors.textlight,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            if (trailing != null) ...[const SizedBox(width: 4), trailing!],
+          ],
+        ),
+        const SizedBox(height: 8),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            value,
+            maxLines: 1,
+            style: TextStyle(
+              color: AppColors.textlight,
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        if (footer != null) ...[const SizedBox(height: 8), footer!],
+      ],
+    );
+  }
 }
 /// Opens the offers a mechanic can spend points on.
 ///

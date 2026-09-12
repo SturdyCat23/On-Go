@@ -227,7 +227,7 @@ class _MechanicStep5VerificationState
           _buildHeader(),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: context.layout.pageInsets,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -278,7 +278,7 @@ class _MechanicStep5VerificationState
                           ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: Image.file(_profilePhoto!,
-                                width: 140, height: 140, fit: BoxFit.cover),
+                                width: context.layout.scale(140), height: context.layout.scale(140), fit: BoxFit.cover),
                           ),
                           Positioned(
                             top: -10,

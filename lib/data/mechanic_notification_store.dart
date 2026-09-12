@@ -36,8 +36,13 @@ class MechanicNotification {
   /// [MechanicNotificationKind.emergencyPosted] is broadcast that way.
   final String? mechanicName;
 
-  /// The job this is about, when there is one. Null for account approval.
+  /// The job this is about, when there is one. Null for account approval and
+  /// ratings, which are about the mechanic rather than a job.
   final String? requestId;
+
+  /// The quote involved, for [MechanicNotificationKind.quoteAccepted] and
+  /// [MechanicNotificationKind.quoteRejected]. Null otherwise.
+  final String? quoteId;
 
   /// The other party's name, or an empty string when there isn't one.
   final String clientName;
@@ -60,6 +65,7 @@ class MechanicNotification {
     required this.detail,
     required this.createdAt,
     this.requestId,
+    this.quoteId,
     this.read = false,
   });
 
@@ -144,6 +150,7 @@ class MechanicNotificationStore extends ChangeNotifier {
     required String clientName,
     required String detail,
     String? requestId,
+    String? quoteId,
   }) {
     _items.insert(
       0,
@@ -154,6 +161,7 @@ class MechanicNotificationStore extends ChangeNotifier {
         clientName: clientName,
         detail: detail,
         requestId: requestId,
+        quoteId: quoteId,
         createdAt: DateTime.now(),
       ),
     );

@@ -301,7 +301,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
             clipBehavior: Clip.none,
             children: [
               Container(
-                height: 190,
+                height: context.layout.panelHeight(190),
                 width: double.infinity,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -449,10 +449,7 @@ class _ActiveRequestScreenState extends State<ActiveRequestScreen> {
                   ),
                   const SizedBox(height: 10),
                   ElevatedButton.icon(
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => MechanicProfileViewScreen(name: quote.mechanicName)),
-                    ),
+                    onPressed: () => MechanicProfileViewScreen.open(context, quote.mechanicName),
                     icon: const Icon(Icons.edit_outlined, size: 18),
                     label: const Text('Write a Review'),
                     style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 46), shape: const StadiumBorder()),

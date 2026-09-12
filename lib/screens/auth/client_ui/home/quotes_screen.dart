@@ -3,6 +3,7 @@ import '../../../../theme/app_theme.dart';
 import '../../../../widgets/common_widgets.dart';
 // Todo: adjust this path to wherever quote_store.dart lives in your project
 import '../../../../data/quote_store.dart';
+import '../profile/mechanic_profile_view_screen.dart';
 
 class QuotesScreen extends StatefulWidget {
   /// When set, only this request's quotes are shown (used by the "Quotes"
@@ -11,13 +12,20 @@ class QuotesScreen extends StatefulWidget {
   /// bell to this anymore.
   final String? requestId;
 
-  const QuotesScreen({super.key, this.requestId});
+  /// The quote a notification pointed at. When set, that row is highlighted
+  /// and scrolled into view, so the client lands on the offer they were told
+  /// about rather than having to find it among the job's other quotes.
+  final String? focusQuoteId;
+
+  const QuotesScreen({super.key, this.requestId, this.focusQuoteId});
 
   @override
   State<QuotesScreen> createState() => _QuotesScreenState();
 }
 
 class _QuotesScreenState extends State<QuotesScreen> {
+  final _focusKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
@@ -26,6 +34,15 @@ class _QuotesScreenState extends State<QuotesScreen> {
         QuoteNotificationStore.instance.markRequestQuotesSeen(widget.requestId!);
       } else {
         QuoteNotificationStore.instance.markSeen();
+      }
+      final focused = _focusKey.currentContext;
+      if (focused != null) {
+        Scrollable.ensureVisible(
+          focused,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+          alignment: 0.3,
+        );
       }
     });
   }
@@ -78,7 +95,7 @@ class _QuotesScreenState extends State<QuotesScreen> {
           }
 
           return ListView(
-            padding: const EdgeInsets.all(20),
+            padding: context.layout.pageInsets,
             children: [
               const Text('Quotes', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
               const SizedBox(height: 4),
@@ -87,7 +104,12 @@ class _QuotesScreenState extends State<QuotesScreen> {
               const SizedBox(height: 16),
               ...pending.map((request) => Padding(
                     padding: const EdgeInsets.only(bottom: 16),
-                    child: _RequestQuoteCard(request: request, store: store),
+                    child: _RequestQuoteCard(
+                      request: request,
+                      store: store,
+                      focusQuoteId: widget.focusQuoteId,
+                      focusKey: _focusKey,
+                    ),
                   )),
             ],
           );
@@ -124,8 +146,15 @@ Color _urgencyColor(String urgency) {
 class _RequestQuoteCard extends StatelessWidget {
   final HelpRequest request;
   final QuoteNotificationStore store;
+  final String? focusQuoteId;
+  final GlobalKey? focusKey;
 
-  const _RequestQuoteCard({required this.request, required this.store});
+  const _RequestQuoteCard({
+    required this.request,
+    required this.store,
+    this.focusQuoteId,
+    this.focusKey,
+  });
 
   /// Turning a quote down is final for that mechanic — they are told, and they
   /// cannot re-quote this job — so it is confirmed rather than one stray tap
@@ -222,22 +251,35 @@ class _RequestQuoteCard extends StatelessWidget {
               ],
             ),
             const Divider(height: 16),
-            ...quotes.map((q) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
+            ...quotes.map((q) => _QuoteRow(
+                  key: q.id == focusQuoteId ? focusKey : null,
+                  spotlight: q.id == focusQuoteId,
                   child: Row(
                     children: [
-                      Expanded(flex: 3, child: Text(q.mechanicName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13))),
+                      Expanded(flex: 3, child: _MechanicNameLink(name: q.mechanicName)),
                       Expanded(flex: 2, child: Text(q.price, style: const TextStyle(fontSize: 13))),
                       Expanded(flex: 2, child: Text(q.eta, style: const TextStyle(fontSize: 13))),
                       Expanded(
                         flex: 2,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.star, size: 14, color: AppColors.warning),
-                            const SizedBox(width: 2),
-                            Text(q.rating.toStringAsFixed(1), style: const TextStyle(fontSize: 13)),
-                          ],
+                        // On a 320-point phone this column is about 42 points
+                        // wide, a little less than the star and the figure
+                        // need, so the pair ran past the column into the next.
+                        // Scale-down only: wherever it already fits it is
+                        // drawn exactly as before, and where it does not it
+                        // shrinks slightly rather than clipping the rating.
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.star, size: 14, color: AppColors.warning),
+                                const SizedBox(width: 2),
+                                Text(q.rating.toStringAsFixed(1), style: const TextStyle(fontSize: 13)),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                       SizedBox(
@@ -282,6 +324,85 @@ class _RequestQuoteCard extends StatelessWidget {
                 )),
           ],
         ],
+      ),
+    );
+  }
+}
+/// One quote's row, tinted when it is the one a notification pointed at.
+///
+/// The tint is painted behind the row without adding padding, so a
+/// highlighted row keeps its columns lined up with the header above it.
+class _QuoteRow extends StatelessWidget {
+  const _QuoteRow({super.key, required this.spotlight, required this.child});
+
+  final bool spotlight;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: spotlight,
+      label: spotlight ? 'The quote from your notification' : null,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: spotlight ? AppColors.info.withValues(alpha: 0.10) : null,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        position: DecorationPosition.background,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: spotlight ? Border.all(color: AppColors.info.withValues(alpha: 0.55)) : null,
+          ),
+          position: DecorationPosition.foreground,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A mechanic's name in a quote row, and the way into their profile.
+///
+/// Before deciding on a quote a client wants to know who is behind it — their
+/// reviews, their certifications, how many jobs they have done. The name is
+/// the obvious thing to tap for that, so the name is what opens it.
+///
+/// It looks as it did — same size, weight and colour — with a faint underline
+/// added so it reads as something that can be tapped rather than a label. The
+/// tap area covers the whole name column and extends above and below the text,
+/// because 13-point text on its own is too small a target for a thumb. That
+/// extra height never shows: every row on this screen is already as tall as
+/// its Accept/Reject buttons, which are taller than the padded name.
+class _MechanicNameLink extends StatelessWidget {
+  const _MechanicNameLink({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: "View $name's profile",
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: () => MechanicProfileViewScreen.open(context, name),
+        borderRadius: BorderRadius.circular(6),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            name,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              decoration: TextDecoration.underline,
+              decorationColor: AppColors.textdark.withValues(alpha: 0.35),
+            ),
+          ),
+        ),
       ),
     );
   }

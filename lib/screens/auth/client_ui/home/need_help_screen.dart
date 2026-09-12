@@ -234,7 +234,7 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
         : AppColors.success;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: context.layout.pageInsets,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -253,7 +253,10 @@ class _NeedHelpScreenState extends State<NeedHelpScreen> {
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
           const SizedBox(height: 10),
           GridView.count(
-            crossAxisCount: 3,
+            // Three across on a phone, more on a wider screen — the tiles
+            // keep their size and the grid gains columns, rather than three
+            // tiles stretching across a tablet.
+            crossAxisCount: context.layout.isTablet ? 4 : 3,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: 10,

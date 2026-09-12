@@ -44,7 +44,7 @@ class _ServiceHistoryScreenState extends State<ServiceHistoryScreen> {
     final completed = _store.myCompletedJobs;
 
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: context.layout.pageInsets,
       children: [
         const Text('Service History', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
         const SizedBox(height: 16),
@@ -99,10 +99,7 @@ class _HistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => MechanicProfileViewScreen(name: mechanicName)),
-      ),
+      onTap: () => MechanicProfileViewScreen.open(context, mechanicName),
       borderRadius: BorderRadius.circular(16),
       overlayColor: WidgetStateProperty.all(Colors.transparent),
       splashColor: Colors.transparent,

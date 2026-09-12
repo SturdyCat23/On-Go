@@ -16,6 +16,23 @@ class MechanicProfileViewScreen extends StatefulWidget {
   final String name;
   const MechanicProfileViewScreen({super.key, required this.name});
 
+  /// Opens [name]'s profile on top of the current screen.
+  ///
+  /// The one way into this screen from anywhere in the client app — quotes,
+  /// the leaderboard, service history, a finished job. It used to be written
+  /// out at each of those places; keeping it here means they cannot drift into
+  /// opening it differently.
+  ///
+  /// [name] is the key everything on the profile is looked up by (reviews,
+  /// credentials, contact details, completed jobs), so pass the name exactly as
+  /// the record that led here carries it — `quote.mechanicName`, not a label.
+  static Future<void> open(BuildContext context, String name) {
+    return Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => MechanicProfileViewScreen(name: name)),
+    );
+  }
+
   @override
   State<MechanicProfileViewScreen> createState() => _MechanicProfileViewScreenState();
 }
@@ -152,7 +169,7 @@ class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
         title: const Text('Mechanic Profile'),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: context.layout.pageInsets,
         children: [
           AppCard(
             padding: const EdgeInsets.all(16),
@@ -179,8 +196,15 @@ class _MechanicProfileViewScreenState extends State<MechanicProfileViewScreen> {
                             children: [
                               Icon(Icons.location_on_outlined, size: 14, color: AppColors.textdark.withValues(alpha: 0.55)),
                               const SizedBox(width: 2),
-                              Text('Puerto Princesa City',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textdark.withValues(alpha: 0.55))),
+                              // Takes what is left beside the pin and
+                              // ellipses, rather than demanding its own width
+                              // and running off the card.
+                              Expanded(
+                                child: Text('Puerto Princesa City',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textdark.withValues(alpha: 0.55))),
+                              ),
                             ],
                           ),
                         ],

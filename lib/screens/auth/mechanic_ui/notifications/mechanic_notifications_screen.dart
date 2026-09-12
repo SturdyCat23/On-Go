@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../data/mechanic_notification_store.dart';
 import '../../../../data/quote_store.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../widgets/notification_card.dart';
+import '../jobs/mechanic_active_job_screen.dart';
 
 /// What the mechanic's bell opens — the mechanic-side twin of
 /// `ClientNotificationsScreen`, using the same card, icon and timestamp
@@ -57,6 +59,36 @@ class MechanicNotificationsScreen extends StatelessWidget {
     return '${diff.inDays}d ago';
   }
 
+  /// Follows [notification] to what it is about, as the store decides from
+  /// the job's current state.
+  ///
+  /// Screens of their own — an assigned job — are pushed from here, so Back
+  /// returns to this list. Places inside the mechanic shell — a job card on
+  /// the Jobs screen, the Earning or Profile tab — cannot be pushed; this
+  /// screen closes and hands the route to the shell, which switches to it.
+  void _open(BuildContext context, MechanicNotification notification) {
+    final route = QuoteNotificationStore.instance.routeForMechanicNotification(
+      notification,
+      QuoteNotificationStore.currentMechanicName,
+    );
+    switch (route) {
+      case OpenMechanicJob(:final requestId):
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => MechanicActiveJobScreen(requestId: requestId)),
+        );
+      case OpenJobInList() || OpenMechanicTab():
+        if (Navigator.of(context).canPop()) Navigator.pop(context, route);
+      case NotificationUnavailable(:final message):
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(message), duration: AppDurations.snackBar));
+      case OpenJobQuotes() || OpenClientJob():
+        // Client-side routes; never produced for a mechanic notification.
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -103,13 +135,9 @@ class MechanicNotificationsScreen extends StatelessWidget {
               final n = notifications[index];
               final accent = _accentFor(n.kind);
 
-              return Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.textdark.withValues(alpha: 0.2)),
-                ),
+              return NotificationCard(
+                onTap: () => _open(context, n),
+                semanticsLabel: '${n.title}. ${n.message}',
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

@@ -119,7 +119,7 @@ class _MechanicLeaderboardScreenState extends State<MechanicLeaderboardScreen> {
     return Stack(
       children: [
         ListView(
-          padding: const EdgeInsets.all(20),
+          padding: context.layout.pageInsets,
           children: [
             Row(
               children: [

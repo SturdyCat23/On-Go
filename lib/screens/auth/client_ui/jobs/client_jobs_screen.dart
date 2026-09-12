@@ -441,7 +441,7 @@ class _UploadedJobList extends StatelessWidget {
       );
     }
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: context.layout.listInsets(),
       children: requests
           .map((r) => Padding(
                 padding: const EdgeInsets.only(bottom: jobCardSpacing),
@@ -581,7 +581,7 @@ class _PendingJobList extends StatelessWidget {
       );
     }
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: context.layout.listInsets(),
       children: requests
           .map((r) => Padding(
                 padding: const EdgeInsets.only(bottom: jobCardSpacing),
@@ -721,7 +721,7 @@ class _ActiveJobList extends StatelessWidget {
       return Center(child: Text('No active jobs right now.', style: TextStyle(color: AppColors.textdark.withValues(alpha: 0.55))));
     }
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: context.layout.listInsets(),
       children: requests
           .map((r) => Padding(
                 padding: const EdgeInsets.only(bottom: jobCardSpacing),

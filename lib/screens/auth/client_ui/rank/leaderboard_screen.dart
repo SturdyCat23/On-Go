@@ -114,7 +114,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     return Stack(
       children: [
         ListView(
-          padding: const EdgeInsets.all(20),
+          padding: context.layout.pageInsets,
           children: [
             Row(
               children: [
@@ -143,10 +143,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               final rank = entry.key + 1;
               final leader = entry.value;
               return GestureDetector(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => MechanicProfileViewScreen(name: leader.name)),
-                ),
+                onTap: () => MechanicProfileViewScreen.open(context, leader.name),
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

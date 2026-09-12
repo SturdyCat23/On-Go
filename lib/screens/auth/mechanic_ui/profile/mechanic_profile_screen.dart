@@ -90,7 +90,7 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
     final photo = _account.photoPath;
 
     final content = ListView(
-      padding: const EdgeInsets.all(20),
+      padding: context.layout.pageInsets,
       children: [
         AppCard(
           padding: const EdgeInsets.all(16),
@@ -145,7 +145,17 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
                           children: [
                             Icon(Icons.location_on_outlined, size: 14, color: AppColors.textdark.withValues(alpha: 0.55)),
                             const SizedBox(width: 2),
-                            Text('Puerto Princesa City', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textdark.withValues(alpha: 0.55))),
+                            // The place name takes what is left beside the pin
+                            // and ellipses. Bare, it demanded its own full
+                            // width and ran off the card on a narrow phone.
+                            Expanded(
+                              child: Text(
+                                'Puerto Princesa City',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textdark.withValues(alpha: 0.55)),
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -218,12 +228,17 @@ class _MechanicProfileScreenState extends State<MechanicProfileScreen> {
               const SizedBox(height: 8),
               const Divider(height: 1),
               const SizedBox(height: 12),
-              Row(
+              // Wrap, not Row: three chips ending in "Most Relevant" do not
+              // fit across a narrow phone, and a chip that has run off the
+              // edge cannot be tapped. Wrapping onto a second line keeps all
+              // three reachable at every width, and costs nothing on a wide
+              // screen where they still sit on one.
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
                 children: [
                   _FilterChip(label: 'All', selected: _filter == _ReviewFilter.all, onTap: () => setState(() => _filter = _ReviewFilter.all)),
-                  const SizedBox(width: 6),
                   _FilterChip(label: 'Rating', selected: _filter == _ReviewFilter.rating, onTap: () => setState(() => _filter = _ReviewFilter.rating)),
-                  const SizedBox(width: 6),
                   _FilterChip(
                       label: 'Most Relevant',
                       selected: _filter == _ReviewFilter.mostRelevant,

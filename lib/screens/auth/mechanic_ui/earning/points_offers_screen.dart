@@ -82,68 +82,19 @@ class _PointsOffersScreenState extends State<PointsOffersScreen> {
       );
 
   /// For an offer the mechanic sizes themselves.
-  Future<double?> _askAmount(PointsOffer offer) async {
-    final balance = _wallet.balanceFor(_mechanicName);
-    final controller =
-        TextEditingController(text: formatPoints(balance));
-    String? error;
-
-    final result = await showDialog<double>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(offer.title),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(offer.description,
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textdark.withValues(alpha: 0.55))),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                autofocus: true,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  labelText: 'Points to convert',
-                  helperText: 'You have ${formatPointsLabel(balance)}',
-                  errorText: error,
-                ),
-                onChanged: (_) {
-                  if (error != null) setDialogState(() => error = null);
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-            ElevatedButton(
-              onPressed: () {
-                final value = double.tryParse(controller.text.trim());
-                if (value == null || value <= 0) {
-                  setDialogState(() => error = 'Enter a number of points.');
-                  return;
-                }
-                if (!_wallet.canAfford(_mechanicName, value)) {
-                  setDialogState(() =>
-                      error = 'You only have ${formatPointsLabel(balance)}.');
-                  return;
-                }
-                Navigator.pop(ctx, value);
-              },
-              child: const Text('Convert'),
-            ),
-          ],
+  ///
+  /// The dialog owns its text field's controller. It used to be disposed here
+  /// the moment `showDialog` returned — but the dialog is still animating
+  /// closed at that point and rebuilds its field once more, against a dead
+  /// controller, which tore up the route underneath it.
+  Future<double?> _askAmount(PointsOffer offer) => showDialog<double>(
+        context: context,
+        builder: (_) => _ConvertAmountDialog(
+          offer: offer,
+          mechanicName: _mechanicName,
+          wallet: _wallet,
         ),
-      ),
-    );
-
-    controller.dispose();
-    return result;
-  }
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -159,7 +110,7 @@ class _PointsOffersScreenState extends State<PointsOffersScreen> {
         title: const Text('View Offer'),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: context.layout.pageInsets,
         children: [
           PointsBalanceCard(
             points: balance,
@@ -184,6 +135,91 @@ class _PointsOffersScreenState extends State<PointsOffersScreen> {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// Asks how many points to convert.
+///
+/// A widget of its own so the text controller lives exactly as long as the
+/// dialog does — created with it, and disposed only once the dialog has
+/// finished leaving the screen.
+class _ConvertAmountDialog extends StatefulWidget {
+  const _ConvertAmountDialog({
+    required this.offer,
+    required this.mechanicName,
+    required this.wallet,
+  });
+
+  final PointsOffer offer;
+  final String mechanicName;
+  final PointsWalletStore wallet;
+
+  @override
+  State<_ConvertAmountDialog> createState() => _ConvertAmountDialogState();
+}
+
+class _ConvertAmountDialogState extends State<_ConvertAmountDialog> {
+  late final double _balance = widget.wallet.balanceFor(widget.mechanicName);
+  late final TextEditingController _controller =
+      TextEditingController(text: formatPoints(_balance));
+  String? _error;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final value = double.tryParse(_controller.text.trim());
+    if (value == null || value <= 0) {
+      setState(() => _error = 'Enter a number of points.');
+      return;
+    }
+    if (!widget.wallet.canAfford(widget.mechanicName, value)) {
+      setState(() => _error = 'You only have ${formatPointsLabel(_balance)}.');
+      return;
+    }
+    Navigator.pop(context, value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.offer.title),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(widget.offer.description,
+              style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textdark.withValues(alpha: 0.55))),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              labelText: 'Points to convert',
+              helperText: 'You have ${formatPointsLabel(_balance)}',
+              errorText: _error,
+            ),
+            onChanged: (_) {
+              if (_error != null) setState(() => _error = null);
+            },
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        ElevatedButton(
+          onPressed: _submit,
+          child: const Text('Convert'),
+        ),
+      ],
     );
   }
 }

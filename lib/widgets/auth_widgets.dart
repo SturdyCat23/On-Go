@@ -270,11 +270,28 @@ class AuthBottomCard extends StatelessWidget {
               topRight: Radius.circular(32),
             ),
           ),
-          padding: const EdgeInsets.fromLTRB(24, 36, 24, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: children,
+          padding: EdgeInsets.fromLTRB(
+            context.layout.isTablet ? 32 : 24,
+            36,
+            context.layout.isTablet ? 32 : 24,
+            32,
+          ),
+          // The card itself still runs edge to edge — that full-bleed panel
+          // anchored to the bottom is the design. What stops at a sensible
+          // width is what is INSIDE it: on a tablet, a sign-in field and a
+          // "Register as Client" button stretched across ten inches look
+          // broken, and the buttons become a long way from the thumb that has
+          // to reach them. Centred inside the card, they keep a phone's
+          // proportions on any screen.
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: context.layout.contentMaxWidth),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: children,
+              ),
+            ),
           ),
         ),
       ],
@@ -393,12 +410,18 @@ class AuthRoleButton extends StatelessWidget {
                 child: Icon(icon, color: AppColors.textlight, size: 20),
               ),
               const SizedBox(width: 16),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textlight,
+              // Expanded, not bare: the label takes what is left of the row
+              // after the circle rather than demanding its own full width.
+              // Without it "Register as Mechanic" runs past the right edge of
+              // the card on any phone narrower than about 430 points.
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textlight,
+                  ),
                 ),
               ),
             ],

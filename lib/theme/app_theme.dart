@@ -12,6 +12,11 @@ export 'package:on_go_design/on_go_design.dart';
 
 export 'auth_background_controller.dart';
 
+/// The responsive layout model — `context.layout`, [ResponsiveBody] and the
+/// rest. Exported here so a screen that already imports this file gets it
+/// without another import.
+export 'app_layout.dart';
+
 /// The mobile app's [ThemeData].
 ///
 /// This is the half the app owns: the colours are shared, the density is not.
